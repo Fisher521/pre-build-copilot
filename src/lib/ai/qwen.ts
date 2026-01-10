@@ -29,11 +29,31 @@ import {
 } from '@/lib/schema'
 import { getNextQuestion, formatQuestionForDisplay, parseAnswerValue } from '@/lib/questionBank'
 
-// Initialize Qwen client (OpenAI-compatible)
-const client = new OpenAI({
-  apiKey: process.env.QWEN_API_KEY!,
-  baseURL: process.env.QWEN_API_BASE || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
-})
+// Initialize Qwen client (OpenAI-compatible) lazily
+let client: OpenAI | null = null
+
+function getClient(): OpenAI {
+  if (!client) {
+    const apiKey = process.env.QWEN_API_KEY
+
+    if (!apiKey) {
+      console.warn('QWEN_API_KEY is not defined - using dummy client for build/dev')
+      // Return a dummy client to prevent build failures
+      // This will still fail at runtime if API calls are made, which is expected
+      return new OpenAI({ 
+        apiKey: 'dummy', 
+        baseURL: 'https://api.example.com',
+        dangerouslyAllowBrowser: true 
+      })
+    }
+
+    client = new OpenAI({
+      apiKey,
+      baseURL: process.env.QWEN_API_BASE || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+    })
+  }
+  return client
+}
 
 const MODEL = process.env.QWEN_MODEL || 'qwen-plus'
 
@@ -83,7 +103,7 @@ export async function extractSchemaFromInput(
   currentSchema: EvaluationSchema
 ): Promise<ParsedInput> {
   try {
-    const response = await client.chat.completions.create({
+    const response = await getClient().chat.completions.create({
       model: MODEL,
       messages: [
         {
@@ -192,7 +212,7 @@ export async function processUserInput(params: {
   })
 
   try {
-    const response = await client.chat.completions.create({
+    const response = await getClient().chat.completions.create({
       model: MODEL,
       messages,
       temperature: 0.7,
@@ -262,7 +282,7 @@ ${conversationSummary}
 请生成 Pre-build Brief：`
 
   try {
-    const response = await client.chat.completions.create({
+    const response = await getClient().chat.completions.create({
       model: MODEL,
       messages: [
         {
@@ -317,7 +337,7 @@ export function handleQuestionAnswer(
  */
 export async function testConnection(): Promise<boolean> {
   try {
-    const response = await client.chat.completions.create({
+    const response = await getClient().chat.completions.create({
       model: MODEL,
       messages: [
         { role: 'system', content: '你是一个助手' },
