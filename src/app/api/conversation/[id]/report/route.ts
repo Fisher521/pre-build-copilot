@@ -43,15 +43,30 @@ export async function POST(
       messages: [
         {
           role: 'system',
-          content: `你是一个项目可行性评估专家。根据用户提供的项目信息，生成一份简洁的评估报告。
+          content: `你是一个资深的项目可行性评估专家。根据用户提供的项目信息，生成一份全面的评估报告。
 
 请以 JSON 格式返回，包含以下字段：
 {
   "projectName": "项目名称",
   "score": 评分(0-100的整数),
-  "verdict": "一句话判断，如'值得尝试'或'需要重新思考'",
+  "verdict": "一句话判断，如'非常值得做'或'需要重新思考'",
   "strengths": ["优势1", "优势2", "优势3"],
   "challenges": ["挑战1", "挑战2"],
+  "marketAnalysis": {
+    "targetSize": "目标市场规模描述",
+    "competition": "竞争情况分析",
+    "opportunity": "市场机会点"
+  },
+  "costEstimate": {
+    "development": "开发成本估算（时间和费用）",
+    "operation": "运营成本估算",
+    "tips": "省钱建议"
+  },
+  "techAnalysis": {
+    "difficulty": "技术难度（简单/中等/较难）",
+    "stack": "推荐技术栈",
+    "mvpTime": "MVP开发周期估算"
+  },
   "nextSteps": ["建议1", "建议2", "建议3"]
 }
 

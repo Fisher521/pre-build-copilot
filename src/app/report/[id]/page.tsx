@@ -11,6 +11,21 @@ interface ReportData {
   verdict: string
   strengths: string[]
   challenges: string[]
+  marketAnalysis?: {
+    targetSize: string
+    competition: string
+    opportunity: string
+  }
+  costEstimate?: {
+    development: string
+    operation: string
+    tips: string
+  }
+  techAnalysis?: {
+    difficulty: string
+    stack: string
+    mvpTime: string
+  }
   nextSteps: string[]
 }
 
@@ -20,7 +35,6 @@ export default function ReportPage() {
   const conversationId = params.id as string
 
   const [isLoading, setIsLoading] = useState(true)
-  const [isGenerating, setIsGenerating] = useState(false)
   const [report, setReport] = useState<ReportData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -28,8 +42,6 @@ export default function ReportPage() {
   useEffect(() => {
     async function generateReport() {
       try {
-        setIsGenerating(true)
-        
         const response = await fetch(`/api/conversation/${conversationId}/report`, {
           method: 'POST',
         })
@@ -42,7 +54,6 @@ export default function ReportPage() {
         setError(err instanceof Error ? err.message : '生成失败')
       } finally {
         setIsLoading(false)
-        setIsGenerating(false)
       }
     }
 
@@ -54,11 +65,9 @@ export default function ReportPage() {
   }
 
   const handleDownload = () => {
-    // TODO: Implement download
     alert('下载功能即将上线')
   }
 
-  // Get score color
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600'
     if (score >= 60) return 'text-primary-600'
@@ -161,6 +170,75 @@ export default function ReportPage() {
           </ul>
         </StepCard>
 
+        {/* Market Analysis */}
+        {report.marketAnalysis && (
+          <StepCard className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span>📈</span> 市场分析
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <div className="text-sm font-medium text-gray-500 mb-1">目标市场</div>
+                <p className="text-gray-700">{report.marketAnalysis.targetSize}</p>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-500 mb-1">竞争情况</div>
+                <p className="text-gray-700">{report.marketAnalysis.competition}</p>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-500 mb-1">机会点</div>
+                <p className="text-gray-700">{report.marketAnalysis.opportunity}</p>
+              </div>
+            </div>
+          </StepCard>
+        )}
+
+        {/* Cost Estimate */}
+        {report.costEstimate && (
+          <StepCard className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span>💰</span> 成本估算
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <div className="text-sm font-medium text-gray-500 mb-1">开发成本</div>
+                <p className="text-gray-700">{report.costEstimate.development}</p>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-500 mb-1">运营成本</div>
+                <p className="text-gray-700">{report.costEstimate.operation}</p>
+              </div>
+              <div className="bg-blue-50 rounded-lg p-3">
+                <div className="text-sm font-medium text-blue-600 mb-1">💡 省钱建议</div>
+                <p className="text-blue-700 text-sm">{report.costEstimate.tips}</p>
+              </div>
+            </div>
+          </StepCard>
+        )}
+
+        {/* Tech Analysis */}
+        {report.techAnalysis && (
+          <StepCard className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span>🛠️</span> 技术实现
+            </h3>
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="text-center p-3 bg-gray-50 rounded-xl">
+                <div className="text-sm text-gray-500 mb-1">技术难度</div>
+                <div className="font-semibold text-gray-900">{report.techAnalysis.difficulty}</div>
+              </div>
+              <div className="text-center p-3 bg-gray-50 rounded-xl">
+                <div className="text-sm text-gray-500 mb-1">MVP 周期</div>
+                <div className="font-semibold text-gray-900">{report.techAnalysis.mvpTime}</div>
+              </div>
+              <div className="text-center p-3 bg-gray-50 rounded-xl col-span-1">
+                <div className="text-sm text-gray-500 mb-1">推荐栈</div>
+                <div className="font-semibold text-gray-900 text-sm">{report.techAnalysis.stack}</div>
+              </div>
+            </div>
+          </StepCard>
+        )}
+
         {/* Next Steps */}
         <StepCard className="mb-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -197,3 +275,4 @@ export default function ReportPage() {
     </div>
   )
 }
+
