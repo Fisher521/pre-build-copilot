@@ -15,38 +15,74 @@ export async function POST(request: NextRequest) {
     const initialInput = body.initialInput as string | undefined
 
     // Create new conversation with empty schema
-    const conversation = await createConversation()
+    let conversation
+    try {
+      conversation = await createConversation()
+    } catch (dbError) {
+      console.error('Database error creating conversation:', dbError)
+      return NextResponse.json(
+        { 
+          error: '数据库连接失败，请检查网络后重试',
+          details: dbError instanceof Error ? dbError.message : 'Unknown database error'
+        },
+        { status: 503 }
+      )
+    }
+    
     const schema = createEmptySchema()
 
     if (initialInput && initialInput.trim()) {
       // Save user's initial message
-      await addMessage(conversation.id, {
-        role: 'user',
-        content: initialInput.trim(),
-      })
+      try {
+        await addMessage(conversation.id, {
+          role: 'user',
+          content: initialInput.trim(),
+        })
+      } catch (msgError) {
+        console.error('Error saving user message:', msgError)
+        // Continue anyway - the message can be reconstructed from the conversation
+      }
 
       // Process through state machine (STATE_1: PARSE_INPUT)
-      const { response, updatedSchema } = await processUserInput({
-        userMessage: initialInput.trim(),
-        schema,
-        previousMessages: [],
-      })
+      try {
+        const { response, updatedSchema } = await processUserInput({
+          userMessage: initialInput.trim(),
+          schema,
+          previousMessages: [],
+        })
 
-      // Save AI response
-      await addMessage(conversation.id, {
-        role: 'assistant',
-        content: response.content,
-        metadata: response.metadata,
-      })
+        // Save AI response
+        try {
+          await addMessage(conversation.id, {
+            role: 'assistant',
+            content: response.content,
+            metadata: response.metadata,
+          })
+        } catch (saveError) {
+          console.error('Error saving AI response:', saveError)
+        }
 
-      // Update conversation schema
-      await updateConversationSchema(conversation.id, updatedSchema)
+        // Update conversation schema
+        try {
+          await updateConversationSchema(conversation.id, updatedSchema)
+        } catch (schemaError) {
+          console.error('Error updating schema:', schemaError)
+        }
 
-      return NextResponse.json({
-        conversationId: conversation.id,
-        message: response,
-        schema: updatedSchema,
-      })
+        return NextResponse.json({
+          conversationId: conversation.id,
+          message: response,
+          schema: updatedSchema,
+        })
+      } catch (aiError) {
+        console.error('AI processing error:', aiError)
+        // Return conversation even if AI fails - user can retry in chat
+        return NextResponse.json({
+          conversationId: conversation.id,
+          schema,
+          error: 'AI 处理暂时不可用，请在对话中重试',
+        })
+      }
     }
 
     // No initial input - just create conversation
@@ -58,8 +94,12 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Conversation API error:', error)
     return NextResponse.json(
-      { error: 'Failed to create conversation' },
+      { 
+        error: '创建对话失败，请稍后重试',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
 }
+

@@ -64,15 +64,16 @@ export function ChatInput({ onSend, disabled, placeholder = '告诉我你的想�
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             disabled={disabled}
-            rows={1}
+            rows={3}
             className={cn(
-              'flex-1 resize-none rounded-3xl px-4 py-3 text-base',
+              'flex-1 resize-none rounded-2xl px-4 py-3 text-base leading-relaxed',
               'bg-gray-100 border-2 border-transparent',
               'focus:border-primary-500 focus:bg-white focus:outline-none',
               'transition-all duration-200',
-              'disabled:opacity-50'
+              'disabled:opacity-50',
+              'min-h-[80px]'
             )}
-            style={{ maxHeight: '120px' }}
+            style={{ maxHeight: '160px' }}
           />
           {/* Voice Button */}
           <VoiceButton

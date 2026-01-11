@@ -43,16 +43,21 @@ export default function HomePage() {
         }),
       })
 
+      const result = await response.json()
+
       if (!response.ok) {
-        throw new Error('创建对话失败')
+        throw new Error(result.error || '创建对话失败')
       }
 
-      const result = await response.json()
+      // Show warning if AI had issues but conversation was created
+      if (result.error && result.conversationId) {
+        console.warn('AI warning:', result.error)
+      }
 
       // Navigate to chat page
       router.push(`/chat/${result.conversationId}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : '发生错误')
+      setError(err instanceof Error ? err.message : '网络错误，请检查连接后重试')
       setIsLoading(false)
     }
   }
@@ -110,15 +115,16 @@ export default function HomePage() {
             onKeyDown={handleKeyDown}
             placeholder="告诉我你想做什么..."
             disabled={isLoading}
-            rows={1}
+            rows={3}
             className={cn(
-              'flex-1 resize-none rounded-xl px-4 py-3 text-base',
+              'flex-1 resize-none rounded-xl px-4 py-3 text-base leading-relaxed',
               'bg-gray-50 border-2 border-transparent',
               'focus:border-primary-500 focus:bg-white focus:outline-none',
               'transition-all duration-200',
-              'disabled:opacity-50'
+              'disabled:opacity-50',
+              'min-h-[80px]'
             )}
-            style={{ maxHeight: '120px' }}
+            style={{ maxHeight: '160px' }}
           />
           {/* Voice Button */}
           <VoiceButton
