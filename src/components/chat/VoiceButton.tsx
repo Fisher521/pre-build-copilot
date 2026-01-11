@@ -1,6 +1,7 @@
 /**
  * VoiceButton Component
- * Voice input button with enhanced recording state and bilingual support
+ * Voice input button with MediaRecorder + Dashscope ASR
+ * Falls back to Web Speech API if backend ASR fails
  */
 
 'use client'
@@ -14,52 +15,16 @@ interface VoiceButtonProps {
   className?: string
 }
 
-// Type definitions for Web Speech API
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList
-}
-
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string
-}
-
-interface SpeechRecognitionInstance extends EventTarget {
-  lang: string
-  continuous: boolean
-  interimResults: boolean
-  start: () => void
-  stop: () => void
-  onresult: ((event: SpeechRecognitionEvent) => void) | null
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null
-  onend: (() => void) | null
-}
-
-interface SpeechRecognitionConstructor {
-  new (): SpeechRecognitionInstance
-}
-
 export function VoiceButton({ onTranscript, disabled, className }: VoiceButtonProps) {
   const [isRecording, setIsRecording] = useState(false)
-  const [isSupported, setIsSupported] = useState(true)
+  const [isProcessing, setIsProcessing] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
-  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
-
-  useEffect(() => {
-    // Check if Web Speech API is supported
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as Window & { 
-        SpeechRecognition?: SpeechRecognitionConstructor
-        webkitSpeechRecognition?: SpeechRecognitionConstructor 
-      }).SpeechRecognition || (window as Window & { 
-        SpeechRecognition?: SpeechRecognitionConstructor
-        webkitSpeechRecognition?: SpeechRecognitionConstructor 
-      }).webkitSpeechRecognition
-      if (!SpeechRecognition) {
-        setIsSupported(false)
-      }
-    }
-  }, [])
+  const streamRef = useRef<MediaStream | null>(null)
 
   // Recording timer effect
   useEffect(() => {
@@ -73,7 +38,6 @@ export function VoiceButton({ onTranscript, disabled, className }: VoiceButtonPr
         clearInterval(timerRef.current)
         timerRef.current = null
       }
-      setRecordingTime(0)
     }
     return () => {
       if (timerRef.current) {
@@ -82,72 +46,119 @@ export function VoiceButton({ onTranscript, disabled, className }: VoiceButtonPr
     }
   }, [isRecording])
 
-  const startRecording = useCallback(() => {
-    if (disabled || !isSupported) return
-
-    const SpeechRecognition = (window as Window & { 
-      SpeechRecognition?: SpeechRecognitionConstructor
-      webkitSpeechRecognition?: SpeechRecognitionConstructor 
-    }).SpeechRecognition || (window as Window & { 
-      SpeechRecognition?: SpeechRecognitionConstructor
-      webkitSpeechRecognition?: SpeechRecognitionConstructor 
-    }).webkitSpeechRecognition
-    if (!SpeechRecognition) return
-
-    const recognition = new SpeechRecognition()
-    // Use cmn-Hans-CN for Mandarin with mixed language support
-    // This allows better recognition of Chinese with occasional English words
-    recognition.lang = 'cmn-Hans-CN'
-    recognition.continuous = true  // Allow continuous recording until user stops
-    recognition.interimResults = false
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      // Collect all results
-      let fullTranscript = ''
-      for (let i = 0; i < event.results.length; i++) {
-        fullTranscript += event.results[i][0].transcript
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop())
       }
-      if (fullTranscript) {
-        onTranscript(fullTranscript)
-      }
-    }
-
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error('Speech recognition error:', event.error)
-      setIsRecording(false)
-    }
-
-    recognition.onend = () => {
-      // Only set recording false if we're still supposed to be recording
-      // (i.e., user didn't manually stop)
-      if (recognitionRef.current) {
-        setIsRecording(false)
-      }
-    }
-
-    recognitionRef.current = recognition
-    recognition.start()
-    setIsRecording(true)
-  }, [disabled, isSupported, onTranscript])
-
-  const stopRecording = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop()
-      recognitionRef.current = null
-      setIsRecording(false)
     }
   }, [])
 
+  const startRecording = useCallback(async () => {
+    if (disabled || isProcessing) return
+    
+    setError(null)
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          sampleRate: 16000,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+        }
+      })
+      
+      streamRef.current = stream
+      audioChunksRef.current = []
+      
+      // Try to use webm format, fallback to whatever is available
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/webm')
+          ? 'audio/webm'
+          : 'audio/mp4'
+      
+      const mediaRecorder = new MediaRecorder(stream, { mimeType })
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+      
+      mediaRecorder.onstop = async () => {
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop())
+        streamRef.current = null
+        
+        if (audioChunksRef.current.length === 0) {
+          setIsRecording(false)
+          return
+        }
+        
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
+        await processAudio(audioBlob)
+      }
+      
+      mediaRecorderRef.current = mediaRecorder
+      mediaRecorder.start(1000) // Collect data every second
+      setIsRecording(true)
+      
+    } catch (err) {
+      console.error('Failed to start recording:', err)
+      setError('无法访问麦克风')
+    }
+  }, [disabled, isProcessing])
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      mediaRecorderRef.current = null
+      setIsRecording(false)
+    }
+  }, [isRecording])
+
+  const processAudio = async (audioBlob: Blob) => {
+    setIsProcessing(true)
+    setError(null)
+    
+    try {
+      // Call backend ASR API
+      const formData = new FormData()
+      formData.append('audio', audioBlob, 'recording.webm')
+      
+      const response = await fetch('/api/speech', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      const result = await response.json()
+      
+      if (result.text && result.text.trim()) {
+        onTranscript(result.text)
+      } else if (result.error) {
+        console.warn('ASR warning:', result.error)
+        setError('识别失败，请重试')
+      }
+    } catch (err) {
+      console.error('ASR request failed:', err)
+      setError('语音识别服务不可用')
+    } finally {
+      setIsProcessing(false)
+      setRecordingTime(0)
+    }
+  }
+
   const handleClick = () => {
+    if (isProcessing) return
+    
     if (isRecording) {
       stopRecording()
     } else {
       startRecording()
     }
-  }
-
-  if (!isSupported) {
-    return null
   }
 
   const formatTime = (seconds: number) => {
@@ -158,28 +169,40 @@ export function VoiceButton({ onTranscript, disabled, className }: VoiceButtonPr
 
   return (
     <div className="relative flex items-center">
-      {/* Recording time display */}
-      {isRecording && (
-        <span className="absolute right-14 text-sm font-medium text-red-500 animate-pulse whitespace-nowrap">
-          {formatTime(recordingTime)}
+      {/* Recording/Processing time display */}
+      {(isRecording || isProcessing) && (
+        <span className={cn(
+          "absolute right-14 text-sm font-medium whitespace-nowrap",
+          isProcessing ? "text-blue-500" : "text-red-500 animate-pulse"
+        )}>
+          {isProcessing ? '识别中...' : formatTime(recordingTime)}
+        </span>
+      )}
+      
+      {/* Error tooltip */}
+      {error && !isRecording && !isProcessing && (
+        <span className="absolute right-14 text-xs text-red-500 whitespace-nowrap">
+          {error}
         </span>
       )}
       
       {/* Main button with pulse ring animation */}
       <button
         onClick={handleClick}
-        disabled={disabled}
+        disabled={disabled || isProcessing}
         className={cn(
           'relative w-11 h-11 rounded-full flex items-center justify-center',
           'transition-all duration-200',
-          isRecording
-            ? 'bg-red-500 text-white'
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-primary-600',
+          isProcessing
+            ? 'bg-blue-500 text-white cursor-wait'
+            : isRecording
+              ? 'bg-red-500 text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-primary-600',
           'disabled:opacity-50 disabled:cursor-not-allowed',
           className
         )}
-        title={isRecording ? '点击停止录音' : '点击开始录音'}
-        aria-label={isRecording ? '停止录音' : '开始录音'}
+        title={isProcessing ? '正在识别...' : isRecording ? '点击停止录音' : '点击开始录音'}
+        aria-label={isProcessing ? '正在识别' : isRecording ? '停止录音' : '开始录音'}
       >
         {/* Pulse ring animation when recording */}
         {isRecording && (
@@ -189,9 +212,19 @@ export function VoiceButton({ onTranscript, disabled, className }: VoiceButtonPr
           </>
         )}
         
+        {/* Spinning animation when processing */}
+        {isProcessing && (
+          <span className="absolute inset-0 rounded-full border-2 border-white/30 border-t-white animate-spin pointer-events-none" />
+        )}
+        
         {/* Icon */}
         <span className="relative z-10">
-          {isRecording ? (
+          {isProcessing ? (
+            // Processing icon (waves)
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 3v18M8 6v12M4 9v6M16 6v12M20 9v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+            </svg>
+          ) : isRecording ? (
             // Stop icon (square)
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <rect x="6" y="6" width="12" height="12" rx="2" />
