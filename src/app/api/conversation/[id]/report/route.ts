@@ -43,59 +43,95 @@ export async function POST(
       messages: [
         {
           role: 'system',
-          content: `你是一个资深的项目可行性评估专家。根据用户提供的项目信息，生成一份全面的评估报告。
+          content: `你是一个帮助 Vibe Coder（用 AI 辅助写代码的独立开发者）评估项目的专家。
 
-请以 JSON 格式返回，包含以下字段：
+目标用户特点：
+- 主要靠 AI 工具（Cursor、Claude、v0.dev）生成代码
+- 预算有限，追求低成本甚至零成本
+- 时间有限，希望快速验证想法
+- 技术能力中等，能拼接但不想搞复杂架构
+
+请以 JSON 格式返回评估报告：
 {
-  "projectName": "项目名称",
-  "score": 评分(0-100的整数),
-  "verdict": "一句话判断，如'非常值得做'或'需要重新思考'",
+  "projectName": "项目简称",
+  "score": 评分(0-100),
+  "verdict": "一句话判断",
   "strengths": ["优势1", "优势2", "优势3"],
   "challenges": ["挑战1", "挑战2"],
   "marketAnalysis": {
-    "targetSize": "目标市场规模描述",
-    "competition": "竞争情况分析",
-    "opportunity": "市场机会点"
+    "verdict": "一句话市场判断",
+    "signals": ["事实信号1", "事实信号2", "事实信号3"],
+    "competitors": [
+      {"name": "竞品名", "feature": "做得好的点", "gap": "没做好的点"}
+    ]
+  },
+  "implementation": {
+    "techStack": {
+      "frontend": "推荐前端技术",
+      "backend": "推荐后端技术",
+      "database": "推荐数据库",
+      "deployment": "部署方案",
+      "aiService": "AI服务（如需要）"
+    },
+    "coreFlow": [
+      "步骤1：XXX",
+      "步骤2：XXX",
+      "步骤3：XXX"
+    ],
+    "devProcess": [
+      {"step": "第一步做什么", "difficulty": "简单/中等/较难", "dependency": "依赖什么"},
+      {"step": "第二步做什么", "difficulty": "简单/中等/较难", "dependency": "依赖什么"}
+    ],
+    "recommendation": "串行还是模块化并行开发，为什么"
   },
   "costEstimate": {
-    "development": "开发成本估算（时间和费用）",
-    "operation": "运营成本估算",
-    "tips": "省钱建议"
+    "timeCost": {
+      "mvp": "MVP 开发时间（天/周）",
+      "fullVersion": "完整版本时间",
+      "dailyHours": "每天建议投入时间"
+    },
+    "moneyCost": {
+      "development": "开发期间费用（通常为0）",
+      "monthlyOperation": [
+        {"item": "项目", "cost": "费用", "note": "备注"}
+      ],
+      "totalMonthly": "月运营总成本估算"
+    },
+    "savingTips": ["省钱建议1", "省钱建议2"]
   },
-  "techAnalysis": {
-    "difficulty": "技术难度（简单/中等/较难）",
-    "stack": "推荐技术栈",
-    "mvpTime": "MVP开发周期估算"
-  },
-  "nextSteps": ["建议1", "建议2", "建议3"]
+  "nextSteps": ["第一步做什么", "第二步做什么", "第三步做什么"]
 }
 
 评分标准：
-- 80+: 非常值得做
-- 60-79: 值得尝试，但有挑战
-- 40-59: 需要慎重考虑
-- <40: 建议重新思考
+- 80+: 非常值得做，技术门槛低，市场有空间
+- 60-79: 值得尝试，但有挑战需克服
+- 40-59: 需要慎重，可能超出 vibe coder 能力范围
+- <40: 建议换个方向
 
 请只返回 JSON，不要有其他内容。`,
         },
         {
           role: 'user',
-          content: `请评估以下项目：
+          content: `请为以下项目生成评估报告：
 
-项目想法：${schema.idea.one_liner || '未说明'}
-背景信息：${schema.idea.background || '未说明'}
-目标用户：${schema.user.primary_user || '未说明'}
-使用场景：${schema.user.usage_context || '未说明'}
-解决问题：${schema.problem.scenario || '未说明'}
-痛点程度：${schema.problem.pain_level || '未说明'}
-MVP 核心功能：${schema.mvp.first_job || '未说明'}
-产品形态：${schema.platform.form || '未说明'}
-时间偏好：${schema.preference.timeline || '未说明'}
-开发优先级：${schema.preference.priority || '未说明'}`,
+【项目想法】${schema.idea.one_liner || '未说明'}
+【目标用户】${schema.user.primary_user || '未说明'}
+【产品形态】${schema.platform.form || '未说明'}
+【时间偏好】${schema.preference.timeline || '未说明'}
+【技术状态】${schema.mvp.type || '未说明'}
+【预算偏好】${schema.preference.priority || '未说明'}
+【商业意图】${schema.user.usage_context || '未说明'}
+【市场感觉】${schema.problem.scenario || '未说明'}
+
+请特别注意：
+1. 技术实现要拆解具体步骤流程（如 AI 日报：筛选源→抓数据→评估→筛选→评分→概括）
+2. 开发过程要给出具体步骤、难度、依赖
+3. 成本要分时间成本和金钱成本，金钱主要是 API 和工具费用
+4. 推荐技术栈要具体到产品名（Supabase、Vercel、OpenAI等）`,
         },
       ],
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 2000,
     })
 
     const content = response.choices[0]?.message?.content || ''
