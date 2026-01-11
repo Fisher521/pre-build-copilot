@@ -22,34 +22,40 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await audioFile.arrayBuffer()
     const base64Audio = Buffer.from(arrayBuffer).toString('base64')
 
-    // Try Qwen2-Audio first (uses QWEN_API_KEY)
+    // Try Qwen3-ASR-Flash (DashScope International)
     const qwenKey = process.env.QWEN_API_KEY
 
     if (qwenKey) {
       try {
-        // Use DashScope native API format (not OpenAI compatible mode)
-        const response = await fetch('https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation', {
+        // Use DashScope International API with qwen3-asr-flash model
+        const response = await fetch('https://dashscope-intl.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${qwenKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'qwen2-audio-instruct',
+            model: 'qwen3-asr-flash',
             input: {
               messages: [
+                {
+                  role: 'system',
+                  content: [{ text: '' }],
+                },
                 {
                   role: 'user',
                   content: [
                     {
-                      audio: `data:;base64,${base64Audio}`,
-                    },
-                    {
-                      text: '请将这段音频中的语音内容逐字转录为文字，只输出转录结果，不要添加任何解释或格式。如果听不清或无法识别，请输出空字符串。',
+                      audio: `data:audio/webm;base64,${base64Audio}`,
                     },
                   ],
                 },
               ],
+            },
+            parameters: {
+              asr_options: {
+                enable_itn: true,
+              },
             },
           }),
         })
@@ -65,22 +71,23 @@ export async function POST(request: NextRequest) {
             text = content
           }
 
-          // Clean up the response - remove common AI prefixes
+          // Clean up the response
           const cleanText = text
-            .replace(/^(转录结果[：:]\s*|音频内容[：:]\s*|语音内容[：:]\s*)/i, '')
             .replace(/^["']|["']$/g, '')
             .trim()
 
-          return NextResponse.json({
-            text: cleanText,
-            success: true,
-          })
+          if (cleanText) {
+            return NextResponse.json({
+              text: cleanText,
+              success: true,
+            })
+          }
         } else {
           const errorText = await response.text()
-          console.error('Qwen2-Audio error:', errorText)
+          console.error('Qwen3-ASR error:', errorText)
         }
       } catch (qwenError) {
-        console.error('Qwen2-Audio request failed:', qwenError)
+        console.error('Qwen3-ASR request failed:', qwenError)
       }
     }
 
