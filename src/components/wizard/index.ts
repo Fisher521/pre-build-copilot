@@ -1,4 +1,7 @@
-export { StepIndicator } from './StepIndicator'
-export { CategoryCard } from './CategoryCard'
-export { OptionButton } from './OptionButton'
-export { WizardContainer, type WizardData } from './WizardContainer'
+/**
+ * Wizard Components Export
+ */
+
+export { StepCard } from './StepCard'
+export { WizardProgress } from './WizardProgress'
+export { ActionButtons } from './ActionButtons'
