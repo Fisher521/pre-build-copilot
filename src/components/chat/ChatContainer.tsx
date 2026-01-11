@@ -101,22 +101,10 @@ export function ChatContainer({
   const handleGenerateBrief = async () => {
     setIsGeneratingBrief(true)
     try {
-      const response = await fetch('/api/brief/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate brief')
-      }
-
-      const result = await response.json()
-      router.push(`/brief/${result.briefId}`)
+      // Navigate directly to report page - it will generate the report on mount
+      router.push(`/report/${conversationId}`)
     } catch (err) {
-      console.error('Brief generation error:', err)
-      alert('生成 Brief 失败，请稍后重试')
-    } finally {
+      console.error('Navigation error:', err)
       setIsGeneratingBrief(false)
     }
   }
