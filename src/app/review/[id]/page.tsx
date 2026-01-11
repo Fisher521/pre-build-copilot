@@ -3,6 +3,7 @@
 import { useRouter, useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { StepCard, ActionButtons } from '@/components/wizard'
+import { VoiceButton } from '@/components/chat/VoiceButton'
 import { cn } from '@/lib/utils'
 
 interface ParsedInfo {
@@ -117,18 +118,24 @@ export default function ReviewPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               📌 项目名称
             </label>
-            <input
-              type="text"
-              value={parsedInfo.projectName}
-              onChange={(e) => handleFieldChange('projectName', e.target.value)}
-              className={cn(
-                'w-full px-4 py-3 rounded-xl text-base',
-                'bg-gray-50 border-2 border-transparent',
-                'focus:border-primary-500 focus:bg-white focus:outline-none',
-                'transition-all duration-200'
-              )}
-              placeholder="给你的项目起个名字"
-            />
+            <div className="relative flex items-center gap-2">
+              <input
+                type="text"
+                value={parsedInfo.projectName}
+                onChange={(e) => handleFieldChange('projectName', e.target.value)}
+                className={cn(
+                  'flex-1 px-4 py-3 rounded-xl text-base',
+                  'bg-gray-50 border-2 border-transparent',
+                  'focus:border-primary-500 focus:bg-white focus:outline-none',
+                  'transition-all duration-200'
+                )}
+                placeholder="给你的项目起个名字"
+              />
+              <VoiceButton
+                onTranscript={(text) => handleFieldChange('projectName', parsedInfo.projectName + text)}
+                className="flex-shrink-0"
+              />
+            </div>
           </div>
 
           {/* Core Feature */}
@@ -136,18 +143,24 @@ export default function ReviewPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               🎯 核心功能
             </label>
-            <textarea
-              value={parsedInfo.coreFeature}
-              onChange={(e) => handleFieldChange('coreFeature', e.target.value)}
-              rows={2}
-              className={cn(
-                'w-full px-4 py-3 rounded-xl text-base resize-none',
-                'bg-gray-50 border-2 border-transparent',
-                'focus:border-primary-500 focus:bg-white focus:outline-none',
-                'transition-all duration-200'
-              )}
-              placeholder="这个产品最核心要做什么"
-            />
+            <div className="relative flex items-start gap-2">
+              <textarea
+                value={parsedInfo.coreFeature}
+                onChange={(e) => handleFieldChange('coreFeature', e.target.value)}
+                rows={2}
+                className={cn(
+                  'flex-1 px-4 py-3 rounded-xl text-base resize-none',
+                  'bg-gray-50 border-2 border-transparent',
+                  'focus:border-primary-500 focus:bg-white focus:outline-none',
+                  'transition-all duration-200'
+                )}
+                placeholder="这个产品最核心要做什么"
+              />
+              <VoiceButton
+                onTranscript={(text) => handleFieldChange('coreFeature', parsedInfo.coreFeature + text)}
+                className="flex-shrink-0 mt-2"
+              />
+            </div>
           </div>
 
           {/* Target User */}
@@ -155,18 +168,24 @@ export default function ReviewPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               👥 目标用户
             </label>
-            <input
-              type="text"
-              value={parsedInfo.targetUser}
-              onChange={(e) => handleFieldChange('targetUser', e.target.value)}
-              className={cn(
-                'w-full px-4 py-3 rounded-xl text-base',
-                'bg-gray-50 border-2 border-transparent',
-                'focus:border-primary-500 focus:bg-white focus:outline-none',
-                'transition-all duration-200'
-              )}
-              placeholder="谁会用这个产品"
-            />
+            <div className="relative flex items-center gap-2">
+              <input
+                type="text"
+                value={parsedInfo.targetUser}
+                onChange={(e) => handleFieldChange('targetUser', e.target.value)}
+                className={cn(
+                  'flex-1 px-4 py-3 rounded-xl text-base',
+                  'bg-gray-50 border-2 border-transparent',
+                  'focus:border-primary-500 focus:bg-white focus:outline-none',
+                  'transition-all duration-200'
+                )}
+                placeholder="谁会用这个产品"
+              />
+              <VoiceButton
+                onTranscript={(text) => handleFieldChange('targetUser', parsedInfo.targetUser + text)}
+                className="flex-shrink-0"
+              />
+            </div>
           </div>
 
           {/* Problem Solved */}
@@ -174,18 +193,24 @@ export default function ReviewPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               💡 解决什么问题
             </label>
-            <textarea
-              value={parsedInfo.problemSolved}
-              onChange={(e) => handleFieldChange('problemSolved', e.target.value)}
-              rows={2}
-              className={cn(
-                'w-full px-4 py-3 rounded-xl text-base resize-none',
-                'bg-gray-50 border-2 border-transparent',
-                'focus:border-primary-500 focus:bg-white focus:outline-none',
-                'transition-all duration-200'
-              )}
-              placeholder="用户现在遇到什么痛点"
-            />
+            <div className="relative flex items-start gap-2">
+              <textarea
+                value={parsedInfo.problemSolved}
+                onChange={(e) => handleFieldChange('problemSolved', e.target.value)}
+                rows={2}
+                className={cn(
+                  'flex-1 px-4 py-3 rounded-xl text-base resize-none',
+                  'bg-gray-50 border-2 border-transparent',
+                  'focus:border-primary-500 focus:bg-white focus:outline-none',
+                  'transition-all duration-200'
+                )}
+                placeholder="用户现在遇到什么痛点"
+              />
+              <VoiceButton
+                onTranscript={(text) => handleFieldChange('problemSolved', parsedInfo.problemSolved + text)}
+                className="flex-shrink-0 mt-2"
+              />
+            </div>
           </div>
         </div>
 

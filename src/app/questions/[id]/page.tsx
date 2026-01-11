@@ -3,6 +3,7 @@
 import { useRouter, useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { StepCard, WizardProgress, ActionButtons } from '@/components/wizard'
+import { VoiceButton } from '@/components/chat/VoiceButton'
 import { cn } from '@/lib/utils'
 
 interface Question {
@@ -181,7 +182,7 @@ export default function QuestionsPage() {
 
           {/* Custom Input */}
           {currentQuestion.allowCustom && (
-            <div className="relative">
+            <div className="relative flex items-center gap-2">
               <input
                 type="text"
                 value={customInput}
@@ -189,16 +190,20 @@ export default function QuestionsPage() {
                 onKeyDown={(e) => e.key === 'Enter' && handleCustomSubmit()}
                 placeholder="或者自己说..."
                 className={cn(
-                  'w-full px-4 py-3 rounded-xl text-base',
+                  'flex-1 px-4 py-3 rounded-xl text-base',
                   'bg-gray-50 border-2 border-transparent',
                   'focus:border-primary-500 focus:bg-white focus:outline-none',
                   'transition-all duration-200'
                 )}
               />
+              <VoiceButton
+                onTranscript={(text) => setCustomInput(prev => prev + text)}
+                className="flex-shrink-0"
+              />
               {customInput.trim() && (
                 <button
                   onClick={handleCustomSubmit}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 text-sm bg-primary-500 text-white rounded-lg"
+                  className="px-4 py-2.5 text-sm bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors"
                 >
                   确定
                 </button>
