@@ -1,11 +1,11 @@
 /**
  * Brief Preview Page
- * Dynamic route for viewing generated briefs
+ * Dynamic route for viewing generated briefs with Markdown rendering
  */
 
 import { notFound } from 'next/navigation'
 import { getBrief } from '@/lib/db/briefs'
-import { BriefCard, DownloadButton } from '@/components/brief'
+import { BriefCard, DownloadButton, MarkdownPreview } from '@/components/brief'
 import Link from 'next/link'
 
 interface BriefPageProps {
@@ -48,7 +48,7 @@ export default async function BriefPage({ params }: BriefPageProps) {
           </h1>
         </div>
 
-        {/* Brief Card */}
+        {/* Brief Card - Summary */}
         <div className="mb-8">
           <BriefCard
             projectName={brief.project_name}
@@ -61,11 +61,7 @@ export default async function BriefPage({ params }: BriefPageProps) {
           <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
             👀 完整内容预览
           </h2>
-          <div className="prose prose-sm max-w-none">
-            <pre className="whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 p-4 rounded-xl overflow-auto max-h-96">
-              {brief.markdown_content}
-            </pre>
-          </div>
+          <MarkdownPreview content={brief.markdown_content} />
         </div>
 
         {/* Action Buttons */}

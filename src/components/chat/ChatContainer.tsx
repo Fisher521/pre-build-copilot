@@ -5,14 +5,14 @@
 
 'use client'
 
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useChat } from '@/hooks/useChat'
 import { MessageBubble } from './MessageBubble'
 import { ChatInput } from './ChatInput'
 import { LoadingDots } from '@/components/ui/LoadingDots'
 import { Button } from '@/components/ui/Button'
-import type { Message, EvaluationSchema } from '@/lib/types'
+import type { Message, EvaluationSchema, Choice } from '@/lib/types'
 
 interface ChatContainerProps {
   conversationId: string
@@ -22,27 +22,19 @@ interface ChatContainerProps {
 }
 
 /**
- * Progress bar component
+ * Progress bar component - [■■■□□] 60% format
  */
 function ProgressBar({ score }: { score: number }) {
-  const filled = Math.floor(score / 20)
-  const segments = Array.from({ length: 5 }, (_, i) => i < filled)
+  const filledCount = Math.floor(score / 20)
+  const filled = '■'.repeat(filledCount)
+  const empty = '□'.repeat(5 - filledCount)
 
   return (
     <div className="flex items-center gap-2 text-sm text-gray-600">
-      <div className="flex gap-1">
-        {segments.map((isFilled, i) => (
-          <div
-            key={i}
-            className={`w-3 h-3 rounded-sm ${
-              isFilled ? 'bg-primary-500' : 'bg-gray-200'
-            }`}
-          />
-        ))}
-      </div>
-      <span>{score}%</span>
+      <span className="font-mono text-xs">[{filled}{empty}]</span>
+      <span className="font-medium">{score}%</span>
       {score < 40 && <span className="text-gray-400">· 收集信息中</span>}
-      {score >= 40 && score < 80 && <span className="text-gray-400">· 可以给初步建议了</span>}
+      {score >= 40 && score < 80 && <span className="text-primary-500">· 可以给初步建议了</span>}
       {score >= 80 && <span className="text-green-600">· 信息充足</span>}
     </div>
   )
@@ -69,6 +61,7 @@ export function ChatContainer({
   })
 
   const [isGeneratingBrief, setIsGeneratingBrief] = useState(false)
+  const [isVoiceMode, setIsVoiceMode] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom when new messages arrive
@@ -83,6 +76,27 @@ export function ChatContainer({
       router.push('/')
     }
   }
+
+  // Handle choice selection from ChoiceButtons
+  const handleChoiceSelect = useCallback((choiceId: string) => {
+    if (isLoading) return
+
+    // If user selected "voice", toggle voice mode
+    if (choiceId === 'voice') {
+      setIsVoiceMode(true)
+      return
+    }
+
+    // Find the choice text from the last message
+    const lastMessage = messages[messages.length - 1]
+    if (lastMessage?.metadata?.choices) {
+      const choice = (lastMessage.metadata.choices as Choice[]).find(c => c.id === choiceId)
+      if (choice) {
+        // Send the choice text as a message
+        sendMessage(choice.text)
+      }
+    }
+  }, [messages, sendMessage, isLoading])
 
   const handleGenerateBrief = async () => {
     setIsGeneratingBrief(true)
@@ -158,6 +172,7 @@ export function ChatContainer({
               key={message.id}
               message={message}
               isLast={index === messages.length - 1 && !isLoading}
+              onChoiceSelect={handleChoiceSelect}
             />
           ))}
 
@@ -220,7 +235,11 @@ export function ChatContainer({
       </main>
 
       {/* Input Area */}
-      <ChatInput onSend={sendMessage} disabled={isLoading} />
+      <ChatInput
+        onSend={sendMessage}
+        disabled={isLoading}
+        placeholder={isVoiceMode ? "说完了点发送..." : "告诉我你的想法..."}
+      />
     </div>
   )
 }

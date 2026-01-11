@@ -4,99 +4,56 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createConversation, updateConversation } from '@/lib/db/conversations'
+import { createConversation, updateConversationSchema } from '@/lib/db/conversations'
 import { addMessage } from '@/lib/db/messages'
-import { generateStarterMessage } from '@/lib/ai'
+import { processUserInput } from '@/lib/ai'
 import { createEmptySchema } from '@/lib/schema'
-import type { EvaluationSchema, MVPType, TimelinePreference } from '@/lib/types'
-
-interface WizardData {
-  projectType: string
-  projectName: string
-  timeBudget: string
-  audience: string
-}
-
-/**
- * Map wizard data to initial schema
- */
-function createSchemaFromWizardData(data: WizardData): EvaluationSchema {
-  const schema = createEmptySchema()
-
-  // Map project name to idea
-  if (data.projectName) {
-    schema.idea.one_liner = data.projectName
-  }
-
-  // Map audience to user
-  const audienceMap: Record<string, string> = {
-    self: '自己',
-    friends: '朋友/家人',
-    public: '大众',
-  }
-  if (data.audience && audienceMap[data.audience]) {
-    schema.user.primary_user = audienceMap[data.audience]
-  }
-
-  // Map project type to mvp.type
-  const typeMap: Record<string, MVPType> = {
-    app: 'functional_tool',
-    web: 'functional_tool',
-    tool: 'functional_tool',
-    ai: 'ai_tool',
-    other: 'other',
-  }
-  if (data.projectType && typeMap[data.projectType]) {
-    schema.mvp.type = typeMap[data.projectType]
-  }
-
-  // Map time budget to preference
-  const timeMap: Record<string, TimelinePreference> = {
-    weekend: '7d',
-    month: '30d',
-    flexible: 'flexible',
-  }
-  if (data.timeBudget && timeMap[data.timeBudget]) {
-    schema.preference.timeline = timeMap[data.timeBudget]
-  }
-
-  return schema
-}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}))
-    const wizardData = body.wizardData as WizardData | undefined
+    const initialInput = body.initialInput as string | undefined
 
-    // Create new conversation
+    // Create new conversation with empty schema
     const conversation = await createConversation()
+    const schema = createEmptySchema()
 
-    // Initialize schema with wizard data if provided
-    let schema = createEmptySchema()
-    if (wizardData) {
-      schema = createSchemaFromWizardData(wizardData)
+    if (initialInput && initialInput.trim()) {
+      // Save user's initial message
+      await addMessage(conversation.id, {
+        role: 'user',
+        content: initialInput.trim(),
+      })
 
-      // Update conversation with project name and schema
-      await updateConversation(conversation.id, {
-        project_name: wizardData.projectName || undefined,
-        schema_data: schema,
+      // Process through state machine (STATE_1: PARSE_INPUT)
+      const { response, updatedSchema } = await processUserInput({
+        userMessage: initialInput.trim(),
+        schema,
+        previousMessages: [],
+      })
+
+      // Save AI response
+      await addMessage(conversation.id, {
+        role: 'assistant',
+        content: response.content,
+        metadata: response.metadata,
+      })
+
+      // Update conversation schema
+      await updateConversationSchema(conversation.id, updatedSchema)
+
+      return NextResponse.json({
+        conversationId: conversation.id,
+        message: response,
+        schema: updatedSchema,
       })
     }
 
-    // Generate starter message
-    const starterMessage = await generateStarterMessage()
-
-    await addMessage(conversation.id, {
-      role: 'assistant',
-      content: starterMessage.content,
-      metadata: starterMessage.metadata,
-    })
-
+    // No initial input - just create conversation
+    // This shouldn't happen with the new flow, but handle it gracefully
     return NextResponse.json({
       conversationId: conversation.id,
-      message: starterMessage,
       schema,
-      wizardContext: wizardData,
     })
   } catch (error) {
     console.error('Conversation API error:', error)
