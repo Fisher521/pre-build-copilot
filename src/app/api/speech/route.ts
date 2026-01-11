@@ -18,18 +18,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Convert audio to base64 for Qwen2-Audio
+    // Convert audio to base64
     const arrayBuffer = await audioFile.arrayBuffer()
     const base64Audio = Buffer.from(arrayBuffer).toString('base64')
-    const audioDataUrl = `data:audio/webm;base64,${base64Audio}`
 
     // Try Qwen2-Audio first (uses QWEN_API_KEY)
     const qwenKey = process.env.QWEN_API_KEY
-    const qwenBase = process.env.QWEN_API_BASE || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1'
 
     if (qwenKey) {
       try {
-        const response = await fetch(`${qwenBase}/chat/completions`, {
+        // Use DashScope native API format (not OpenAI compatible mode)
+        const response = await fetch('https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${qwenKey}`,
@@ -37,32 +36,35 @@ export async function POST(request: NextRequest) {
           },
           body: JSON.stringify({
             model: 'qwen2-audio-instruct',
-            messages: [
-              {
-                role: 'user',
-                content: [
-                  {
-                    type: 'audio_url',
-                    audio_url: {
-                      url: audioDataUrl,
+            input: {
+              messages: [
+                {
+                  role: 'user',
+                  content: [
+                    {
+                      audio: `data:;base64,${base64Audio}`,
                     },
-                  },
-                  {
-                    type: 'text',
-                    text: '请将这段音频中的语音内容逐字转录为文字，只输出转录结果，不要添加任何解释或格式。如果听不清或无法识别，请输出空字符串。',
-                  },
-                ],
-              },
-            ],
-            max_tokens: 1000,
-            temperature: 0.1,
+                    {
+                      text: '请将这段音频中的语音内容逐字转录为文字，只输出转录结果，不要添加任何解释或格式。如果听不清或无法识别，请输出空字符串。',
+                    },
+                  ],
+                },
+              ],
+            },
           }),
         })
 
         if (response.ok) {
           const result = await response.json()
-          const text = result.choices?.[0]?.message?.content || ''
-          
+          // DashScope returns: output.choices[0].message.content[0].text
+          const content = result.output?.choices?.[0]?.message?.content
+          let text = ''
+          if (Array.isArray(content)) {
+            text = content.find((c: { text?: string }) => c.text)?.text || ''
+          } else if (typeof content === 'string') {
+            text = content
+          }
+
           // Clean up the response - remove common AI prefixes
           const cleanText = text
             .replace(/^(转录结果[：:]\s*|音频内容[：:]\s*|语音内容[：:]\s*)/i, '')
