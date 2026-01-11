@@ -184,8 +184,8 @@ export function VoiceButton({ onTranscript, disabled, className }: VoiceButtonPr
         {/* Pulse ring animation when recording */}
         {isRecording && (
           <>
-            <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-75" />
-            <span className="absolute inset-0 rounded-full bg-red-500 animate-pulse" />
+            <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-75 pointer-events-none" />
+            <span className="absolute inset-0 rounded-full bg-red-500 animate-pulse pointer-events-none" />
           </>
         )}
         
