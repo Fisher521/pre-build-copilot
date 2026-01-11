@@ -106,14 +106,12 @@ export function isFieldFilled(schema: EvaluationSchema, path: SchemaFieldPath): 
 }
 
 /**
- * MVP required fields
+ * MVP required fields - 评估只需要 3 个核心信息
  */
 const MVP_FIELDS: SchemaFieldPath[] = [
-  'idea.one_liner',
-  'user.primary_user',
-  'mvp.type',
-  'platform.form',
-  'preference.timeline',
+  'idea.one_liner',      // 核心想法
+  'user.primary_user',   // 目标用户
+  'platform.form',       // 产品形态
 ]
 
 /**
@@ -137,18 +135,20 @@ const ALL_FIELDS: SchemaFieldPath[] = [
 
 /**
  * Calculate completion score
- * 基础分 = MVP 字段完成数 × 20（满分 100）
- * 加分项 = 非 MVP 字段完成数 × 5（额外加分，最多到100）
+ * 核心字段 = 3 个，每个 30 分（满分 90）
+ * 加分项 = 非核心字段完成数 × 2（最多到 100）
+ *
+ * 设计目的：快速进入评估阶段，减少追问
  */
 export function calculateCompletionScore(schema: EvaluationSchema): number {
-  // Count MVP fields completed
+  // Count MVP fields completed (3 fields × 30 = 90 max)
   const mvpCompleted = MVP_FIELDS.filter(field => isFieldFilled(schema, field)).length
-  const baseScore = mvpCompleted * 20
+  const baseScore = mvpCompleted * 30
 
-  // Count non-MVP fields completed
+  // Count non-MVP fields completed (bonus, max 10)
   const nonMvpFields = ALL_FIELDS.filter(f => !MVP_FIELDS.includes(f))
   const nonMvpCompleted = nonMvpFields.filter(field => isFieldFilled(schema, field)).length
-  const bonusScore = nonMvpCompleted * 5
+  const bonusScore = nonMvpCompleted * 2
 
   return Math.min(100, baseScore + bonusScore)
 }
@@ -183,11 +183,15 @@ export function getUnfilledFields(schema: EvaluationSchema): SchemaFieldPath[] {
 
 /**
  * Determine next state based on completion score
+ *
+ * 快速进入评估：
+ * - 1 个核心字段 (30%) → 初步评估
+ * - 2 个核心字段 (60%) → 完整评估
  */
 export function determineNextState(score: number): WizardState {
-  if (score < 40) {
+  if (score < 30) {
     return 'ASK_QUESTION'
-  } else if (score < 80) {
+  } else if (score < 60) {
     return 'PRELIMINARY_EVAL'
   } else {
     return 'FULL_EVAL'
