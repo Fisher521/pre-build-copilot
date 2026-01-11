@@ -56,6 +56,7 @@ function getClient(): OpenAI {
 }
 
 const MODEL = process.env.QWEN_MODEL || 'qwen-plus'
+const FAST_MODEL = 'qwen-turbo' // Faster model for quick interactions
 
 /**
  * Parse AI response to extract choices if present
@@ -213,10 +214,10 @@ export async function processUserInput(params: {
 
   try {
     const response = await getClient().chat.completions.create({
-      model: MODEL,
+      model: FAST_MODEL, // Use faster model for initial interactions
       messages,
-      temperature: 0.7,
-      max_tokens: 1500,
+      temperature: 0.6,
+      max_tokens: 500, // Reduced for faster response
     })
 
     const content = response.choices[0]?.message?.content || ''

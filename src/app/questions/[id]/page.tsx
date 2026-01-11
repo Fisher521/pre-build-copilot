@@ -13,61 +13,57 @@ interface Question {
   allowCustom?: boolean
 }
 
-// Question bank for the wizard
+// 感受型问题 - 针对 Vibe Coder 设计
 const QUESTIONS: Question[] = [
   {
-    id: 'time_investment',
-    text: '你打算花多少时间在这个项目上？',
+    id: 'timeline',
+    text: '你更希望这个项目是？',
     options: [
-      { label: '1周内', value: '<1week' },
-      { label: '1个月', value: '1month' },
-      { label: '3个月', value: '3months' },
-      { label: '长期投入', value: 'long-term' },
-    ],
-    allowCustom: true,
-  },
-  {
-    id: 'tech_stack',
-    text: '你熟悉哪些技术？',
-    options: [
-      { label: '前端(React/Vue)', value: 'frontend' },
-      { label: '后端(Node/Python)', value: 'backend' },
-      { label: '移动端(iOS/Android)', value: 'mobile' },
-      { label: '都不太熟', value: 'none' },
-    ],
-    allowCustom: true,
-  },
-  {
-    id: 'budget',
-    text: '愿意投入多少预算？',
-    options: [
-      { label: '零成本', value: 'free' },
-      { label: '几百块', value: '<500' },
-      { label: '几千块', value: '<5000' },
-      { label: '不差钱', value: 'unlimited' },
+      { label: '一两天随便试试', value: '7d' },
+      { label: '一两周认真做个 MVP', value: '14d' },
+      { label: '如果顺了，可以长期做', value: '30d' },
+      { label: '现在还没想清楚', value: 'flexible' },
     ],
   },
   {
-    id: 'monetization',
-    text: '计划怎么赚钱？',
+    id: 'tech_comfort',
+    text: '你现在更像哪种状态？',
     options: [
-      { label: '广告', value: 'ads' },
-      { label: '订阅付费', value: 'subscription' },
-      { label: '一次性购买', value: 'one-time' },
-      { label: '暂不考虑', value: 'none' },
+      { label: '会写代码，但不想折腾复杂架构', value: 'code_simple' },
+      { label: '技术一般，主要靠 AI + 拼起来', value: 'ai_build' },
+      { label: '技术不错，但不想一开始就重', value: 'code_good' },
+      { label: '不太确定', value: 'unsure' },
     ],
-    allowCustom: true,
   },
   {
-    id: 'competition',
-    text: '知道有类似的产品吗？',
+    id: 'budget_feeling',
+    text: '你对「花钱」这件事的感觉更接近？',
     options: [
-      { label: '有很多', value: 'many' },
-      { label: '有几个', value: 'some' },
-      { label: '好像没有', value: 'none' },
-      { label: '不太清楚', value: 'unknown' },
+      { label: '能不花钱最好', value: 'free' },
+      { label: '每月几十块可以接受', value: 'little' },
+      { label: '如果有希望，几百块也行', value: 'invest' },
+      { label: '现在还不想考虑', value: 'later' },
     ],
-    allowCustom: true,
+  },
+  {
+    id: 'commercialization',
+    text: '你现在做这个项目，更像是？',
+    options: [
+      { label: '自己用 + 顺便看看有没有人愿意付费', value: 'self_maybe' },
+      { label: '明确想做一个能赚钱的产品', value: 'business' },
+      { label: '先做出来再说', value: 'first' },
+      { label: '还没想清楚', value: 'unsure' },
+    ],
+  },
+  {
+    id: 'market_feeling',
+    text: '你现在对市场的感觉更像是？',
+    options: [
+      { label: '我感觉可能已经有人做过', value: 'exists' },
+      { label: '我没见过类似的，但也不确定', value: 'unseen' },
+      { label: '我完全没查过', value: 'uncheck' },
+      { label: '不重要，先做再说', value: 'doesnt_matter' },
+    ],
   },
 ]
 
