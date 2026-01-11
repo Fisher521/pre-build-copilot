@@ -1,5 +1,5 @@
 /**
- * Pre-build Copilot - Utility Functions
+ * Vibe Checker - Utility Functions
  */
 
 import { clsx, type ClassValue } from 'clsx'

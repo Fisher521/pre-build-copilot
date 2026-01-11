@@ -44,7 +44,7 @@ async function testBasicConnection() {
 }
 
 async function testCopilotPrompt() {
-  console.log('🤖 测试 Pre-build Copilot Prompt...\n')
+  console.log('🤖 测试 Vibe Checker Prompt...\n')
 
   const systemPrompt = `你是一个温和、不评判的开发决策助手。
 
@@ -131,7 +131,7 @@ async function testChoicesFormat() {
 
 async function main() {
   console.log('='.repeat(50))
-  console.log('  Pre-build Copilot - Qwen API 测试')
+  console.log('  Vibe Checker - Qwen API 测试')
   console.log('='.repeat(50))
   console.log('')
 

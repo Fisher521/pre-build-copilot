@@ -15,16 +15,22 @@ interface ReportData {
     targetSize: string
     competition: string
     opportunity: string
+    competitors?: Array<{ name: string; pricing: string }>
+    dataSource?: string
   }
   costEstimate?: {
     development: string
+    developmentDays?: number
     operation: string
+    operationMonthly?: number
     tips: string
   }
   techAnalysis?: {
     difficulty: string
     stack: string
     mvpTime: string
+    phases?: Array<{ name: string; description: string }>
+    architecture?: string
   }
   nextSteps: string[]
 }
@@ -116,10 +122,10 @@ export default function ReportPage() {
 
   return (
     <div className="min-h-screen py-12 px-6 bg-gradient-to-b from-gray-50 to-white">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">📊 Pre-build 评估报告</h1>
+          <h1 className="text-2xl font-bold text-gray-900">📊 Vibe Check 评估报告</h1>
           <p className="text-gray-500 mt-2">{report.projectName}</p>
         </div>
 
@@ -140,35 +146,38 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* Strengths */}
-        <StepCard className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <span>💪</span> 优势
-          </h3>
-          <ul className="space-y-2">
-            {report.strengths.map((item, i) => (
-              <li key={i} className="flex items-start gap-3 text-gray-700">
-                <span className="text-green-500 mt-0.5">✓</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </StepCard>
+        {/* Strengths & Challenges - Side by Side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Strengths */}
+          <StepCard>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span>💪</span> 优势
+            </h3>
+            <ul className="space-y-2">
+              {report.strengths.map((item, i) => (
+                <li key={i} className="flex items-start gap-3 text-gray-700">
+                  <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
+                  <span className="text-sm">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </StepCard>
 
-        {/* Challenges */}
-        <StepCard className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <span>⚠️</span> 挑战
-          </h3>
-          <ul className="space-y-2">
-            {report.challenges.map((item, i) => (
-              <li key={i} className="flex items-start gap-3 text-gray-700">
-                <span className="text-yellow-500 mt-0.5">!</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </StepCard>
+          {/* Challenges */}
+          <StepCard>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span>⚠️</span> 挑战
+            </h3>
+            <ul className="space-y-2">
+              {report.challenges.map((item, i) => (
+                <li key={i} className="flex items-start gap-3 text-gray-700">
+                  <span className="text-yellow-500 mt-0.5 flex-shrink-0">!</span>
+                  <span className="text-sm">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </StepCard>
+        </div>
 
         {/* Market Analysis */}
         {report.marketAnalysis && (
@@ -177,18 +186,51 @@ export default function ReportPage() {
               <span>📈</span> 市场分析
             </h3>
             <div className="space-y-4">
-              <div>
-                <div className="text-sm font-medium text-gray-500 mb-1">目标市场</div>
-                <p className="text-gray-700">{report.marketAnalysis.targetSize}</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="text-xs font-medium text-gray-500 mb-1">目标市场</div>
+                  <p className="text-sm text-gray-700">{report.marketAnalysis.targetSize}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="text-xs font-medium text-gray-500 mb-1">竞争情况</div>
+                  <p className="text-sm text-gray-700">{report.marketAnalysis.competition}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="text-xs font-medium text-gray-500 mb-1">机会点</div>
+                  <p className="text-sm text-gray-700">{report.marketAnalysis.opportunity}</p>
+                </div>
               </div>
-              <div>
-                <div className="text-sm font-medium text-gray-500 mb-1">竞争情况</div>
-                <p className="text-gray-700">{report.marketAnalysis.competition}</p>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-gray-500 mb-1">机会点</div>
-                <p className="text-gray-700">{report.marketAnalysis.opportunity}</p>
-              </div>
+
+              {/* Competitors Pricing Table */}
+              {report.marketAnalysis.competitors && report.marketAnalysis.competitors.length > 0 && (
+                <div>
+                  <div className="text-sm font-medium text-gray-700 mb-2">竞品定价对比</div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="text-left px-3 py-2 font-medium text-gray-600">竞品</th>
+                          <th className="text-left px-3 py-2 font-medium text-gray-600">定价</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {report.marketAnalysis.competitors.map((comp, i) => (
+                          <tr key={i} className="border-b border-gray-100">
+                            <td className="px-3 py-2 text-gray-700">{comp.name}</td>
+                            <td className="px-3 py-2 text-gray-700">{comp.pricing}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {report.marketAnalysis.dataSource && (
+                <div className="text-xs text-gray-400 mt-2">
+                  数据来源: {report.marketAnalysis.dataSource}
+                </div>
+              )}
             </div>
           </StepCard>
         )}
@@ -200,14 +242,30 @@ export default function ReportPage() {
               <span>💰</span> 成本估算
             </h3>
             <div className="space-y-4">
-              <div>
-                <div className="text-sm font-medium text-gray-500 mb-1">开发成本</div>
-                <p className="text-gray-700">{report.costEstimate.development}</p>
+              {/* Cost Cards */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+                  <div className="text-xs font-medium text-purple-600 mb-1">⏱️ 时间成本</div>
+                  {report.costEstimate.developmentDays ? (
+                    <div className="text-2xl font-bold text-purple-700">
+                      {report.costEstimate.developmentDays} <span className="text-sm font-normal">天</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-purple-700">{report.costEstimate.development}</p>
+                  )}
+                </div>
+                <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+                  <div className="text-xs font-medium text-green-600 mb-1">💵 月度成本</div>
+                  {report.costEstimate.operationMonthly !== undefined ? (
+                    <div className="text-2xl font-bold text-green-700">
+                      ¥{report.costEstimate.operationMonthly} <span className="text-sm font-normal">/月</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-green-700">{report.costEstimate.operation}</p>
+                  )}
+                </div>
               </div>
-              <div>
-                <div className="text-sm font-medium text-gray-500 mb-1">运营成本</div>
-                <p className="text-gray-700">{report.costEstimate.operation}</p>
-              </div>
+
               <div className="bg-blue-50 rounded-lg p-3">
                 <div className="text-sm font-medium text-blue-600 mb-1">💡 省钱建议</div>
                 <p className="text-blue-700 text-sm">{report.costEstimate.tips}</p>
@@ -222,20 +280,52 @@ export default function ReportPage() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <span>🛠️</span> 技术实现
             </h3>
+
+            {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-4 mb-4">
               <div className="text-center p-3 bg-gray-50 rounded-xl">
-                <div className="text-sm text-gray-500 mb-1">技术难度</div>
+                <div className="text-xs text-gray-500 mb-1">技术难度</div>
                 <div className="font-semibold text-gray-900">{report.techAnalysis.difficulty}</div>
               </div>
               <div className="text-center p-3 bg-gray-50 rounded-xl">
-                <div className="text-sm text-gray-500 mb-1">MVP 周期</div>
+                <div className="text-xs text-gray-500 mb-1">MVP 周期</div>
                 <div className="font-semibold text-gray-900">{report.techAnalysis.mvpTime}</div>
               </div>
-              <div className="text-center p-3 bg-gray-50 rounded-xl col-span-1">
-                <div className="text-sm text-gray-500 mb-1">推荐栈</div>
+              <div className="text-center p-3 bg-gray-50 rounded-xl">
+                <div className="text-xs text-gray-500 mb-1">推荐技术栈</div>
                 <div className="font-semibold text-gray-900 text-sm">{report.techAnalysis.stack}</div>
               </div>
             </div>
+
+            {/* Development Phases */}
+            {report.techAnalysis.phases && report.techAnalysis.phases.length > 0 && (
+              <div className="mb-4">
+                <div className="text-sm font-medium text-gray-700 mb-3">开发阶段</div>
+                <div className="space-y-2">
+                  {report.techAnalysis.phases.map((phase, i) => (
+                    <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-medium flex-shrink-0">
+                        {i + 1}
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900 text-sm">{phase.name}</div>
+                        <div className="text-xs text-gray-500">{phase.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Architecture */}
+            {report.techAnalysis.architecture && (
+              <div className="p-3 bg-gray-800 rounded-lg">
+                <div className="text-xs font-medium text-gray-400 mb-2">架构说明</div>
+                <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono">
+                  {report.techAnalysis.architecture}
+                </pre>
+              </div>
+            )}
           </StepCard>
         )}
 

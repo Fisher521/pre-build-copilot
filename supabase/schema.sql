@@ -1,5 +1,5 @@
 -- ================================================
--- Pre-build Copilot Database Schema
+-- Vibe Checker Database Schema
 -- Run this SQL in your Supabase SQL Editor
 -- ================================================
 

@@ -80,8 +80,8 @@ export default function HomePage() {
         >
           <span className="text-white">💡</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Pre-build Copilot</h1>
-        <p className="text-gray-500 mt-2">把想法变成可行性报告</p>
+        <h1 className="text-2xl font-bold text-gray-900">Vibe Checker</h1>
+        <p className="text-gray-500 mt-2">写代码前，先 check 一下</p>
       </div>
 
       {/* Main Input Card */}

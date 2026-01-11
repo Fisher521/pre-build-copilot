@@ -1,5 +1,5 @@
 /**
- * Pre-build Copilot - Type Definitions
+ * Vibe Checker - Type Definitions
  * Based on schema_framework_v1.md and system_prompt_wizard_mode.md
  */
 
@@ -20,7 +20,7 @@ export type MVPType = 'content_tool' | 'functional_tool' | 'ai_tool' | 'other' |
 /**
  * Platform form enum
  */
-export type PlatformForm = 'web' | 'ios' | 'android' | 'plugin' | 'cli' | 'unknown'
+export type PlatformForm = 'web' | 'ios' | 'android' | 'plugin' | 'cli' | 'miniprogram' | 'unknown'
 
 /**
  * API/Data dependency enum
@@ -113,13 +113,13 @@ export type SchemaFieldPath =
 
 /**
  * MVP required fields
+ * 与 questionBank.ts 中 isMVP: true 的问题保持一致
+ * 只需 3 题即可进行评估
  */
 export const MVP_REQUIRED_FIELDS: SchemaFieldPath[] = [
-  'idea.one_liner',
-  'user.primary_user',
-  'mvp.type',
-  'platform.form',
-  'preference.timeline'
+  'idea.one_liner',      // Q1: 产品描述
+  'user.primary_user',   // Q2: 目标用户
+  'platform.form',       // Q3: 产品形态
 ]
 
 // ================================

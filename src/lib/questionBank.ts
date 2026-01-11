@@ -1,8 +1,10 @@
 /**
- * Question Bank Module
- * Based on question_bank_v1.md
+ * Question Bank Module - Vibe Checker
  *
- * 每个 Schema 字段对应的标准化追问问题
+ * 针对 vibe coder 重新设计的问题：
+ * - 用日常语言，不问技术问题
+ * - 只问用户能回答的问题
+ * - 需要评估后才知道的信息，由 AI 推断
  */
 
 import type { Question, SchemaFieldPath, EvaluationSchema, Choice } from './types'
@@ -10,185 +12,126 @@ import { isFieldFilled } from './schema'
 
 /**
  * Question definitions
- * 按优先级排序，MVP 必填字段优先
+ *
+ * 设计原则：
+ * 1. MVP 必填只需 3 题即可给出评估
+ * 2. 删除技术问题（时间预期、技术偏好、外部依赖、隐私级别）
+ * 3. 问题语言更口语化、低压力
  */
 export const QUESTION_BANK: Question[] = [
-  // Q1: idea.one_liner (MVP)
+  // ===== 第一阶段：必答（3题，完成后即可评估） =====
+
+  // Q1: 产品描述 (MVP)
   {
     id: 'q1',
     field: 'idea.one_liner',
-    question: '用一句话描述，你想做的这个东西是什么？\n\n比如：「一个帮人快速生成周报的工具」「一个追踪加密货币价格的 App」\n\n（随便说，不用很精确，之后可以改）',
+    question: '用一句话描述，你想做的这个东西是什么？\n\n比如：「一个帮人快速生成周报的工具」「一个追踪加密货币价格的 App」\n\n（随便说，不用很精确）',
     type: 'open',
     priority: 1,
     isMVP: true,
   },
-  // Q3: user.primary_user (MVP)
+
+  // Q2: 目标用户 (MVP)
   {
-    id: 'q3',
+    id: 'q2',
     field: 'user.primary_user',
     question: '这个东西主要是给谁用的？',
     type: 'choice',
     options: [
       { id: 'self', label: '主要给自己用', value: '自己' },
-      { id: 'specific', label: '给特定的一群人（比如设计师、学生、XX从业者）', value: '特定人群' },
-      { id: 'public', label: '希望大众都能用', value: '大众' },
-      { id: 'skip', label: '还没想好 / 先跳过', value: 'unknown' },
+      { id: 'friends', label: '给身边的朋友/同事用', value: '朋友同事' },
+      { id: 'specific', label: '给特定的一群人（比如设计师、学生）', value: '特定人群' },
+      { id: 'public', label: '希望大家都能用', value: '大众' },
     ],
     priority: 2,
     isMVP: true,
   },
-  // Q5: mvp.type (MVP)
+
+  // Q3: 产品形态 (MVP)
   {
-    id: 'q5',
-    field: 'mvp.type',
-    question: '这个产品主要是做什么的？',
+    id: 'q3',
+    field: 'platform.form',
+    question: '你希望它是什么形式？',
     type: 'choice',
     options: [
-      { id: 'content', label: '帮用户生成内容（文字、图片、视频等）', value: 'content_tool' },
-      { id: 'functional', label: '帮用户完成某个具体功能（计算、转换、自动化等）', value: 'functional_tool' },
-      { id: 'ai', label: '封装 AI 能力（调用 ChatGPT、生成图片等）', value: 'ai_tool' },
-      { id: 'other', label: '其他类型 / 不确定', value: 'other' },
+      { id: 'web', label: '网页（电脑或手机都能打开）', value: 'web' },
+      { id: 'mobile', label: '手机 App', value: 'ios' },
+      { id: 'plugin', label: '浏览器插件', value: 'plugin' },
+      { id: 'wechat', label: '微信小程序', value: 'miniprogram' },
+      { id: 'skip', label: '还没想好', value: 'unknown' },
     ],
     priority: 3,
     isMVP: true,
   },
-  // Q7: platform.form (MVP)
+
+  // ===== 第二阶段：补充（可选，有助于更准确评估） =====
+
+  // Q4: 是否自己会用 - 判断是否 scratch your own itch
   {
-    id: 'q7',
-    field: 'platform.form',
-    question: '你希望它是什么形态的产品？',
+    id: 'q4',
+    field: 'idea.background',
+    question: '你自己会用这个产品吗？',
     type: 'choice',
     options: [
-      { id: 'web', label: '网页 / Web App', value: 'web' },
-      { id: 'mobile', label: '手机 App（iOS 或 Android）', value: 'ios' },
-      { id: 'plugin', label: '浏览器插件 / 桌面工具', value: 'plugin' },
-      { id: 'cli', label: '命令行工具 / 脚本', value: 'cli' },
-      { id: 'skip', label: '还没想好 / 先跳过', value: 'unknown' },
+      { id: 'yes', label: '会，我自己就很需要', value: '自己需要' },
+      { id: 'maybe', label: '可能偶尔用', value: '偶尔使用' },
+      { id: 'no', label: '不太会，主要给别人用', value: '给他人用' },
+      { id: 'skip', label: '跳过', value: '' },
     ],
     priority: 4,
-    isMVP: true,
+    isMVP: false,
   },
-  // Q8: preference.timeline (MVP)
+
+  // Q5: 身边有人需要吗 - 初步验证需求
   {
-    id: 'q8',
-    field: 'preference.timeline',
-    question: '你希望多久能看到一个可用的版本？',
+    id: 'q5',
+    field: 'problem.pain_level',
+    question: '你身边有人需要这个吗？',
     type: 'choice',
     options: [
-      { id: '7d', label: '一周内（快速验证想法）', value: '7d' },
-      { id: '14d', label: '两周左右（有基本功能）', value: '14d' },
-      { id: '30d', label: '一个月（相对完整）', value: '30d' },
-      { id: 'flexible', label: '不着急 / 先跳过', value: 'flexible' },
+      { id: 'yes', label: '有，好几个人都提过类似需求', value: 'high' },
+      { id: 'maybe', label: '可能有，但没直接问过', value: 'medium' },
+      { id: 'no', label: '不确定', value: 'low' },
+      { id: 'skip', label: '跳过', value: 'unknown' },
     ],
     priority: 5,
-    isMVP: true,
+    isMVP: false,
   },
-  // Q2: idea.background (可选)
+
+  // Q6: 核心功能
   {
-    id: 'q2',
-    field: 'idea.background',
-    question: '方便说说你为什么想做这个吗？',
-    type: 'choice',
-    options: [
-      { id: 'self_need', label: '自己遇到了这个问题', value: '自己遇到问题' },
-      { id: 'others_need', label: '看到别人有这个需求', value: '他人需求' },
-      { id: 'opportunity', label: '觉得这个方向有机会', value: '市场机会' },
-      { id: 'skip', label: '就是想试试 / 先跳过', value: '' },
-    ],
+    id: 'q6',
+    field: 'mvp.first_job',
+    question: '如果这个产品只能做一件事，你希望它做什么？\n\n（比如：「能生成一份周报」「能查到今天的汇率」）',
+    type: 'open',
     priority: 6,
     isMVP: false,
   },
-  // Q4: user.usage_context (可选)
+
+  // Q7: 是否想过怎么赚钱（可选）
   {
-    id: 'q4',
+    id: 'q7',
     field: 'user.usage_context',
-    question: '用户一般会在什么情况下用它？',
+    question: '你有想过怎么靠它赚钱吗？（没想好也没关系）',
     type: 'choice',
     options: [
-      { id: 'work', label: '工作中（提高效率、完成任务）', value: '工作场景' },
-      { id: 'life', label: '生活中（娱乐、记录、管理）', value: '生活场景' },
-      { id: 'specific', label: '特定场景（出差时、睡前、通勤中...）', value: '特定场景' },
-      { id: 'skip', label: '不确定 / 先跳过', value: '' },
+      { id: 'free', label: '先免费，以后再说', value: '暂时免费' },
+      { id: 'paid', label: '付费订阅或一次性购买', value: '付费' },
+      { id: 'ads', label: '靠广告', value: '广告' },
+      { id: 'none', label: '不打算赚钱，自己用', value: '不考虑' },
+      { id: 'skip', label: '还没想', value: '' },
     ],
     priority: 7,
     isMVP: false,
   },
-  // Q6: mvp.first_job (可选)
+
+  // Q8: 见过类似产品吗（可选）
   {
-    id: 'q6',
-    field: 'mvp.first_job',
-    question: '如果这个产品只能做一件事，你最希望它先完成什么？\n\n（比如：「能生成一份周报」「能查到今天的汇率」「能把语音转成文字」）',
+    id: 'q8',
+    field: 'problem.scenario',
+    question: '你见过类似的产品吗？（说不上来也没事）',
     type: 'open',
     priority: 8,
-    isMVP: false,
-  },
-  // Q9: preference.priority (可选)
-  {
-    id: 'q9',
-    field: 'preference.priority',
-    question: '如果要选一个最重要的，你更在意：',
-    type: 'choice',
-    options: [
-      { id: 'fast', label: '速度 - 先做出来再说', value: 'ship_fast' },
-      { id: 'stable', label: '稳定 - 宁可慢点，少出问题', value: 'stable_first' },
-      { id: 'cost', label: '成本 - 尽量少花钱', value: 'cost_first' },
-      { id: 'skip', label: '都重要 / 不确定', value: 'unknown' },
-    ],
-    priority: 9,
-    isMVP: false,
-  },
-  // Q10: constraints.api_or_data_dependency (可选)
-  {
-    id: 'q10',
-    field: 'constraints.api_or_data_dependency',
-    question: '这个产品需要用到外部的数据或服务吗？',
-    type: 'choice',
-    options: [
-      { id: 'none', label: '不需要，自己就能完成', value: 'none' },
-      { id: 'possible', label: '可能需要（比如调用 AI、获取天气、查汇率）', value: 'possible' },
-      { id: 'confirmed', label: '肯定需要，而且我知道用哪个', value: 'confirmed' },
-      { id: 'skip', label: '不确定 / 先跳过', value: 'unknown' },
-    ],
-    priority: 10,
-    isMVP: false,
-  },
-  // Q11: constraints.privacy_level (可选)
-  {
-    id: 'q11',
-    field: 'constraints.privacy_level',
-    question: '这个产品会处理用户的隐私数据吗？',
-    type: 'choice',
-    options: [
-      { id: 'low', label: '不会，完全不涉及个人信息', value: 'low' },
-      { id: 'medium', label: '可能会有一些（昵称、偏好设置等）', value: 'medium' },
-      { id: 'high', label: '会涉及敏感信息（支付、健康、位置等）', value: 'high' },
-      { id: 'skip', label: '不确定 / 先跳过', value: 'unknown' },
-    ],
-    priority: 11,
-    isMVP: false,
-  },
-  // Q12: problem.scenario (可选)
-  {
-    id: 'q12',
-    field: 'problem.scenario',
-    question: '能举个具体例子吗？用户现在遇到什么问题、怎么处理的？\n\n（比如：「每周五要花 2 小时写周报，经常忘记写了什么」）',
-    type: 'open',
-    priority: 12,
-    isMVP: false,
-  },
-  // Q13: problem.pain_level (可选)
-  {
-    id: 'q13',
-    field: 'problem.pain_level',
-    question: '你觉得这个问题有多痛？',
-    type: 'choice',
-    options: [
-      { id: 'low', label: '有点烦，但忍忍也行', value: 'low' },
-      { id: 'medium', label: '经常影响效率或心情', value: 'medium' },
-      { id: 'high', label: '非常痛，愿意花钱解决', value: 'high' },
-      { id: 'skip', label: '不确定 / 先跳过', value: 'unknown' },
-    ],
-    priority: 13,
     isMVP: false,
   },
 ]
@@ -248,26 +191,51 @@ export function formatQuestionForDisplay(question: Question): {
 
 /**
  * Parse user answer and get the value to store in schema
+ *
+ * 匹配优先级：
+ * 1. 精确匹配 option ID
+ * 2. 精确匹配 option label
+ * 3. 精确匹配 option value
+ * 4. 数字选择（如 "1", "2"）
+ * 5. 模糊匹配（answer 包含在 label 中，且长度 >= 2）
  */
 export function parseAnswerValue(question: Question, answer: string): string {
+  const trimmedAnswer = answer.trim()
+
   if (question.type === 'open') {
-    return answer.trim()
+    return trimmedAnswer
   }
 
-  // Try to match by option ID or label
-  const option = question.options?.find(
-    opt => opt.id === answer ||
-           opt.label === answer ||
-           opt.value === answer ||
-           opt.label.includes(answer)
-  )
+  const options = question.options || []
 
-  if (option) {
-    return option.value
+  // 1. 精确匹配 ID
+  const byId = options.find(opt => opt.id === trimmedAnswer)
+  if (byId) return byId.value
+
+  // 2. 精确匹配 label
+  const byLabel = options.find(opt => opt.label === trimmedAnswer)
+  if (byLabel) return byLabel.value
+
+  // 3. 精确匹配 value
+  const byValue = options.find(opt => opt.value === trimmedAnswer)
+  if (byValue) return byValue.value
+
+  // 4. 数字选择（用户输入 "1", "2" 等）
+  const numIndex = parseInt(trimmedAnswer, 10)
+  if (!isNaN(numIndex) && numIndex >= 1 && numIndex <= options.length) {
+    return options[numIndex - 1].value
   }
 
-  // If no match, return the raw answer for open interpretation
-  return answer.trim()
+  // 5. 模糊匹配：answer 是 label 的子串，且长度足够避免误匹配
+  if (trimmedAnswer.length >= 2) {
+    const byFuzzy = options.find(opt =>
+      opt.label.toLowerCase().includes(trimmedAnswer.toLowerCase())
+    )
+    if (byFuzzy) return byFuzzy.value
+  }
+
+  // 无匹配，返回原始答案
+  return trimmedAnswer
 }
 
 /**
@@ -299,4 +267,89 @@ export function getRemainingQuestionsCount(schema: EvaluationSchema): {
   }
 
   return { mvp, optional, total: mvp + optional }
+}
+
+/**
+ * Get optional (non-MVP) questions
+ */
+export function getOptionalQuestions(): Question[] {
+  return QUESTION_BANK.filter(q => !q.isMVP)
+}
+
+/**
+ * Get questions by stage
+ * Stage 1: MVP 必答题
+ * Stage 2: 可选补充题
+ */
+export function getQuestionsByStage(stage: 1 | 2): Question[] {
+  return stage === 1 ? getMVPQuestions() : getOptionalQuestions()
+}
+
+/**
+ * Get previous question based on current question
+ */
+export function getPreviousQuestion(
+  currentQuestion: Question,
+  schema: EvaluationSchema
+): Question | null {
+  const currentIndex = QUESTION_BANK.findIndex(q => q.id === currentQuestion.id)
+  if (currentIndex <= 0) return null
+
+  // 返回上一个已填写的问题，或上一个问题
+  for (let i = currentIndex - 1; i >= 0; i--) {
+    const q = QUESTION_BANK[i]
+    if (isFieldFilled(schema, q.field)) {
+      return q
+    }
+  }
+
+  return QUESTION_BANK[currentIndex - 1]
+}
+
+/**
+ * Get completion progress
+ * Returns percentage and counts
+ */
+export function getProgress(schema: EvaluationSchema): {
+  mvpPercent: number
+  totalPercent: number
+  mvpAnswered: number
+  mvpTotal: number
+  optionalAnswered: number
+  optionalTotal: number
+} {
+  const mvpQuestions = getMVPQuestions()
+  const optionalQuestions = getOptionalQuestions()
+
+  const mvpAnswered = mvpQuestions.filter(q => isFieldFilled(schema, q.field)).length
+  const optionalAnswered = optionalQuestions.filter(q => isFieldFilled(schema, q.field)).length
+
+  const mvpTotal = mvpQuestions.length
+  const optionalTotal = optionalQuestions.length
+
+  return {
+    mvpPercent: mvpTotal > 0 ? Math.round((mvpAnswered / mvpTotal) * 100) : 0,
+    totalPercent: QUESTION_BANK.length > 0
+      ? Math.round(((mvpAnswered + optionalAnswered) / QUESTION_BANK.length) * 100)
+      : 0,
+    mvpAnswered,
+    mvpTotal,
+    optionalAnswered,
+    optionalTotal,
+  }
+}
+
+/**
+ * Check if MVP questions are complete (ready for evaluation)
+ */
+export function isMVPComplete(schema: EvaluationSchema): boolean {
+  return getMVPQuestions().every(q => isFieldFilled(schema, q.field))
+}
+
+/**
+ * Get current stage based on completion
+ * Returns 1 if still answering MVP, 2 if answering optional
+ */
+export function getCurrentStage(schema: EvaluationSchema): 1 | 2 {
+  return isMVPComplete(schema) ? 2 : 1
 }

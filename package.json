@@ -1,6 +1,7 @@
 {
-  "name": "pre-build-copilot",
+  "name": "vibe-checker",
   "version": "0.1.0",
+  "description": "帮助 vibe coder 在写代码前快速评估项目可行性",
   "private": true,
   "scripts": {
     "dev": "next dev",

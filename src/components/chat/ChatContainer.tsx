@@ -136,7 +136,7 @@ export function ChatContainer({
             >
               ← 返回
             </button>
-            <h1 className="font-semibold text-gray-900">Pre-build Copilot</h1>
+            <h1 className="font-semibold text-gray-900">Vibe Checker</h1>
             {canGenerateBrief && (
               <Button
                 variant="primary"

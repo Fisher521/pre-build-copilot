@@ -1,7 +1,7 @@
 /**
  * VoiceButton Component
- * Voice input button with MediaRecorder + Dashscope ASR
- * Falls back to Web Speech API if backend ASR fails
+ * Voice input with Web Speech API for real-time streaming transcription
+ * Falls back to MediaRecorder + Backend ASR if Web Speech API not available
  */
 
 'use client'
@@ -9,22 +9,81 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
+// Web Speech API types
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList
+  resultIndex: number
+}
+
+interface SpeechRecognitionResultList {
+  length: number
+  item(index: number): SpeechRecognitionResult
+  [index: number]: SpeechRecognitionResult
+}
+
+interface SpeechRecognitionResult {
+  length: number
+  item(index: number): SpeechRecognitionAlternative
+  [index: number]: SpeechRecognitionAlternative
+  isFinal: boolean
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string
+  confidence: number
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  start(): void
+  stop(): void
+  abort(): void
+  onresult: ((event: SpeechRecognitionEvent) => void) | null
+  onerror: ((event: Event & { error: string }) => void) | null
+  onend: (() => void) | null
+  onstart: (() => void) | null
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition
+    webkitSpeechRecognition: new () => SpeechRecognition
+  }
+}
+
 interface VoiceButtonProps {
   onTranscript: (text: string) => void
+  onInterimTranscript?: (text: string) => void  // 实时显示识别中的文字
   disabled?: boolean
   className?: string
 }
 
-export function VoiceButton({ onTranscript, disabled, className }: VoiceButtonProps) {
+export function VoiceButton({ onTranscript, onInterimTranscript, disabled, className }: VoiceButtonProps) {
   const [isRecording, setIsRecording] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  
+  const [interimText, setInterimText] = useState('')
+  const [useWebSpeech, setUseWebSpeech] = useState(true)
+
+  // Web Speech API refs
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
+
+  // Fallback MediaRecorder refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
+
+  // Check Web Speech API support
+  useEffect(() => {
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRecognitionAPI) {
+      setUseWebSpeech(false)
+    }
+  }, [])
 
   // Recording timer effect
   useEffect(() => {
@@ -52,16 +111,101 @@ export function VoiceButton({ onTranscript, disabled, className }: VoiceButtonPr
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop())
       }
+      if (recognitionRef.current) {
+        recognitionRef.current.abort()
+      }
     }
   }, [])
 
-  const startRecording = useCallback(async () => {
+  // ========== Web Speech API Methods ==========
+  const startWebSpeechRecording = useCallback(() => {
     if (disabled || isProcessing) return
-    
+
     setError(null)
-    
+    setInterimText('')
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition
+      if (!SpeechRecognitionAPI) {
+        throw new Error('Web Speech API not supported')
+      }
+
+      const recognition = new SpeechRecognitionAPI()
+      recognition.continuous = true
+      recognition.interimResults = true
+      recognition.lang = 'zh-CN'
+
+      let finalTranscript = ''
+
+      recognition.onstart = () => {
+        setIsRecording(true)
+      }
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        let interim = ''
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i]
+          if (result.isFinal) {
+            finalTranscript += result[0].transcript
+          } else {
+            interim += result[0].transcript
+          }
+        }
+
+        // 更新实时文字
+        const currentText = finalTranscript + interim
+        setInterimText(currentText)
+        onInterimTranscript?.(currentText)
+      }
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error)
+        if (event.error === 'not-allowed') {
+          setError('麦克风权限被拒绝')
+        } else if (event.error === 'no-speech') {
+          setError('未检测到语音')
+        } else {
+          setError('语音识别出错')
+        }
+        setIsRecording(false)
+      }
+
+      recognition.onend = () => {
+        setIsRecording(false)
+        // 发送最终识别结果
+        if (finalTranscript.trim()) {
+          onTranscript(finalTranscript.trim())
+        }
+        setInterimText('')
+      }
+
+      recognitionRef.current = recognition
+      recognition.start()
+
+    } catch (err) {
+      console.error('Failed to start Web Speech:', err)
+      setError('语音识别不可用')
+      // Fallback to MediaRecorder
+      setUseWebSpeech(false)
+    }
+  }, [disabled, isProcessing, onTranscript, onInterimTranscript])
+
+  const stopWebSpeechRecording = useCallback(() => {
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop()
+      recognitionRef.current = null
+    }
+  }, [isRecording])
+
+  // ========== MediaRecorder Fallback Methods ==========
+  const startMediaRecording = useCallback(async () => {
+    if (disabled || isProcessing) return
+
+    setError(null)
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           sampleRate: 16000,
           channelCount: 1,
@@ -69,56 +213,71 @@ export function VoiceButton({ onTranscript, disabled, className }: VoiceButtonPr
           noiseSuppression: true,
         }
       })
-      
+
       streamRef.current = stream
       audioChunksRef.current = []
-      
-      // Try to use webm format, fallback to whatever is available
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
         ? 'audio/webm;codecs=opus'
         : MediaRecorder.isTypeSupported('audio/webm')
           ? 'audio/webm'
           : 'audio/mp4'
-      
+
       const mediaRecorder = new MediaRecorder(stream, { mimeType })
-      
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data)
         }
       }
-      
+
       mediaRecorder.onstop = async () => {
-        // Stop all tracks
         stream.getTracks().forEach(track => track.stop())
         streamRef.current = null
-        
+
         if (audioChunksRef.current.length === 0) {
           setIsRecording(false)
           return
         }
-        
+
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
         await processAudio(audioBlob)
       }
-      
+
       mediaRecorderRef.current = mediaRecorder
-      mediaRecorder.start(1000) // Collect data every second
+      mediaRecorder.start(1000)
       setIsRecording(true)
-      
+
     } catch (err) {
       console.error('Failed to start recording:', err)
       setError('无法访问麦克风')
     }
   }, [disabled, isProcessing])
 
-  const stopRecording = useCallback(() => {
+  const stopMediaRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop()
       mediaRecorderRef.current = null
       setIsRecording(false)
     }
   }, [isRecording])
+
+  // ========== Unified Start/Stop ==========
+  const startRecording = useCallback(() => {
+    if (useWebSpeech) {
+      startWebSpeechRecording()
+    } else {
+      startMediaRecording()
+    }
+  }, [useWebSpeech, startWebSpeechRecording, startMediaRecording])
+
+  const stopRecording = useCallback(() => {
+    if (useWebSpeech) {
+      stopWebSpeechRecording()
+    } else {
+      stopMediaRecording()
+    }
+  }, [useWebSpeech, stopWebSpeechRecording, stopMediaRecording])
 
   const processAudio = async (audioBlob: Blob) => {
     setIsProcessing(true)
@@ -169,16 +328,23 @@ export function VoiceButton({ onTranscript, disabled, className }: VoiceButtonPr
 
   return (
     <div className="relative flex items-center">
-      {/* Recording/Processing time display */}
-      {(isRecording || isProcessing) && (
+      {/* Real-time transcription display (Web Speech API) */}
+      {isRecording && useWebSpeech && interimText && (
+        <div className="absolute right-14 max-w-[200px] text-sm text-gray-700 truncate animate-pulse">
+          {interimText}
+        </div>
+      )}
+
+      {/* Recording/Processing time display (fallback mode) */}
+      {(isRecording || isProcessing) && !interimText && (
         <span className={cn(
           "absolute right-14 text-sm font-medium whitespace-nowrap",
           isProcessing ? "text-blue-500" : "text-red-500 animate-pulse"
         )}>
-          {isProcessing ? '识别中...' : formatTime(recordingTime)}
+          {isProcessing ? '识别中...' : useWebSpeech ? '正在听...' : formatTime(recordingTime)}
         </span>
       )}
-      
+
       {/* Error tooltip */}
       {error && !isRecording && !isProcessing && (
         <span className="absolute right-14 text-xs text-red-500 whitespace-nowrap">

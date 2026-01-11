@@ -8,6 +8,7 @@ export {
   generateBrief,
   testConnection,
   processUserInput,
+  processUserInputStreaming,
   extractSchemaFromInput,
   handleQuestionAnswer,
 } from './qwen'

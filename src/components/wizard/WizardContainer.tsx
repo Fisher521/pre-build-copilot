@@ -95,7 +95,7 @@ export function WizardContainer({ onComplete }: WizardContainerProps) {
         >
           <span className="text-white">🚀</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Pre-build Copilot</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Vibe Checker</h1>
       </div>
 
       {/* Wizard Content */}

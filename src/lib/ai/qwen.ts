@@ -369,3 +369,118 @@ export async function generateAIResponse(params: {
   })
   return result.response
 }
+
+/**
+ * Process user input with streaming response
+ * Returns an async generator that yields content chunks
+ */
+export async function* processUserInputStreaming(params: {
+  userMessage: string
+  schema: EvaluationSchema
+  previousMessages?: Array<{ role: string; content: string }>
+}): AsyncGenerator<{
+  type: 'content' | 'metadata' | 'schema' | 'done'
+  content?: string
+  metadata?: MessageMetadata
+  schema?: EvaluationSchema
+  completionScore?: number
+  nextState?: string
+}> {
+  const { userMessage, schema, previousMessages = [] } = params
+
+  // Step 1: Extract schema fields from user input
+  const parsed = await extractSchemaFromInput(userMessage, schema)
+
+  // Step 2: Update schema with extracted fields
+  let updatedSchema = updateSchema(schema, parsed.extractedFields)
+  const score = calculateCompletionScore(updatedSchema)
+  updatedSchema._meta.completion_score = score
+
+  // Step 3: Determine next state
+  const nextState = determineNextState(score)
+  updatedSchema._meta.current_state = nextState
+
+  // Step 4: Get next question if needed
+  const nextQuestion = nextState === 'ASK_QUESTION' ? getNextQuestion(updatedSchema) : null
+  const questionDisplay = nextQuestion ? formatQuestionForDisplay(nextQuestion) : null
+
+  // Step 5: Generate AI response based on state with streaming
+  const statePrompt = getStatePrompt(nextState, {
+    schema: updatedSchema,
+    score,
+    nextQuestion: questionDisplay?.text,
+  })
+
+  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+    {
+      role: 'system',
+      content: SYSTEM_PROMPT + '\n\n' + statePrompt,
+    },
+  ]
+
+  // Add few-shot examples for initial messages
+  if (previousMessages.length < 4) {
+    messages.push(...FEW_SHOT_EXAMPLES)
+  }
+
+  // Add conversation history
+  for (const msg of previousMessages.slice(-6)) {
+    messages.push({
+      role: msg.role as 'user' | 'assistant',
+      content: msg.content,
+    })
+  }
+
+  // Add current user message
+  messages.push({
+    role: 'user',
+    content: userMessage,
+  })
+
+  try {
+    const stream = await getClient().chat.completions.create({
+      model: MODEL,
+      messages,
+      temperature: 0.7,
+      max_tokens: 1500,
+      stream: true,
+    })
+
+    let fullContent = ''
+
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta?.content || ''
+      if (delta) {
+        fullContent += delta
+        yield { type: 'content', content: delta }
+      }
+    }
+
+    // Parse the complete response for choices
+    const { metadata } = parseAIResponse(fullContent)
+
+    // If we have a question with choices, use those
+    if (questionDisplay?.choices && nextState === 'ASK_QUESTION') {
+      metadata.type = 'choices'
+      metadata.choices = questionDisplay.choices
+    }
+
+    // Yield metadata and final schema
+    yield {
+      type: 'metadata',
+      metadata,
+    }
+
+    yield {
+      type: 'schema',
+      schema: updatedSchema,
+      completionScore: score,
+      nextState,
+    }
+
+    yield { type: 'done' }
+  } catch (error) {
+    console.error('Qwen streaming error:', error)
+    throw new Error('AI 服务暂时不可用，请稍后再试')
+  }
+}

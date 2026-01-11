@@ -7,7 +7,6 @@ import type {
   EvaluationSchema,
   SchemaFieldPath,
   WizardState,
-  MVP_REQUIRED_FIELDS,
 } from './types'
 
 /**
@@ -185,13 +184,28 @@ export function getUnfilledFields(schema: EvaluationSchema): SchemaFieldPath[] {
  * Determine next state based on completion score
  *
  * 快速进入评估：
- * - 1 个核心字段 (30%) → 初步评估
- * - 2 个核心字段 (60%) → 完整评估
+ * - 0 个 MVP 字段 (0%) → 继续问问题
+ * - 1-2 个 MVP 字段 (30-60%) → 初步评估（可以给基本建议）
+ * - 3 个 MVP 字段 (90%+) → 完整评估
  */
 export function determineNextState(score: number): WizardState {
   if (score < 30) {
     return 'ASK_QUESTION'
-  } else if (score < 60) {
+  } else if (score < 90) {
+    return 'PRELIMINARY_EVAL'
+  } else {
+    return 'FULL_EVAL'
+  }
+}
+
+/**
+ * Determine state based on MVP field count (alternative to score-based)
+ */
+export function determineStateByMVPCount(schema: EvaluationSchema): WizardState {
+  const { completed } = getMVPStatus(schema)
+  if (completed === 0) {
+    return 'ASK_QUESTION'
+  } else if (completed < MVP_FIELDS.length) {
     return 'PRELIMINARY_EVAL'
   } else {
     return 'FULL_EVAL'
@@ -273,6 +287,7 @@ export function formatSchemaSummary(schema: EvaluationSchema): string {
       android: 'Android App',
       plugin: '浏览器插件 / 桌面工具',
       cli: '命令行工具',
+      miniprogram: '微信小程序',
     }
     fields.push(`| 产品形态 | ${platformLabels[schema.platform.form] || schema.platform.form} |`)
   }
