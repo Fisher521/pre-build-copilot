@@ -26,6 +26,7 @@ export function createEmptySchema(): EvaluationSchema {
     user: {
       primary_user: '',
       usage_context: '',
+      experience_level: 'unknown',
     },
     mvp: {
       first_job: '',
