@@ -542,7 +542,7 @@ Each question object:
 
   try {
     const response = await getClient().chat.completions.create({
-      model: MODEL,
+      model: FAST_MODEL,
       messages: [
         {
           role: 'system',

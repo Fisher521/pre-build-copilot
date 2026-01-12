@@ -5,7 +5,7 @@
 
 import { getClient } from './qwen'
 
-const MODEL = process.env.QWEN_MODEL || 'qwen-plus'
+const MODEL = 'qwen-turbo' // Use faster model for search simulation
 
 export interface SearchResult {
   title: string
