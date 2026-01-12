@@ -490,53 +490,57 @@ export async function* processUserInputStreaming(params: {
  * Generate dynamic questions based on project context (Vibe Checker 2.0)
  */
 export async function generateProjectQuestions(schema: EvaluationSchema): Promise<any[]> {
-  const prompt = `You are a Vibe Coding Consultant.
-User's Idea: ${schema.idea.one_liner}
-Core Function: ${schema.mvp.first_job}
-Target User: ${schema.user.primary_user}
+  const prompt = `你是一个 Vibe Coding 顾问。
 
-You are an expert product manager (Vibe Coder style).
-Your goal is to generate 3-4 "Killer Questions" to help the user clarify their idea and identify risks.
+【用户项目信息】
+- 想法：${schema.idea.one_liner}
+- 核心功能：${schema.mvp.first_job}
+- 目标用户：${schema.user.primary_user}
 
-PROJECT ANALYSIS:
-1. **Identify Category**:
-   - **Tool**: Efficiency, solving personal pain. (Focus: "How do you solve it now?")
-   - **Content**: Information, media. (Focus: "Where does content come from?", "Can you keep updating?")
-   - **Transaction/Platform**: Connecting two parties. (Focus: "Can you find first users?", "Offline ops?")
-   - **AI Wrapper**: API based. (Focus: "What if AI makes mistakes?", "Differentiation?")
+你是一个专业的产品顾问（Vibe Coder 风格）。
+你的目标是生成 3-4 个"关键问题"，帮助用户理清思路并识别风险。
 
-2. **Check Discouragement Triggers** (If found, ASK these immediately to warn user):
-   - **Offline Operations**: Delivery, meetups, hardware.
-   - **Regulation**: Finance, Health, payment flows.
-   - **Complexity**: Training models, high concurrency.
-   - **Cold Start**: Needs 2-sided network.
+【项目分析】
+1. **识别项目类型**：
+   - **工具类**：效率提升，解决个人痛点。（重点问：你现在怎么解决这个问题？）
+   - **内容类**：信息、媒体。（重点问：内容从哪来？能持续更新吗？）
+   - **交易/平台类**：连接双边。（重点问：能找到第一批用户吗？需要线下运营吗？）
+   - **AI套壳类**：基于API。（重点问：AI出错怎么办？如何差异化？）
 
-GENERATION RULES:
-1. **First Question** MUST be the "Extension of Experience" question if not answered (e.g. "Have you built similar things?").
-2. **Subsequent Questions**: Pick the most critical risks based on Category.
-3. **Options**: Provide 3-4 distinct paths.
-4. **Feedback**: For EACH option, provide immediate "Vibe Check" feedback.
-   - If user picks a "Hard Mode" option (e.g. Offline, Native App), feedback MUST be a 'warning'.
-   - If user picks a "Vibe Mode" option (e.g. Web, Tools), feedback should be 'positive'.
+2. **劝退预警**（如果发现以下情况，必须立即提问警告用户）：
+   - **线下运营**：配送、见面、硬件
+   - **强监管**：金融、医疗、支付
+   - **技术复杂**：训练模型、高并发
+   - **冷启动难**：需要双边网络效应
 
-OUTPUT FORMAT:
-Return a JSON object with a "questions" array.
-Each question object:
+【生成规则】
+1. **第一个问题**必须是"经验水平"问题（如：你之前做过类似的项目吗？）
+2. **后续问题**：根据项目类型选择最关键的风险点
+3. **选项**：提供 3-4 个不同的选择
+4. **反馈**：每个选项都要有即时反馈
+   - 如果用户选了"困难模式"（如线下、原生App），反馈类型必须是 'warning'
+   - 如果用户选了"轻松模式"（如网页、工具），反馈类型应该是 'positive'
+
+【重要】所有内容必须用中文输出！
+
+【输出格式】
+返回一个 JSON 对象，包含 "questions" 数组。
+每个问题对象：
 - \`id\`: string
-- \`field\`: string (Map to one of: 'user.experience_level', 'mvp.type', 'platform.form', 'constraints.api_or_data_dependency', 'preference.priority', 'problem.scenario')
-- \`question\`: string (The question text)
-- \`insight\`: string (Why we ask this)
-- \`options\`: array of objects:
+- \`field\`: string (映射到: 'user.experience_level', 'mvp.type', 'platform.form', 'constraints.api_or_data_dependency', 'preference.priority', 'problem.scenario')
+- \`question\`: string (问题文本，中文)
+- \`insight\`: string (为什么问这个，中文)
+- \`options\`: 数组，每个选项包含:
   - \`id\`: string
-  - \`label\`: string
-  - \`value\`: string (Maps to schema enums. For experience_level: 'never'|'tutorial'|'small_project'|'veteran'. For others use standard schema values found in types definitions)
-  - \`feedback\`: { \`type\`: 'positive'|'warning'|'neutral', \`message\`: string }
-  - \`tags\`: string[] (e.g. ['easy', 'hard'])
+  - \`label\`: string (选项文本，中文)
+  - \`value\`: string (枚举值)
+  - \`feedback\`: { \`type\`: 'positive'|'warning'|'neutral', \`message\`: string (中文反馈) }
+  - \`tags\`: string[]
 
-### Example Option Values for Mapping
+### 枚举值参考
 - experience_level: 'never', 'tutorial', 'small_project', 'veteran'
 - mvp.type: 'content_tool', 'functional_tool', 'ai_tool', 'transaction_tool'
-- platform.form: 'web', 'ios', 'miniprogram', 'plugin' (use 'web' for easiest)
+- platform.form: 'web', 'ios', 'miniprogram', 'plugin'
 - priority: 'ship_fast', 'cost_first'
 `
 
@@ -575,7 +579,7 @@ Each question object:
       messages: [
         {
           role: 'system',
-          content: 'Output JSON only. Ensure valid JSON format.',
+          content: '只输出有效的JSON，所有内容用中文。',
         },
         {
           role: 'user',

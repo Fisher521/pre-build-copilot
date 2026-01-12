@@ -88,8 +88,8 @@ export default function QuestionsPage() {
         body: JSON.stringify({ answers }),
       })
       
-      // Navigate to Summary (Step 4)
-      router.push(`/summary/${conversationId}`)
+      // Navigate directly to Report (skip summary)
+      router.push(`/report/${conversationId}`)
     } catch (err) {
       console.error('Save failed:', err)
       setIsSaving(false)
@@ -201,7 +201,7 @@ export default function QuestionsPage() {
               onBack={handleBack}
               onNext={handleNext}
               backLabel="上一步"
-              nextLabel={isLastQuestion ? "生成初步总结 →" : "下一题 →"} // Navigate to Summary first
+              nextLabel={isLastQuestion ? "生成完整报告 →" : "下一题 →"}
               nextDisabled={!selectedValue || !showFeedback} // Force user to see feedback
               nextLoading={isSaving}
             />

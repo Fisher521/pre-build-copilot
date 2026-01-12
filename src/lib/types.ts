@@ -234,6 +234,33 @@ export interface ConversationWithMessages extends Conversation {
 // Report 2.0 Output Types
 // ================================
 
+/**
+ * 产品实现方案 (Product Approach)
+ * 在技术方案之前，让用户选择产品逻辑流程
+ */
+export interface ProductApproachStep {
+  step: number
+  action: string
+  detail: string
+}
+
+export interface ProductApproach {
+  id: string
+  name: string              // "方案A：RSS聚合模式"
+  description: string       // 一句话描述
+  workflow: ProductApproachStep[]  // 产品流程步骤
+  pros: string[]            // 优势
+  cons: string[]            // 劣势
+  best_for: string          // 适合场景
+  complexity: 'low' | 'medium' | 'high'  // 复杂度
+}
+
+export interface ProductApproachOptions {
+  approaches: ProductApproach[]
+  recommended_id: string    // 推荐方案的id
+  recommendation_reason: string  // 推荐理由
+}
+
 export interface ReportScore {
   feasibility: number // 0-100
   breakdown: {
@@ -266,37 +293,43 @@ export interface ExecutionStep {
 export interface VibeReport {
   score: ReportScore
   one_liner_conclusion: string
-  
+
   why_worth_it: string[]
   risks: string[]
-  
+
   market_analysis: {
     competitors: { name: string; pros: string; cons: string; url?: string }[]
     opportunity: string
     search_trends?: string
   }
-  
+
+  // V2.1: 产品实现方案（在技术方案之前）
+  product_approaches: ProductApproachOptions
+
+  // 用户选择的方案ID（前端交互后设置）
+  selected_approach_id?: string
+
   tech_options: {
     option_a: TechStackOption
     option_b: TechStackOption
     advice: string
   }
-  
+
   fastest_path: ExecutionStep[]
-  
+
   cost_estimate: {
     time_breakdown: string
     money_breakdown: string
   }
-  
+
   pitfalls: string[]
-  
+
   next_steps: {
     today: string[]
     this_week: string[]
     later: string[]
   }
-  
+
   learning_takeaways: string[]
 }
 
