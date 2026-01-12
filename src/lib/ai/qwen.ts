@@ -32,7 +32,7 @@ import { getNextQuestion, formatQuestionForDisplay, parseAnswerValue } from '@/l
 // Initialize Qwen client (OpenAI-compatible) lazily
 let client: OpenAI | null = null
 
-function getClient(): OpenAI {
+export function getClient(): OpenAI {
   if (!client) {
     const apiKey = process.env.QWEN_API_KEY
 

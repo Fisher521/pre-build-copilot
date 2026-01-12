@@ -3,8 +3,7 @@
  * Simulates web search for market analysis using Qwen LLM
  */
 
-import OpenAI from 'openai'
-import { getClient } from './qwen' // Assuming we can export getClient or use a new instance
+import { getClient } from './qwen'
 
 const MODEL = process.env.QWEN_MODEL || 'qwen-plus'
 
@@ -28,9 +27,6 @@ export async function searchCompetitors(query: string): Promise<SearchResponse> 
   // Here we ask Qwen to hallucinate a "Search Result" structure based on its knowledge
   // which is actually better for "Vibe Checking" than raw search sometimes.
   
-  const client = getClient() // We need to export this from qwen.ts or duplicate logic
-  // Since getClient is not exported, we'll assume we can use the same env vars to new OpenAI
-  
   const prompt = `Simulate a Google Search result for: "${query}"
 Focus on finding 3 real-world similar products/competitors.
 Return JSON format:
@@ -42,12 +38,9 @@ Return JSON format:
 }`
 
   try {
-     const openai = new OpenAI({
-      apiKey: process.env.QWEN_API_KEY || 'dummy',
-      baseURL: process.env.QWEN_API_BASE || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
-    })
+     const client = getClient()
 
-    const response = await openai.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: MODEL,
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' }
