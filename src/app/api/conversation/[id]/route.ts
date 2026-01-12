@@ -25,6 +25,7 @@ export async function GET(
       id: conversation.id,
       schema: conversation.schema_data,
       status: conversation.status,
+      metadata: conversation.metadata,
       createdAt: conversation.created_at,
     })
   } catch (error) {

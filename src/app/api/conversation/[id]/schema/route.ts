@@ -35,8 +35,34 @@ export async function PATCH(
       const { generateProjectQuestions } = await import('@/lib/ai')
       const { updateConversation } = await import('@/lib/db/conversations')
 
-      // Generate questions (this might take a few seconds)
-      const generatedQuestions = await generateProjectQuestions(updatedSchema)
+      // Generate questions with strict 8s timeout for Vercel Serverless
+      let generatedQuestions = []
+      try {
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('AI Generation Timeout')), 8000)
+        )
+        
+        generatedQuestions = await Promise.race([
+          generateProjectQuestions(updatedSchema),
+          timeoutPromise
+        ]) as any[]
+      } catch (error) {
+        console.warn('Question generation timed out/failed, using fallback:', error)
+        // Hardcoded fallback to ensure flow continues
+        generatedQuestions = [
+          {
+            id: 'experience',
+            field: 'user.experience_level',
+            question: 'What is your experience level with coding/products?',
+            insight: 'This helps us tailor the tech stack recommendations.',
+            type: 'choice',
+            options: [
+              { id: 'never', label: 'First timer', value: 'never', feedback: { type: 'neutral', message: "Welcome! We'll guide you step-by-step." } },
+              { id: 'veteran', label: 'Experienced', value: 'veteran', feedback: { type: 'positive', message: "Awesome, let's talk advanced tools." } }
+            ]
+          }
+        ]
+      }
 
       // Store in conversation metadata
       await updateConversation(id, {
