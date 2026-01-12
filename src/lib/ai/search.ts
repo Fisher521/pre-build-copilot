@@ -23,6 +23,17 @@ export interface SearchResponse {
  * Simulate a search for competitors
  */
 export async function searchCompetitors(query: string): Promise<SearchResponse> {
+  // Fail fast if no API key
+  if (!process.env.QWEN_API_KEY) {
+    console.warn('Skipping search simulation: No QWEN_API_KEY found')
+    return {
+      results: [
+        { title: 'Simulation (No API Key)', url: '#', snippet: 'Please set QWEN_API_KEY to see real AI results.', source: 'System' }
+      ],
+      notes: 'Market analysis disabled (missing API key).'
+    }
+  }
+
   // In a real app, this would call Tavily/Serper/Bing API
   // Here we ask Qwen to hallucinate a "Search Result" structure based on its knowledge
   // which is actually better for "Vibe Checking" than raw search sometimes.

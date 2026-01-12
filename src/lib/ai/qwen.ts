@@ -540,6 +540,35 @@ Each question object:
 - priority: 'ship_fast', 'cost_first'
 `
 
+  // Fail fast if no API key
+  if (!process.env.QWEN_API_KEY) {
+    console.warn('Skipping AI generation: No QWEN_API_KEY found')
+    // Fallback immediately
+    return [
+      {
+        id: 'experience',
+        field: 'user.experience_level',
+        question: '你之前做过类似的产品吗？',
+        insight: '了解你的经验能帮我调整建议的难度。',
+        type: 'choice',
+        options: [
+          { 
+            id: 'never', 
+            label: '第一次尝试', 
+            value: 'never',
+            feedback: { type: 'neutral', message: '没关系，我会给你最详细的指引。' }
+          },
+          { 
+            id: 'veteran', 
+            label: '老手了', 
+            value: 'veteran',
+            feedback: { type: 'positive', message: '太好了，我们可以直接聊核心难点。' }
+          }
+        ]
+      }
+    ]
+  }
+
   try {
     const response = await getClient().chat.completions.create({
       model: FAST_MODEL,
