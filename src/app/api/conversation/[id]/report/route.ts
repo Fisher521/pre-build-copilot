@@ -1,11 +1,44 @@
 /**
  * Generate Report API
- * POST /api/conversation/[id]/report - Generate evaluation report
+ * POST /api/conversation/[id]/report - Generate V2.0 evaluation report
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getConversation } from '@/lib/db/conversations'
+import { getConversation, updateConversation } from '@/lib/db/conversations'
+import { searchCompetitors } from '@/lib/ai/search'
 import OpenAI from 'openai'
+import type { VibeReport } from '@/lib/types'
+
+// Vibe Coding Tool Library - The "Stack" for V2.0
+const VIBE_TOOL_LIBRARY = `
+RECOMMENDED TOOL LIBRARY (Prioritize these):
+1. **Generators (The "Magic" Layer)**:
+   - **v0.dev**: BEST for Frontend UI, React components, dashboards. (Free tier good).
+   - **Lovable.dev / Bolt.new**: BEST for Full-stack apps/prototypes if user is less technical.
+   - **Replit Agent**: Good for Python/Backend heavy scripts.
+
+2. **Smart IDEs**:
+   - **Cursor**: The Gold Standard. Mandatory recommendation for all Vibe Coders.
+   - **Windsurf**: Alternative if they know it.
+
+3. **Backend/Database**:
+   - **Supabase**: The default choice. Auth + DB + Realtime.
+   - **Convex**: Good for real-time but slight learning curve.
+   - **Firebase**: Legacy but acceptable.
+
+4. **Payments/Ops**:
+   - **Lemonsqueezy / Stripe**: Payments.
+   - **Clerk**: Auth (if not using Supabase Auth).
+   - **Vercel**: Hosting (Default).
+`
+
+// Tone Guides based on Experience
+const TONE_GUIDES = {
+  'never': "Tone: Ultra-encouraging, very simple terms. No jargon. Treat them like a smart non-technical friend. Focus on 'Magic' tools like v0/Lovable.",
+  'tutorial': "Tone: Encouraging but educational. Explain *why* certain tools save time. Focus on learning through doing.",
+  'junior': "Tone: Peer-to-peer, pragmatic. Focus on speed and avoiding 'tutorial hell'. Warn about over-engineering.",
+  'senior': "Tone: Respectful, terse, high-level. Focus on removing friction and leveraging existing skills with new AI tools. 'Don't waste time building auth from scratch'."
+}
 
 // Initialize Qwen client
 function getClient(): OpenAI {
@@ -35,126 +68,142 @@ export async function POST(
     }
 
     const schema = conversation.schema_data
+    
+    // Per V2 spec: Perform search first
+    // Simulate finding competitors based on user idea
+    let searchContext = ''
+    try {
+       const searchResult = await searchCompetitors(schema.idea.one_liner)
+       searchContext = JSON.stringify(searchResult)
+    } catch (e) {
+       console.warn('Search failed, proceeding without external info', e)
+       searchContext = 'Search unavailable.'
+    }
 
-    // Generate report using AI
+    // Determine Tone
+    const expLevel = (schemaStyles => {
+        // approximate mapping if exact enum match isn't perfect, or default to junior
+        return schema.user.experience_level || 'junior'
+    })() as keyof typeof TONE_GUIDES
+    
+    const toneInstruction = TONE_GUIDES[expLevel] || TONE_GUIDES['junior']
+
+    // Generate report using Qwen
     const client = getClient()
+    const prompt = `You are a Vibe Coding Advisor. Generate a structured Vibe Check Report (V2.0) for the user's project.
+
+USER PROJECT:
+- Idea: ${schema.idea.one_liner}
+- Target: ${schema.user.primary_user}
+- MVP Type: ${schema.mvp.type}
+- Experience Level: ${schema.user.experience_level}
+- User's Answers: ${JSON.stringify(conversation.metadata?.answers || {})}
+
+${VIBE_TOOL_LIBRARY}
+
+${toneInstruction}
+
+MARKET CONTEXT (Simulated Search Results):
+${searchContext}
+
+REQUIREMENTS:
+1. **Tone**: See above. "Vibe Coder" style (pragmatic, speed-focused).
+2. **Structure**: Strictly follow the JSON schema below.
+3. **Content**:
+   - **Tech Stack**: MUST pick from the VIBE TOOL LIBRARY. Do not recommend "plain HTML" or "Java Spring" unless absolutely necessary.
+   - **Analysis**: Be honest relative to their experience level.
+
+JSON OUTPUT FORMAT:
+{
+  "one_liner_conclusion": "One sentence summary (e.g. 'Great starter project, but watch out for API costs.')",
+  "score": {
+    "feasibility": 85,
+    "breakdown": { "tech": 90, "market": 70, "onboarding": 80, "user_match": 85 }
+  },
+  "why_worth_it": ["Reason 1", "Reason 2", "Reason 3"],
+  "risks": ["Risk 1", "Risk 2"],
+  "market_analysis": {
+    "opportunity": "Market verdict...",
+    "search_trends": "Trend analysis...",
+    "competitors": [
+      { "name": "Comp A", "url": "...", "pros": "Good X", "cons": "Bad Y" }
+    ]
+  },
+  "tech_options": {
+    "option_a": {
+      "name": "The 'Vibe' Path (Fastest)",
+      "tools": ["v0", "Next.js", "Vercel"],
+      "fit_for": "Quick MVP",
+      "capability": "Basic",
+      "dev_time": "3 days",
+      "cost": "Free tier"
+    },
+    "option_b": {
+      "name": "The 'Pro' Path (Scalable)",
+      "tools": ["React Native", "Supabase"],
+      "fit_for": "Long term",
+      "capability": "High",
+      "dev_time": "3 weeks",
+      "cost": "$20/mo"
+    },
+    "advice": "Which one to pick and why."
+  },
+  "fastest_path": [
+    {
+      "title": "Step 1: xxxx",
+      "description": "Details...",
+      "copy_text": "Prompt to copy...",
+      "action_label": "Go to v0",
+      "action_url": "https://v0.dev"
+    }
+  ],
+  "cost_estimate": {
+    "time_breakdown": "MVP: 1 week...",
+    "money_breakdown": "API: $5/mo...",
+    "saving_tips": ["Use free tier...", "Local LLM..."]
+  },
+  "pitfalls": ["Pitfall 1", "Pitfall 2"],
+  "learning_takeaways": ["Skill A", "Concept B"],
+  "next_steps": {
+    "today": ["Action 1", "Action 2"],
+    "this_week": ["Action 3", "Action 4"],
+    "later": ["Action 5"]
+  }
+}
+`
+
     const response = await client.chat.completions.create({
       model: process.env.QWEN_MODEL || 'qwen-plus',
       messages: [
         {
           role: 'system',
-          content: `你是一个帮助 Vibe Coder（用 AI 辅助写代码的独立开发者）评估项目的专家。
-
-目标用户特点：
-- 主要靠 AI 工具（Cursor、Claude、v0.dev）生成代码
-- 预算有限，追求低成本甚至零成本
-- 时间有限，希望快速验证想法
-- 技术能力中等，能拼接但不想搞复杂架构
-
-请以 JSON 格式返回评估报告：
-{
-  "projectName": "项目简称",
-  "score": 评分(0-100),
-  "verdict": "一句话判断",
-  "strengths": ["优势1", "优势2", "优势3"],
-  "challenges": ["挑战1", "挑战2"],
-  "marketAnalysis": {
-    "verdict": "一句话市场判断",
-    "signals": ["事实信号1", "事实信号2", "事实信号3"],
-    "competitors": [
-      {"name": "竞品名", "feature": "做得好的点", "gap": "没做好的点"}
-    ]
-  },
-  "implementation": {
-    "techStack": {
-      "frontend": "推荐前端技术",
-      "backend": "推荐后端技术",
-      "database": "推荐数据库",
-      "deployment": "部署方案",
-      "aiService": "AI服务（如需要）"
-    },
-    "coreFlow": [
-      "步骤1：XXX",
-      "步骤2：XXX",
-      "步骤3：XXX"
-    ],
-    "devProcess": [
-      {"step": "第一步做什么", "difficulty": "简单/中等/较难", "dependency": "依赖什么"},
-      {"step": "第二步做什么", "difficulty": "简单/中等/较难", "dependency": "依赖什么"}
-    ],
-    "recommendation": "串行还是模块化并行开发，为什么"
-  },
-  "costEstimate": {
-    "timeCost": {
-      "mvp": "MVP 开发时间（天/周）",
-      "fullVersion": "完整版本时间",
-      "dailyHours": "每天建议投入时间"
-    },
-    "moneyCost": {
-      "development": "开发期间费用（通常为0）",
-      "monthlyOperation": [
-        {"item": "项目", "cost": "费用", "note": "备注"}
-      ],
-      "totalMonthly": "月运营总成本估算"
-    },
-    "savingTips": ["省钱建议1", "省钱建议2"]
-  },
-  "nextSteps": ["第一步做什么", "第二步做什么", "第三步做什么"]
-}
-
-评分标准：
-- 80+: 非常值得做，技术门槛低，市场有空间
-- 60-79: 值得尝试，但有挑战需克服
-- 40-59: 需要慎重，可能超出 vibe coder 能力范围
-- <40: 建议换个方向
-
-请只返回 JSON，不要有其他内容。`,
+          content: 'You are a pragmatic, experienced indie hacker advisor. Output valid JSON only.',
         },
         {
           role: 'user',
-          content: `请为以下项目生成评估报告：
-
-【项目想法】${schema.idea.one_liner || '未说明'}
-【目标用户】${schema.user.primary_user || '未说明'}
-【产品形态】${schema.platform.form || '未说明'}
-【时间偏好】${schema.preference.timeline || '未说明'}
-【技术状态】${schema.mvp.type || '未说明'}
-【预算偏好】${schema.preference.priority || '未说明'}
-【商业意图】${schema.user.usage_context || '未说明'}
-【市场感觉】${schema.problem.scenario || '未说明'}
-
-请特别注意：
-1. 技术实现要拆解具体步骤流程（如 AI 日报：筛选源→抓数据→评估→筛选→评分→概括）
-2. 开发过程要给出具体步骤、难度、依赖
-3. 成本要分时间成本和金钱成本，金钱主要是 API 和工具费用
-4. 推荐技术栈要具体到产品名（Supabase、Vercel、OpenAI等）`,
+          content: prompt,
         },
       ],
       temperature: 0.7,
-      max_tokens: 2000,
+      response_format: { type: 'json_object' },
     })
 
-    const content = response.choices[0]?.message?.content || ''
-    
-    // Parse JSON from response
-    let report
+    const content = response.choices[0]?.message?.content || '{}'
+    let report: VibeReport
+
     try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        report = JSON.parse(jsonMatch[0])
-      } else {
-        throw new Error('Invalid response format')
-      }
+      report = JSON.parse(content)
+      
+      await updateConversation(id, {
+        metadata: {
+            ...conversation.metadata,
+            v2_report: report
+        }
+      })
+
     } catch (parseError) {
-      // Fallback report
-      report = {
-        projectName: schema.idea.one_liner || '未命名项目',
-        score: 65,
-        verdict: '值得尝试',
-        strengths: ['有明确的目标用户', '问题定义清晰'],
-        challenges: ['需要进一步验证市场需求'],
-        nextSteps: ['制作 MVP', '寻找早期用户测试', '收集反馈迭代'],
-      }
+      console.error('JSON parse error', parseError)
+      throw new Error('Failed to parse AI report')
     }
 
     return NextResponse.json({

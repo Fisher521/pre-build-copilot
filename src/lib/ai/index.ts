@@ -11,6 +11,7 @@ export {
   processUserInputStreaming,
   extractSchemaFromInput,
   handleQuestionAnswer,
+  generateProjectQuestions,
 } from './qwen'
 
 export {

@@ -3,101 +3,69 @@
 import { useRouter, useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { StepCard, WizardProgress, ActionButtons } from '@/components/wizard'
-import { VoiceButton } from '@/components/chat/VoiceButton'
 import { cn } from '@/lib/utils'
-
-interface Question {
-  id: string
-  text: string
-  options?: { label: string; value: string }[]
-  allowCustom?: boolean
-}
-
-// 感受型问题 - 针对 Vibe Coder 设计
-const QUESTIONS: Question[] = [
-  {
-    id: 'timeline',
-    text: '你更希望这个项目是？',
-    options: [
-      { label: '一两天随便试试', value: '7d' },
-      { label: '一两周认真做个 MVP', value: '14d' },
-      { label: '如果顺了，可以长期做', value: '30d' },
-      { label: '现在还没想清楚', value: 'flexible' },
-    ],
-  },
-  {
-    id: 'tech_comfort',
-    text: '你现在更像哪种状态？',
-    options: [
-      { label: '会写代码，但不想折腾复杂架构', value: 'code_simple' },
-      { label: '技术一般，主要靠 AI + 拼起来', value: 'ai_build' },
-      { label: '技术不错，但不想一开始就重', value: 'code_good' },
-      { label: '不太确定', value: 'unsure' },
-    ],
-  },
-  {
-    id: 'budget_feeling',
-    text: '你对「花钱」这件事的感觉更接近？',
-    options: [
-      { label: '能不花钱最好', value: 'free' },
-      { label: '每月几十块可以接受', value: 'little' },
-      { label: '如果有希望，几百块也行', value: 'invest' },
-      { label: '现在还不想考虑', value: 'later' },
-    ],
-  },
-  {
-    id: 'commercialization',
-    text: '你现在做这个项目，更像是？',
-    options: [
-      { label: '自己用 + 顺便看看有没有人愿意付费', value: 'self_maybe' },
-      { label: '明确想做一个能赚钱的产品', value: 'business' },
-      { label: '先做出来再说', value: 'first' },
-      { label: '还没想清楚', value: 'unsure' },
-    ],
-  },
-  {
-    id: 'market_feeling',
-    text: '你现在对市场的感觉更像是？',
-    options: [
-      { label: '我感觉可能已经有人做过', value: 'exists' },
-      { label: '我没见过类似的，但也不确定', value: 'unseen' },
-      { label: '我完全没查过', value: 'uncheck' },
-      { label: '不重要，先做再说', value: 'doesnt_matter' },
-    ],
-  },
-]
+import type { Question, QuestionOption } from '@/lib/types'
 
 export default function QuestionsPage() {
   const router = useRouter()
   const params = useParams()
   const conversationId = params.id as string
 
+  const [isLoading, setIsLoading] = useState(true)
+  const [questions, setQuestions] = useState<Question[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>({})
-  const [customInput, setCustomInput] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [showFeedback, setShowFeedback] = useState(false)
 
-  const currentQuestion = QUESTIONS[currentIndex]
-  const isLastQuestion = currentIndex === QUESTIONS.length - 1
+  // Load questions from metadata
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const response = await fetch(`/api/conversation/${conversationId}`)
+        if (!response.ok) throw new Error('加载失败')
+        
+        const data = await response.json()
+        const generated = data.metadata?.generatedQuestions as Question[]
+        
+        if (generated && generated.length > 0) {
+          setQuestions(generated)
+        } else {
+          // Check if we need to generate them or show a loading state
+          // Ideally this page shouldn't be loaded until questions are ready
+          // For now, let's assume they might be missing and handle gracefully
+          console.warn('No generated questions found')
+        }
+      } catch (err) {
+        console.error('Load error:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadData()
+  }, [conversationId])
+
+  const currentQuestion = questions[currentIndex]
+  const isLastQuestion = currentIndex === questions.length - 1
+  const selectedValue = currentQuestion ? answers[currentQuestion.id] : undefined
+  
+  // Find selected option object to get feedback
+  const selectedOption = currentQuestion?.options?.find(opt => opt.value === selectedValue)
 
   const handleOptionClick = (value: string) => {
-    setAnswers(prev => ({ ...prev, [currentQuestion.id]: value }))
-    setCustomInput('')
+    if (showFeedback) return // Prevent changing answer while showing feedback (optional design choice)
     
-    // Auto-advance after selection
-    if (!isLastQuestion) {
-      setTimeout(() => setCurrentIndex(prev => prev + 1), 300)
-    }
+    setAnswers(prev => ({ ...prev, [currentQuestion!.id]: value }))
+    setShowFeedback(true)
   }
 
-  const handleCustomSubmit = () => {
-    if (customInput.trim()) {
-      setAnswers(prev => ({ ...prev, [currentQuestion.id]: customInput.trim() }))
-      setCustomInput('')
-      
-      if (!isLastQuestion) {
-        setCurrentIndex(prev => prev + 1)
-      }
+  const handleNext = () => {
+    setShowFeedback(false)
+    if (!isLastQuestion) {
+      setCurrentIndex(prev => prev + 1)
+    } else {
+      handleFinish()
     }
   }
 
@@ -105,15 +73,8 @@ export default function QuestionsPage() {
     if (currentIndex === 0) {
       router.push(`/review/${conversationId}`)
     } else {
+      setShowFeedback(false)
       setCurrentIndex(prev => prev - 1)
-    }
-  }
-
-  const handleSkip = () => {
-    if (!isLastQuestion) {
-      setCurrentIndex(prev => prev + 1)
-    } else {
-      handleFinish()
     }
   }
 
@@ -127,15 +88,32 @@ export default function QuestionsPage() {
         body: JSON.stringify({ answers }),
       })
       
-      // Navigate to report page (Step 4)
-      router.push(`/report/${conversationId}`)
+      // Navigate to Summary (Step 4)
+      router.push(`/summary/${conversationId}`)
     } catch (err) {
       console.error('Save failed:', err)
       setIsSaving(false)
     }
   }
 
-  const selectedValue = answers[currentQuestion.id]
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (!currentQuestion) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">正在生成针对你项目的评估问题...</p>
+          <p className="text-sm text-gray-400">如果长时间没反应，请刷新重试</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-gray-50 to-white">
@@ -143,79 +121,91 @@ export default function QuestionsPage() {
         {/* Progress */}
         <WizardProgress
           currentStep={currentIndex + 1}
-          totalSteps={QUESTIONS.length}
+          totalSteps={questions.length}
           className="mb-8"
         />
 
         {/* Question Card */}
         <StepCard maxWidth="xl">
-          <div className="text-center mb-8">
-            <h2 className="text-xl font-semibold text-gray-900">
-              {currentQuestion.text}
-            </h2>
-          </div>
-
-          {/* Options Grid */}
-          {currentQuestion.options && (
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              {currentQuestion.options.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => handleOptionClick(option.value)}
-                  className={cn(
-                    'px-4 py-4 rounded-xl text-sm font-medium',
-                    'border-2 transition-all duration-200',
-                    selectedValue === option.value
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-primary-300 hover:bg-primary-50/50'
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Custom Input */}
-          {currentQuestion.allowCustom && (
-            <div className="relative flex items-center gap-2">
-              <input
-                type="text"
-                value={customInput}
-                onChange={(e) => setCustomInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleCustomSubmit()}
-                placeholder="或者自己说..."
-                className={cn(
-                  'flex-1 px-4 py-3 rounded-xl text-base',
-                  'bg-gray-50 border-2 border-transparent',
-                  'focus:border-primary-500 focus:bg-white focus:outline-none',
-                  'transition-all duration-200'
-                )}
-              />
-              <VoiceButton
-                onTranscript={(text) => setCustomInput(prev => prev + text)}
-                className="flex-shrink-0"
-              />
-              {customInput.trim() && (
-                <button
-                  onClick={handleCustomSubmit}
-                  className="px-4 py-2.5 text-sm bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors"
-                >
-                  确定
-                </button>
+          <div className="space-y-6">
+            {/* Header */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                {currentQuestion.question}
+              </h2>
+              {currentQuestion.insight && (
+                <div className="flex items-start gap-2 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <span className="text-lg">💡</span>
+                  <p className="leading-relaxed">{currentQuestion.insight}</p>
+                </div>
               )}
             </div>
-          )}
 
-          <ActionButtons
-            onBack={handleBack}
-            onNext={isLastQuestion ? handleFinish : undefined}
-            onSkip={handleSkip}
-            showSkip={true}
-            nextLabel={isLastQuestion ? '生成报告 →' : undefined}
-            nextLoading={isSaving}
-            skipLabel={isLastQuestion ? '跳过并生成' : '跳过'}
-          />
+            {/* Options Grid */}
+            <div className="grid grid-cols-1 gap-3">
+              {currentQuestion.options?.map((option) => {
+                const isSelected = selectedValue === option.value
+                const isOtherSelected = selectedValue && selectedValue !== option.value
+                
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => handleOptionClick(option.value)}
+                    disabled={showFeedback}
+                    className={cn(
+                      'text-left px-5 py-4 rounded-xl text-base transition-all duration-200 relative overflow-hidden',
+                      'border-2',
+                      isSelected
+                        ? 'border-primary-500 bg-primary-50 text-primary-900 shadow-sm'
+                        : 'border-gray-100 bg-white text-gray-700 hover:border-primary-200 hover:bg-gray-50',
+                      showFeedback && isOtherSelected && 'opacity-40 grayscale'
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{option.label}</span>
+                      {isSelected && (
+                        <span className="text-primary-600">
+                          {showFeedback ? ' ' : '✓'}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Immediate Feedback Card - V2.0 Core Feature */}
+            {showFeedback && selectedOption?.feedback && (
+              <div className={cn(
+                "rounded-xl p-4 border animate-in fade-in slide-in-from-top-2 duration-300",
+                selectedOption.feedback.type === 'warning' 
+                  ? "bg-amber-50 border-amber-200 text-amber-900" 
+                  : selectedOption.feedback.type === 'positive'
+                    ? "bg-green-50 border-green-200 text-green-900"
+                    : "bg-blue-50 border-blue-200 text-blue-900"
+              )}>
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">
+                    {selectedOption.feedback.type === 'warning' ? '⚠️' : selectedOption.feedback.type === 'positive' ? '👍' : '💬'}
+                  </span>
+                  <div>
+                    <p className="font-medium text-sm leading-relaxed">
+                      {selectedOption.feedback.message}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <ActionButtons
+              onBack={handleBack}
+              onNext={handleNext}
+              backLabel="上一步"
+              nextLabel={isLastQuestion ? "生成初步总结 →" : "下一题 →"} // Navigate to Summary first
+              nextDisabled={!selectedValue || !showFeedback} // Force user to see feedback
+              nextLoading={isSaving}
+            />
+          </div>
         </StepCard>
       </div>
     </div>

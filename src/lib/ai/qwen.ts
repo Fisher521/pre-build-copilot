@@ -485,3 +485,106 @@ export async function* processUserInputStreaming(params: {
     throw new Error('AI 服务暂时不可用，请稍后再试')
   }
 }
+
+/**
+ * Generate dynamic questions based on project context (Vibe Checker 2.0)
+ */
+export async function generateProjectQuestions(schema: EvaluationSchema): Promise<any[]> {
+  const prompt = `You are a Vibe Coding Consultant.
+User's Idea: ${schema.idea.one_liner}
+Core Function: ${schema.mvp.first_job}
+Target User: ${schema.user.primary_user}
+
+You are an expert product manager (Vibe Coder style).
+Your goal is to generate 3-4 "Killer Questions" to help the user clarify their idea and identify risks.
+
+PROJECT ANALYSIS:
+1. **Identify Category**:
+   - **Tool**: Efficiency, solving personal pain. (Focus: "How do you solve it now?")
+   - **Content**: Information, media. (Focus: "Where does content come from?", "Can you keep updating?")
+   - **Transaction/Platform**: Connecting two parties. (Focus: "Can you find first users?", "Offline ops?")
+   - **AI Wrapper**: API based. (Focus: "What if AI makes mistakes?", "Differentiation?")
+
+2. **Check Discouragement Triggers** (If found, ASK these immediately to warn user):
+   - **Offline Operations**: Delivery, meetups, hardware.
+   - **Regulation**: Finance, Health, payment flows.
+   - **Complexity**: Training models, high concurrency.
+   - **Cold Start**: Needs 2-sided network.
+
+GENERATION RULES:
+1. **First Question** MUST be the "Extension of Experience" question if not answered (e.g. "Have you built similar things?").
+2. **Subsequent Questions**: Pick the most critical risks based on Category.
+3. **Options**: Provide 3-4 distinct paths.
+4. **Feedback**: For EACH option, provide immediate "Vibe Check" feedback.
+   - If user picks a "Hard Mode" option (e.g. Offline, Native App), feedback MUST be a 'warning'.
+   - If user picks a "Vibe Mode" option (e.g. Web, Tools), feedback should be 'positive'.
+
+OUTPUT FORMAT:
+Return a JSON object with a "questions" array.
+Each question object:
+- \`id\`: string
+- \`field\`: string (Map to one of: 'user.experience_level', 'mvp.type', 'platform.form', 'constraints.api_or_data_dependency', 'preference.priority', 'problem.scenario')
+- \`question\`: string (The question text)
+- \`insight\`: string (Why we ask this)
+- \`options\`: array of objects:
+  - \`id\`: string
+  - \`label\`: string
+  - \`value\`: string (Maps to schema enums. For experience_level: 'never'|'tutorial'|'small_project'|'veteran'. For others use standard schema values found in types definitions)
+  - \`feedback\`: { \`type\`: 'positive'|'warning'|'neutral', \`message\`: string }
+  - \`tags\`: string[] (e.g. ['easy', 'hard'])
+
+### Example Option Values for Mapping
+- experience_level: 'never', 'tutorial', 'small_project', 'veteran'
+- mvp.type: 'content_tool', 'functional_tool', 'ai_tool', 'transaction_tool'
+- platform.form: 'web', 'ios', 'miniprogram', 'plugin' (use 'web' for easiest)
+- priority: 'ship_fast', 'cost_first'
+`
+
+  try {
+    const response = await getClient().chat.completions.create({
+      model: MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: 'Output JSON only. Ensure valid JSON format.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      response_format: { type: 'json_object' },
+    })
+
+    const content = response.choices[0]?.message?.content || '{}'
+    const result = JSON.parse(content)
+    return result.questions || []
+  } catch (error) {
+    console.error('Generate questions error:', error)
+    // Fallback if AI fails
+    return [
+      {
+        id: 'experience',
+        field: 'user.experience_level',
+        question: '你之前做过类似的产品吗？',
+        insight: '了解你的经验能帮我调整建议的难度。',
+        type: 'choice',
+        options: [
+          { 
+            id: 'never', 
+            label: '第一次尝试', 
+            value: 'never',
+            feedback: { type: 'neutral', message: '没关系，我会给你最详细的指引。' }
+          },
+          { 
+            id: 'veteran', 
+            label: '老手了', 
+            value: 'veteran',
+            feedback: { type: 'positive', message: '太好了，我们可以直接聊核心难点。' }
+          }
+        ]
+      }
+    ]
+  }
+}

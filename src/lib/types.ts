@@ -7,6 +7,10 @@
 // Evaluation Schema Types (核心 Schema)
 // ================================
 
+// ================================
+// Evaluation Schema Types (Core Schema)
+// ================================
+
 /**
  * Pain level enum
  */
@@ -15,7 +19,17 @@ export type PainLevel = 'low' | 'medium' | 'high' | 'unknown'
 /**
  * MVP type enum
  */
-export type MVPType = 'content_tool' | 'functional_tool' | 'ai_tool' | 'other' | 'unknown'
+export type MVPType = 'content_tool' | 'functional_tool' | 'ai_tool' | 'transaction_tool' | 'other' | 'unknown'
+
+/**
+ * User experience level (V2.0 State Question)
+ */
+export type ExperienceLevel = 
+  | 'never'           // 从没用 AI 做过东西
+  | 'tutorial'        // 跟着教程做过
+  | 'small_project'   // 做过一些小东西
+  | 'veteran'         // 做过好几个了
+  | 'unknown'
 
 /**
  * Platform form enum
@@ -68,6 +82,7 @@ export interface EvaluationSchema {
   user: {
     primary_user: string
     usage_context: string
+    experience_level: ExperienceLevel // V2.0 added
   }
   mvp: {
     first_job: string
@@ -103,6 +118,7 @@ export type SchemaFieldPath =
   | 'problem.pain_level'
   | 'user.primary_user'
   | 'user.usage_context'
+  | 'user.experience_level' // V2.0 added
   | 'mvp.first_job'
   | 'mvp.type'
   | 'platform.form'
@@ -113,41 +129,56 @@ export type SchemaFieldPath =
 
 /**
  * MVP required fields
- * 与 questionBank.ts 中 isMVP: true 的问题保持一致
- * 只需 3 题即可进行评估
  */
 export const MVP_REQUIRED_FIELDS: SchemaFieldPath[] = [
-  'idea.one_liner',      // Q1: 产品描述
-  'user.primary_user',   // Q2: 目标用户
-  'platform.form',       // Q3: 产品形态
+  'idea.one_liner',
+  'user.primary_user',
+  'platform.form',
 ]
 
 // ================================
-// Question Bank Types
+// Question Bank Types (V2.0)
 // ================================
 
 /**
- * Question type
+ * Feedback provided immediately after selection
  */
-export type QuestionType = 'choice' | 'open'
+export interface OptionFeedback {
+  type: 'positive' | 'warning' | 'neutral'
+  message: string
+}
 
 /**
- * Question option
+ * Report impact configuration
+ */
+export interface ReportImpact {
+  tech_stack?: string
+  timeline?: string
+  cost?: string
+  risk?: string
+}
+
+/**
+ * Question option with metadata
  */
 export interface QuestionOption {
   id: string
   label: string
   value: string
+  feedback?: OptionFeedback    // V2.0 added: Immediate feedback
+  tags?: string[]             // V2.0 added: Logic tags
+  report_impact?: ReportImpact // V2.0 added: For report generation logic
 }
 
 /**
- * Question from question bank
+ * Question structure
  */
 export interface Question {
   id: string
   field: SchemaFieldPath
-  question: string
-  type: QuestionType
+  question: string // The main question text
+  insight?: string // V2.0 added: "Why we ask this" (点拨)
+  type: 'choice' | 'open'
   options?: QuestionOption[]
   priority: number
   isMVP: boolean
@@ -157,37 +188,22 @@ export interface Question {
 // Conversation Types
 // ================================
 
-/**
- * Conversation status
- */
 export type ConversationStatus = 'active' | 'completed' | 'abandoned'
-
-/**
- * Message role
- */
 export type MessageRole = 'user' | 'assistant' | 'system'
 
-/**
- * Choice option in selection questions
- */
 export interface Choice {
   id: string
   text: string
 }
 
-/**
- * Message metadata for special content types
- */
 export interface MessageMetadata {
   type?: 'text' | 'choices' | 'summary' | 'evaluation'
   choices?: Choice[]
   selectedChoice?: string
   updatedFields?: SchemaFieldPath[]
+  generatedQuestions?: Question[] // V2.0 added: Store generated questions
 }
 
-/**
- * Chat message
- */
 export interface Message {
   id: string
   conversation_id: string
@@ -197,9 +213,6 @@ export interface Message {
   created_at: string
 }
 
-/**
- * Conversation session
- */
 export interface Conversation {
   id: string
   user_id?: string
@@ -207,21 +220,88 @@ export interface Conversation {
   schema_data: EvaluationSchema
   project_name?: string
   project_description?: string
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown> // Stores generatedQuestions, report data, etc.
   created_at: string
   updated_at: string
   completed_at?: string
 }
 
-/**
- * Conversation with messages
- */
 export interface ConversationWithMessages extends Conversation {
   messages: Message[]
 }
 
 // ================================
-// Evaluation Output Types
+// Report 2.0 Output Types
+// ================================
+
+export interface ReportScore {
+  feasibility: number // 0-100
+  breakdown: {
+    tech: number
+    market: number
+    onboarding: number
+    user_match: number
+  }
+}
+
+export interface TechStackOption {
+  id: string
+  name: string // "方案A：极简版"
+  tools: string[] // ["v0", "Vercel"]
+  capability: string // "展示、简单交互"
+  difficulty: number // 1-5 stars
+  dev_time: string // "2-4 hours"
+  cost: string // "0 元"
+  fit_for: string // "先验证想法"
+}
+
+export interface ExecutionStep {
+  title: string
+  description: string
+  action_url?: string
+  action_label?: string
+  copy_text?: string // Prompt to copy
+}
+
+export interface VibeReport {
+  score: ReportScore
+  one_liner_conclusion: string
+  
+  why_worth_it: string[]
+  risks: string[]
+  
+  market_analysis: {
+    competitors: { name: string; pros: string; cons: string; url?: string }[]
+    opportunity: string
+    search_trends?: string
+  }
+  
+  tech_options: {
+    option_a: TechStackOption
+    option_b: TechStackOption
+    advice: string
+  }
+  
+  fastest_path: ExecutionStep[]
+  
+  cost_estimate: {
+    time_breakdown: string
+    money_breakdown: string
+  }
+  
+  pitfalls: string[]
+  
+  next_steps: {
+    today: string[]
+    this_week: string[]
+    later: string[]
+  }
+  
+  learning_takeaways: string[]
+}
+
+// ================================
+// Legacy Types Support (For backward compatibility)
 // ================================
 
 /**
@@ -246,15 +326,15 @@ export interface RecommendedApproach {
   next_steps: string[]
 }
 
-/**
- * Evaluation result
- */
 export interface EvaluationResult {
   summary: string
   feasibility: FeasibilityAssessment
   risks: string[]
   recommendation: RecommendedApproach
+  // V2.0 Extension
+  v2_report?: VibeReport
 }
+
 
 // ================================
 // AI Response Types

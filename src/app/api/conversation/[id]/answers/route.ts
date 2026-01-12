@@ -4,8 +4,20 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getConversation, updateConversationSchema } from '@/lib/db/conversations'
-import type { EvaluationSchema, TimelinePreference, MVPType } from '@/lib/types'
+import { getConversation, updateConversation } from '@/lib/db/conversations'
+import type { EvaluationSchema } from '@/lib/types'
+
+// Helper to update nested object by dot notation path
+// e.g. set(obj, 'user.experience_level', 'expert')
+function setDeep(obj: any, path: string, value: any) {
+  const keys = path.split('.')
+  let current = obj
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (!current[keys[i]]) current[keys[i]] = {}
+    current = current[keys[i]]
+  }
+  current[keys[keys.length - 1]] = value
+}
 
 export async function POST(
   request: NextRequest,
@@ -24,57 +36,40 @@ export async function POST(
       )
     }
 
-    // Map answers to schema fields
-    const currentSchema = conversation.schema_data
+    // 1. Save answers to metadata (The Source of Truth for Report V2)
+    const newMetadata = {
+      ...conversation.metadata,
+      answers: {
+        ...(conversation.metadata?.answers as Record<string, any> || {}),
+        ...answers
+      }
+    }
+
+    // 2. Attempt to update schema data if keys match schema paths
+    // Dynamic questions have 'field' property like 'user.experience_level'
+    const newSchema = { ...conversation.schema_data }
+    Object.entries(answers).forEach(([key, value]) => {
+      // If key looks like a path (contains dot), try to update schema
+      if (key.includes('.')) {
+        try {
+          setDeep(newSchema, key, value)
+        } catch (e) {
+          console.warn(`Failed to map answer ${key} to schema`, e)
+        }
+      }
+    })
     
-    // Map timeline
-    const timelineVal = answers.timeline
-    const timelineMap: Record<string, TimelinePreference> = {
-      '7d': '7d',
-      '14d': '14d',
-      '30d': '30d',
-      'flexible': 'flexible',
-    }
-    
-    // Map tech_comfort to mvp type
-    const techMap: Record<string, MVPType> = {
-      'code_simple': 'functional_tool',
-      'ai_build': 'ai_tool',
-      'code_good': 'functional_tool',
-      'unsure': 'unknown',
+    // Update timestamp
+    newSchema._meta = {
+       ...newSchema._meta,
+       updated_at: new Date().toISOString()
     }
 
-    // Map budget to priority
-    const priority = (answers.budget_feeling === 'free' || answers.budget_feeling === 'little') 
-      ? 'cost_first' 
-      : 'ship_fast'
-
-    const updatedSchema: EvaluationSchema = {
-      ...currentSchema,
-      preference: {
-        ...currentSchema.preference,
-        timeline: timelineMap[timelineVal] || currentSchema.preference.timeline,
-        priority: priority,
-      },
-      mvp: {
-        ...currentSchema.mvp,
-        type: techMap[answers.tech_comfort] || currentSchema.mvp.type,
-      },
-      user: {
-        ...currentSchema.user,
-        usage_context: answers.commercialization || currentSchema.user.usage_context,
-      },
-      problem: {
-        ...currentSchema.problem,
-        scenario: answers.market_feeling ? `市场感觉：${answers.market_feeling}` : currentSchema.problem.scenario,
-      },
-      _meta: {
-        ...currentSchema._meta,
-        updated_at: new Date().toISOString(),
-      },
-    }
-
-    await updateConversationSchema(id, updatedSchema)
+    // Save both
+    await updateConversation(id, {
+      metadata: newMetadata,
+      schema_data: newSchema
+    })
 
     return NextResponse.json({
       success: true,

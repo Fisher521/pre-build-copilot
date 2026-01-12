@@ -26,8 +26,26 @@ export async function PATCH(
     // Merge updates into existing schema
     const currentSchema = conversation.schema_data
     const updatedSchema = updateSchema(currentSchema, body)
-
+    
+    // Update schema in DB
     await updateConversationSchema(id, updatedSchema)
+
+    // Hook: If this is the "Confirm" step (contains core fields), generate specific questions
+    if (body.idea || body.mvp) {
+      const { generateProjectQuestions } = await import('@/lib/ai')
+      const { updateConversation } = await import('@/lib/db/conversations')
+
+      // Generate questions (this might take a few seconds)
+      const generatedQuestions = await generateProjectQuestions(updatedSchema)
+
+      // Store in conversation metadata
+      await updateConversation(id, {
+        metadata: {
+          ...conversation.metadata,
+          generatedQuestions,
+        },
+      })
+    }
 
     return NextResponse.json({
       success: true,
