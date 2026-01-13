@@ -11,7 +11,7 @@ import type { TechStackOption } from '@/lib/types'
 interface TechStackComparisonCardProps {
   optionA: TechStackOption
   optionB: TechStackOption
-  zeroCodest?: TechStackOption
+  zeroCost?: TechStackOption
   advice: string
 }
 
