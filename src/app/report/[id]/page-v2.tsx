@@ -13,7 +13,14 @@ import {
   DevelopmentPathCard,
   ValidationMethodsCard,
   TermTranslationTable,
-  DissuasionView
+  DissuasionView,
+  WhyWorthItCard,
+  TechStackComparisonCard,
+  CostEstimateCard,
+  PitfallsCard,
+  PromptFrameworkCard,
+  NextStepsCard,
+  ProductApproachGuidance
 } from '@/components/report'
 
 // 加载步骤配置
@@ -157,34 +164,11 @@ export default function ReportPageV2() {
         </div>
 
         {/* 为什么值得做 / 需要注意的风险 */}
-        <div className="grid md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span>💪</span> 为什么值得做
-            </h3>
-            <ul className="space-y-3">
-              {report.why_worth_it.map((item, i) => (
-                <li key={i} className="flex items-start gap-3 text-gray-700">
-                  <span className="text-green-500 mt-0.5">✓</span>
-                  <span className="text-sm leading-relaxed">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span>⚠️</span> 需要注意的风险
-            </h3>
-            <ul className="space-y-3">
-              {report.risks.map((item, i) => (
-                <li key={i} className="flex items-start gap-3 text-gray-700">
-                  <span className="text-amber-500 mt-0.5">!</span>
-                  <span className="text-sm leading-relaxed">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+          <WhyWorthItCard
+            whyWorthIt={report.why_worth_it}
+            risks={report.risks}
+          />
         </div>
 
         {/* 市场分析 */}
@@ -214,6 +198,59 @@ export default function ReportPageV2() {
         {report.validation_methods && report.validation_methods.length > 0 && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400">
             <ValidationMethodsCard methods={report.validation_methods} />
+          </div>
+        )}
+
+        {/* 技术方案对比 */}
+        {report.tech_stack_comparison && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-450">
+            <TechStackComparisonCard
+              optionA={report.tech_stack_comparison.option_a}
+              optionB={report.tech_stack_comparison.option_b}
+              zeroCost={report.tech_stack_comparison.zero_cost}
+              advice={report.tech_stack_comparison.advice}
+            />
+          </div>
+        )}
+
+        {/* 成本估算 */}
+        {report.cost_estimate && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500">
+            <CostEstimateCard costEstimate={report.cost_estimate} />
+          </div>
+        )}
+
+        {/* 可能踩的坑 */}
+        {report.pitfalls && report.pitfalls.length > 0 && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-550">
+            <PitfallsCard pitfalls={report.pitfalls} />
+          </div>
+        )}
+
+        {/* 提示词框架教学 */}
+        {report.prompt_framework && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-600">
+            <PromptFrameworkCard framework={report.prompt_framework} />
+          </div>
+        )}
+
+        {/* 下一步建议 */}
+        {report.next_steps && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-650">
+            <NextStepsCard nextSteps={report.next_steps} />
+          </div>
+        )}
+
+        {/* 产品方案引导式提问 */}
+        {report.guided_questions && report.guided_questions.length > 0 && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-700">
+            <ProductApproachGuidance
+              questions={report.guided_questions}
+              onComplete={(approachId) => {
+                console.log('Selected approach:', approachId)
+                // 可以在这里根据选择的方案加载更详细的指导
+              }}
+            />
           </div>
         )}
 

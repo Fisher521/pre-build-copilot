@@ -392,7 +392,17 @@ export default function ReportPage() {
               <div>
                 <div className="text-sm font-medium text-gray-500 mb-2">搜索趋势</div>
                 <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  {report.market_analysis.search_trends}
+                  <div>{report.market_analysis.search_trends.value}</div>
+                  {report.market_analysis.search_trends.source && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      来源: {report.market_analysis.search_trends.source}
+                      {report.market_analysis.search_trends.source_url && (
+                        <a href={report.market_analysis.search_trends.source_url} target="_blank" rel="noopener noreferrer" className="ml-1 text-primary-600 hover:underline">
+                          查看
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
