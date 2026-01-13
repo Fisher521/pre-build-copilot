@@ -20,7 +20,7 @@ function PitfallItem({ pitfall, index }: PitfallItemProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   // 解析坑点和解决方法（格式："问题 → 解决方法"）
-  const parts = pitfall.split(/[→->]/)
+  const parts = pitfall.split(/[→\->]/)
   const problem = parts[0]?.trim() || pitfall
   const solution = parts[1]?.trim()
 
