@@ -5,6 +5,14 @@ import { useState, useEffect, useRef } from 'react'
 import { StepCard } from '@/components/wizard'
 import { cn } from '@/lib/utils'
 import type { VibeReport, ProductApproach } from '@/lib/types'
+import {
+  ScoreCard,
+  MarketAnalysisCard,
+  DevelopmentPathCard,
+  ValidationMethodsCard,
+  TermTranslationTable,
+  DissuasionView
+} from '@/components/report'
 
 // 加载步骤配置
 const LOADING_STEPS = [

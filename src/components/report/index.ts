@@ -5,3 +5,7 @@
 
 export { ScoreCard } from './ScoreCard'
 export { MarketAnalysisCard } from './MarketAnalysisCard'
+export { DevelopmentPathCard } from './DevelopmentPathCard'
+export { ValidationMethodsCard } from './ValidationMethodsCard'
+export { TermGlossary, TermTranslationTable } from './TermGlossary'
+export { DissuasionView } from './DissuasionView'
