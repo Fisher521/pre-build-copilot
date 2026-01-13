@@ -205,21 +205,59 @@ export default function ReportPage() {
 
         if (!response.ok) throw new Error('生成报告失败')
 
-        const data = await response.json()
+        // 处理流式响应
+        const reader = response.body?.getReader()
+        if (!reader) throw new Error('No response body')
 
-        // 完成进度
-        setProgress(100)
-        setCurrentStep(LOADING_STEPS.length)
+        const decoder = new TextDecoder()
+        let buffer = ''
 
-        // 短暂延迟后显示报告
-        setTimeout(() => {
-          setReport(data.report)
-          if (data.report?.product_approaches?.recommended_id) {
-            setSelectedApproach(data.report.product_approaches.recommended_id)
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n\n')
+          buffer = lines.pop() || ''
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6))
+
+                if (data.type === 'start') {
+                  // 开始生成
+                  setCurrentStep(0)
+                } else if (data.type === 'progress') {
+                  // 根据内容长度更新进度（使用函数式更新避免 stale closure）
+                  const estimatedProgress = Math.min((data.length / 3000) * 100, 90)
+                  setProgress(prev => Math.max(prev, estimatedProgress))
+                  // 根据进度推进步骤
+                  const stepIndex = Math.floor((estimatedProgress / 100) * LOADING_STEPS.length)
+                  setCurrentStep(prev => Math.max(prev, Math.min(stepIndex, LOADING_STEPS.length - 1)))
+                } else if (data.type === 'complete') {
+                  // 完成进度
+                  setProgress(100)
+                  setCurrentStep(LOADING_STEPS.length)
+
+                  // 短暂延迟后显示报告
+                  setTimeout(() => {
+                    setReport(data.report)
+                    if (data.report?.product_approaches?.recommended_id) {
+                      setSelectedApproach(data.report.product_approaches.recommended_id)
+                    }
+                    setIsLoading(false)
+                  }, 500)
+                } else if (data.type === 'error') {
+                  throw new Error(data.message || '生成失败')
+                }
+              } catch (e) {
+                if (e instanceof SyntaxError) continue
+                throw e
+              }
+            }
           }
-          setIsLoading(false)
-        }, 500)
-
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : '生成失败')
         setIsLoading(false)
@@ -632,31 +670,35 @@ export default function ReportPage() {
 
         {/* Cost & Pitfalls */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-600">
+          {/* 成本预估 */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
               <span>💰</span> 成本预估
             </h3>
             <div className="space-y-4">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">时间投入</div>
-                <div className="font-medium text-gray-700">{report.cost_estimate.time_breakdown}</div>
+              <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                <div className="text-xs font-medium text-blue-600 mb-2">⏱️ 时间投入</div>
+                <div className="text-sm text-gray-800 leading-relaxed">{report.cost_estimate.time_breakdown}</div>
               </div>
-              <div>
-                <div className="text-xs text-gray-500 mb-1">金钱投入</div>
-                <div className="font-medium text-gray-700">{report.cost_estimate.money_breakdown}</div>
+              <div className="p-4 bg-green-50 rounded-xl border border-green-100">
+                <div className="text-xs font-medium text-green-600 mb-2">💵 金钱投入</div>
+                <div className="text-sm text-gray-800 leading-relaxed">{report.cost_estimate.money_breakdown}</div>
               </div>
             </div>
           </div>
 
+          {/* 避坑指南 */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span>💣</span> 避坑指南
+            <h3 className="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
+              <span>⚠️</span> 避坑指南
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {report.pitfalls.map((pit, i) => (
-                <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
-                  <span className="text-red-500">•</span>
-                  {pit}
+                <li key={i} className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-orange-200 text-orange-700 flex items-center justify-center text-xs font-medium mt-0.5">
+                    {i + 1}
+                  </span>
+                  <span className="text-sm text-gray-800 leading-relaxed">{pit}</span>
                 </li>
               ))}
             </ul>
