@@ -212,6 +212,38 @@ export default function ReportPage() {
         const decoder = new TextDecoder()
         let buffer = ''
 
+        // 处理 SSE 事件的辅助函数
+        const processLine = (line: string) => {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6))
+
+              if (data.type === 'start') {
+                setCurrentStep(0)
+              } else if (data.type === 'progress') {
+                const estimatedProgress = Math.min((data.length / 3000) * 100, 90)
+                setProgress(prev => Math.max(prev, estimatedProgress))
+                const stepIndex = Math.floor((estimatedProgress / 100) * LOADING_STEPS.length)
+                setCurrentStep(prev => Math.max(prev, Math.min(stepIndex, LOADING_STEPS.length - 1)))
+              } else if (data.type === 'complete') {
+                setProgress(100)
+                setCurrentStep(LOADING_STEPS.length)
+                setTimeout(() => {
+                  setReport(data.report)
+                  if (data.report?.product_approaches?.recommended_id) {
+                    setSelectedApproach(data.report.product_approaches.recommended_id)
+                  }
+                  setIsLoading(false)
+                }, 500)
+              } else if (data.type === 'error') {
+                throw new Error(data.message || '生成失败')
+              }
+            } catch (e) {
+              if (!(e instanceof SyntaxError)) throw e
+            }
+          }
+        }
+
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
@@ -221,42 +253,13 @@ export default function ReportPage() {
           buffer = lines.pop() || ''
 
           for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6))
-
-                if (data.type === 'start') {
-                  // 开始生成
-                  setCurrentStep(0)
-                } else if (data.type === 'progress') {
-                  // 根据内容长度更新进度（使用函数式更新避免 stale closure）
-                  const estimatedProgress = Math.min((data.length / 3000) * 100, 90)
-                  setProgress(prev => Math.max(prev, estimatedProgress))
-                  // 根据进度推进步骤
-                  const stepIndex = Math.floor((estimatedProgress / 100) * LOADING_STEPS.length)
-                  setCurrentStep(prev => Math.max(prev, Math.min(stepIndex, LOADING_STEPS.length - 1)))
-                } else if (data.type === 'complete') {
-                  // 完成进度
-                  setProgress(100)
-                  setCurrentStep(LOADING_STEPS.length)
-
-                  // 短暂延迟后显示报告
-                  setTimeout(() => {
-                    setReport(data.report)
-                    if (data.report?.product_approaches?.recommended_id) {
-                      setSelectedApproach(data.report.product_approaches.recommended_id)
-                    }
-                    setIsLoading(false)
-                  }, 500)
-                } else if (data.type === 'error') {
-                  throw new Error(data.message || '生成失败')
-                }
-              } catch (e) {
-                if (e instanceof SyntaxError) continue
-                throw e
-              }
-            }
+            processLine(line)
           }
+        }
+
+        // 处理流结束后 buffer 中剩余的数据
+        if (buffer.trim()) {
+          processLine(buffer.trim())
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : '生成失败')
