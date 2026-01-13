@@ -239,9 +239,9 @@ export default function HomePage() {
           <p className="text-sm text-gray-400 mb-3">比如：</p>
           <div className="flex flex-wrap gap-2">
             {[
-              '帮人快速生成周报的工具',
-              '独居老人订菜小程序',
-              '宠物健康追踪 App',
+              '用 AI 帮我做个每日新闻摘要站',
+              '读书笔记自动生成思维导图',
+              '一句话生成落地页的工具',
             ].map((example) => (
               <button
                 key={example}
