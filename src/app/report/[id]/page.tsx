@@ -707,19 +707,6 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* Learning */}
-        <div className="rounded-2xl border border-gray-100 bg-gradient-to-br from-indigo-50 to-purple-50 p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-700">
-          <h3 className="text-lg font-semibold text-indigo-900 mb-4 flex items-center gap-2">
-            <span>🎓</span> 学习收获
-          </h3>
-          <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {report.learning_takeaways.map((learn, i) => (
-              <li key={i} className="flex items-center gap-2 text-sm text-indigo-800 bg-white border border-indigo-100 p-3 rounded-lg">
-                <span>💡</span> {learn}
-              </li>
-            ))}
-          </ul>
-        </div>
 
         {/* Feedback */}
         <div className="mb-8 text-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
