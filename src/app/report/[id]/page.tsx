@@ -628,27 +628,27 @@ export default function ReportPage() {
 
         {/* Fastest Path */}
         <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
             <span>🚀</span> 最快上手路径
           </h3>
-          <div className="space-y-4">
+          <div className="space-y-5">
             {report.fastest_path.map((step, i) => (
-              <div key={i} className="relative pl-10">
-                <div className="absolute left-0 w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm">
+              <div key={i} className="relative pl-12">
+                <div className="absolute left-0 w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm">
                   {i + 1}
                 </div>
-                <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
-                  <div className="font-bold text-gray-900 mb-1">{step.title}</div>
-                  <p className="text-sm text-gray-600 mb-3">{step.description}</p>
+                <div className="bg-gray-50 border border-gray-100 rounded-xl p-5">
+                  <div className="font-semibold text-gray-900 mb-2 text-base">{step.title}</div>
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line mb-4">{step.description}</p>
                   {step.copy_text && (
                     <div
-                      className="bg-white border border-gray-200 p-3 rounded-lg text-xs font-mono text-gray-600 mb-3 cursor-pointer hover:bg-gray-50 transition-colors group"
+                      className="bg-white border border-gray-200 p-4 rounded-lg text-sm text-gray-700 mb-4 cursor-pointer hover:bg-gray-50 transition-colors group leading-relaxed whitespace-pre-line"
                       onClick={() => navigator.clipboard.writeText(step.copy_text!)}
                       title="点击复制"
                     >
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-[10px] uppercase text-gray-400">可复制的提示词</span>
-                        <span className="text-[10px] text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity">点击复制</span>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-medium text-gray-500">📋 可复制的提示词</span>
+                        <span className="text-xs text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity">点击复制</span>
                       </div>
                       {step.copy_text}
                     </div>
@@ -657,7 +657,7 @@ export default function ReportPage() {
                     <a
                       href={step.action_url}
                       target="_blank"
-                      className="inline-block px-4 py-2 bg-primary-500 text-white text-sm font-medium rounded-lg hover:bg-primary-600 transition-colors"
+                      className="inline-block px-5 py-2.5 bg-primary-500 text-white text-sm font-medium rounded-lg hover:bg-primary-600 transition-colors"
                     >
                       {step.action_label || '去执行 →'}
                     </a>
