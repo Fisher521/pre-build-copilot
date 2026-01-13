@@ -1,6 +1,6 @@
 /**
  * Generate Report API
- * POST /api/conversation/[id]/report - Generate V2.0 evaluation report
+ * POST /api/conversation/[id]/report - Generate V2.2 evaluation report
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -8,36 +8,56 @@ import { getConversation, updateConversation } from '@/lib/db/conversations'
 import { searchCompetitors } from '@/lib/ai/search'
 import OpenAI from 'openai'
 import type { VibeReport } from '@/lib/types'
-
-// Vibe Coding 工具库 - V2.1
-const VIBE_TOOL_LIBRARY = `
-推荐工具库（优先使用这些）：
-1. **代码生成器（魔法层）**：
-   - **v0.dev**：最适合前端UI、React组件、后台面板（免费额度够用）
-   - **Lovable.dev / Bolt.new**：适合全栈应用/原型，适合技术基础较弱的用户
-   - **扣子空间**：国产替代，无需科学上网
-
-2. **AI编辑器**：
-   - **Cursor**：行业标准，强烈推荐
-   - **Windsurf / Trae**：备选方案
-
-3. **后端/数据库**：
-   - **Supabase**：默认选择，Auth + 数据库 + 实时功能
-   - **MemFire Cloud**：Supabase国产版，国内访问友好
-   - **Convex**：实时数据场景
-
-4. **部署/支付**：
-   - **Vercel**：默认部署方案
-   - **Zeabur**：国产替代
-   - **Stripe / LemonSqueezy**：海外支付
-`
+import {
+  VIBE_TOOL_LIBRARY,
+  CHINA_MARKET_DATA_SOURCES,
+  TERM_TRANSLATIONS,
+  DISSUASION_RULES,
+  VALIDATION_METHODS_TEMPLATE,
+  PROMPT_FRAMEWORK_GUIDE
+} from '@/lib/reportConfig'
+import { REPORT_JSON_SCHEMA } from '@/lib/reportPrompt'
 
 // 根据经验等级调整语气
 const TONE_GUIDES = {
-  'never': "语气：极度鼓励，用最简单的词。不用术语。把用户当作聪明但不懂技术的朋友。重点推荐v0/Lovable这类'魔法'工具。",
-  'tutorial': "语气：鼓励但有教育意义。解释*为什么*某些工具能省时间。强调边做边学。",
-  'small_project': "语气：平等交流，务实。强调速度，警惕过度工程化。",
-  'veteran': "语气：尊重，简洁，高层次。重点是消除摩擦，用AI工具提升已有技能。"
+  'never': "语气：极度鼓励，用最简单的词。不用术语（或用括号解释）。把用户当作聪明但不懂技术的朋友。重点推荐扣子空间/豆包MarsCode这类'魔法'工具。",
+  'tutorial': "语气：鼓励但有教育意义。解释*为什么*某些工具能省时间。强调边做边学。推荐Cursor。",
+  'small_project': "语气：平等交流，务实。强调速度，警惕过度工程化。推荐Cursor + 国产服务。",
+  'veteran': "语气：尊重，简洁，高层次。重点是消除摩擦，用AI工具提升已有技能。推荐Cursor Pro + Claude Code。"
+}
+
+// 劝退检测函数
+function checkDissuasion(projectDescription: string, mvpType: string): { should_dissuade: boolean; reasons: string[]; hard_blockers: string[]; alternatives: { title: string; description: string; why_easier: string }[] } | null {
+  const lowerDesc = projectDescription.toLowerCase()
+  const reasons: string[] = []
+  const hard_blockers: string[] = []
+  const alternatives: { title: string; description: string; why_easier: string }[] = []
+
+  // 检查硬性障碍
+  for (const rule of DISSUASION_RULES.hard_blockers) {
+    if (rule.keywords.some(keyword => lowerDesc.includes(keyword))) {
+      hard_blockers.push(rule.condition)
+      reasons.push(rule.reason)
+      if (rule.alternatives) {
+        alternatives.push({
+          title: '替代方案',
+          description: rule.alternatives,
+          why_easier: '不需要线下资源，纯技术实现'
+        })
+      }
+    }
+  }
+
+  if (hard_blockers.length > 0) {
+    return {
+      should_dissuade: true,
+      reasons,
+      hard_blockers,
+      alternatives
+    }
+  }
+
+  return null
 }
 
 // Initialize Qwen client
@@ -80,17 +100,81 @@ export async function POST(
        searchContext = 'Search unavailable.'
     }
 
+    // 检查是否需要劝退
+    const dissuasionCheck = checkDissuasion(
+      schema.idea.one_liner + ' ' + (schema.idea.background || ''),
+      schema.mvp.type
+    )
+
     // Determine Tone
     const expLevel = (schemaStyles => {
         // approximate mapping if exact enum match isn't perfect, or default to junior
-        return schema.user.experience_level || 'junior'
+        return schema.user.experience_level || 'tutorial'
     })() as keyof typeof TONE_GUIDES
-    
+
     const toneInstruction = TONE_GUIDES[expLevel] || TONE_GUIDES['small_project']
+
+    // 如果需要劝退，返回劝退报告
+    if (dissuasionCheck && dissuasionCheck.should_dissuade) {
+      const dissuasionReport: Partial<VibeReport> = {
+        score: {
+          feasibility: 30,
+          breakdown: { tech: 40, market: 30, onboarding: 20, user_match: 30 }
+        },
+        one_liner_conclusion: '这个项目有较大的硬性障碍，建议考虑替代方案',
+        dissuasion: dissuasionCheck,
+        why_worth_it: [],
+        risks: dissuasionCheck.reasons,
+        market_analysis: {
+          competitors: [],
+          opportunity: '由于硬性障碍，建议暂不进入该市场'
+        },
+        product_approaches: {
+          approaches: [],
+          recommended_id: '',
+          recommendation_reason: ''
+        },
+        tech_options: {
+          option_a: { id: 'a', name: '', tools: [], capability: '', difficulty: 1, dev_time: '', cost: '', fit_for: '' },
+          option_b: { id: 'b', name: '', tools: [], capability: '', difficulty: 1, dev_time: '', cost: '', fit_for: '' },
+          advice: ''
+        },
+        development_path: {
+          recommended_tools: [],
+          service_connections: [],
+          recommended_stack: ''
+        },
+        fastest_path: [],
+        cost_estimate: { time_breakdown: '', money_breakdown: '' },
+        pitfalls: [],
+        validation_methods: [],
+        next_steps: { today: [], this_week: [], later: [] },
+        learning_takeaways: [],
+        term_translations: TERM_TRANSLATIONS,
+        exit_options: {
+          message: '看完觉得有点复杂？没关系，你有几个选择',
+          alternatives: [
+            '收藏这份报告，以后有空再做',
+            '换一个更简单的想法试试',
+            '找一个会写代码的朋友一起做',
+            '直接把这份报告发给开发者，让他帮你做'
+          ]
+        }
+      }
+
+      await updateConversation(id, {
+        metadata: {
+            ...conversation.metadata,
+            v2_report: dissuasionReport
+        }
+      })
+
+      return NextResponse.json({ report: dissuasionReport })
+    }
 
     // Generate report using Qwen
     const client = getClient()
-    const prompt = `你是一个 Vibe Coding 顾问。为用户的项目生成一份结构化的项目评估报告（V2.1）。
+    const prompt = `你是一个 Vibe Coding 顾问（中国市场版）。为用户的项目生成一份结构化的项目评估报告（V2.2）。
 
 【用户项目信息】
 - 想法：${schema.idea.one_liner}
@@ -98,107 +182,40 @@ export async function POST(
 - 核心功能：${schema.mvp.first_job || '未指定'}
 - MVP类型：${schema.mvp.type}
 - 经验水平：${schema.user.experience_level}
+- 平台形态：${schema.platform.form}
 - 用户问卷回答：${JSON.stringify(conversation.metadata?.answers || {})}
 
 ${VIBE_TOOL_LIBRARY}
 
+【中国市场数据源】
+用户可以去这些地方验证数据：
+- 百度指数：${CHINA_MARKET_DATA_SOURCES.search_trends[0].url}
+- 小红书搜索：${CHINA_MARKET_DATA_SOURCES.user_feedback[0].search_template}[关键词]
+- 应用宝：${CHINA_MARKET_DATA_SOURCES.app_stores[1].search_url}[关键词]
+
 ${toneInstruction}
 
-【市场背景】
+【市场背景（搜索结果）】
 ${searchContext}
 
 【要求】
 1. **语言**：所有内容必须用中文输出
 2. **语气**：参考上面的语气指导，务实、注重速度
 3. **产品方案**：必须提供2-3个不同的产品实现思路（不是技术方案，是产品逻辑流程）
-4. **技术选型**：必须从工具库中选择，不要推荐过于复杂的方案
+4. **技术选型**：必须从工具库中选择，**优先推荐国产工具**，确保国内可访问
+5. **数据来源**：所有数据必须标注来源，如果是推断的要说明"建议用户自行验证"
+6. **链接真实性**：只使用真实存在的链接，竞品链接优先使用App Store/应用宝官方链接
 
-【JSON输出格式】（严格遵循）
-{
-  "one_liner_conclusion": "一句话总结（如：很适合新手入门，但要注意API成本）",
-  "score": {
-    "feasibility": 85,
-    "breakdown": { "tech": 90, "market": 70, "onboarding": 80, "user_match": 85 }
-  },
-  "why_worth_it": ["理由1", "理由2", "理由3"],
-  "risks": ["风险1", "风险2"],
-  "market_analysis": {
-    "opportunity": "市场机会分析...",
-    "search_trends": "搜索趋势分析...",
-    "competitors": [
-      { "name": "竞品A", "url": "...", "pros": "优点", "cons": "缺点" }
-    ]
-  },
-  "product_approaches": {
-    "approaches": [
-      {
-        "id": "approach_a",
-        "name": "方案A：xxx模式",
-        "description": "一句话描述这个方案的核心思路",
-        "workflow": [
-          { "step": 1, "action": "数据获取", "detail": "通过RSS/API抓取内容" },
-          { "step": 2, "action": "AI处理", "detail": "用LLM进行筛选和摘要" },
-          { "step": 3, "action": "内容分发", "detail": "推送到用户订阅渠道" }
-        ],
-        "pros": ["优势1", "优势2"],
-        "cons": ["劣势1", "劣势2"],
-        "best_for": "适合什么场景",
-        "complexity": "low"
-      },
-      {
-        "id": "approach_b",
-        "name": "方案B：xxx模式",
-        "description": "一句话描述",
-        "workflow": [...],
-        "pros": [...],
-        "cons": [...],
-        "best_for": "...",
-        "complexity": "medium"
-      }
-    ],
-    "recommended_id": "approach_a",
-    "recommendation_reason": "推荐理由..."
-  },
-  "tech_options": {
-    "option_a": {
-      "name": "极简方案（最快）",
-      "tools": ["v0", "Next.js", "Vercel"],
-      "fit_for": "快速验证想法",
-      "capability": "基础功能",
-      "dev_time": "2-3天",
-      "cost": "免费"
-    },
-    "option_b": {
-      "name": "进阶方案（可扩展）",
-      "tools": ["Cursor", "Supabase", "Vercel"],
-      "fit_for": "长期迭代",
-      "capability": "完整功能",
-      "dev_time": "1-2周",
-      "cost": "约$20/月"
-    },
-    "advice": "根据用户情况给出选择建议"
-  },
-  "fastest_path": [
-    {
-      "title": "第一步：生成界面",
-      "description": "详细说明...",
-      "copy_text": "可复制的提示词...",
-      "action_label": "打开 v0.dev",
-      "action_url": "https://v0.dev"
-    }
-  ],
-  "cost_estimate": {
-    "time_breakdown": "最简版：2-3天；标准版：1周",
-    "money_breakdown": "开发期免费；上线后约0-100元/月"
-  },
-  "pitfalls": ["容易踩的坑1", "容易踩的坑2"],
-  "learning_takeaways": ["会学到的技能1", "会学到的概念2"],
-  "next_steps": {
-    "today": ["今天可以做的事1", "今天可以做的事2"],
-    "this_week": ["本周可以做的事"],
-    "later": ["有人用了再考虑的事"]
-  }
-}
+【JSON输出格式】（严格遵循，这是一个完整的示例）
+${REPORT_JSON_SCHEMA}
+
+【重要说明】
+1. **所有链接必须真实**：竞品链接优先使用 App Store / 应用宝官方链接
+2. **数据必须可验证**：如果无法确认数据，标记 verified: false 并添加 note
+3. **工具推荐国产优先**：优先推荐扣子空间、Trae、MemFire、DeepSeek、Zeabur等国产工具
+4. **术语必须解释**：每次出现专业术语，都在 tools_glossary 或 term_translations 中提供人话解释
+5. **快速验证方法**：必须提供至少2个validation_methods
+6. **提示词教学**：必须提供 prompt_framework，教框架而非给固定模板
 `
 
     const response = await client.chat.completions.create({
