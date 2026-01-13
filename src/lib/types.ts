@@ -476,6 +476,9 @@ export interface VibeReport {
   // 产品方案引导式提问
   product_approach_guidance?: GuidedQuestion[]
 
+  // 引导式提问（V2.2 别名）
+  guided_questions?: GuidedQuestion[]
+
   // 用户选择的方案ID（前端交互后设置）
   selected_approach_id?: string
 
@@ -488,8 +491,16 @@ export interface VibeReport {
     zero_cost_option?: TechStackOption
   }
 
+  // 技术方案对比（V2.2 可选格式）
+  tech_stack_comparison?: {
+    option_a: TechStackOption
+    option_b: TechStackOption
+    zero_cost: TechStackOption
+    advice: string
+  }
+
   // 开发路径（增强版）
-  development_path: {
+  development_path?: {
     // 主力工具选择
     recommended_tools: DevelopmentTool[]
     // 服务连接步骤
