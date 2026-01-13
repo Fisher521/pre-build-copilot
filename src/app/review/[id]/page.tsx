@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { StepCard, ActionButtons } from '@/components/wizard'
 import { VoiceButton } from '@/components/chat/VoiceButton'
 import { cn } from '@/lib/utils'
@@ -13,6 +13,13 @@ interface ParsedInfo {
   problemSolved: string
 }
 
+// 确认后的加载步骤
+const SAVING_STEPS = [
+  { text: '保存项目信息...', icon: '💾' },
+  { text: '生成个性化问题...', icon: '🤔' },
+  { text: '准备下一步...', icon: '✨' },
+]
+
 export default function ReviewPage() {
   const router = useRouter()
   const params = useParams()
@@ -20,6 +27,7 @@ export default function ReviewPage() {
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [savingStep, setSavingStep] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [parsedInfo, setParsedInfo] = useState<ParsedInfo>({
     projectName: '',
@@ -27,6 +35,7 @@ export default function ReviewPage() {
     targetUser: '',
     problemSolved: '',
   })
+  const savingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Load conversation data
   useEffect(() => {
@@ -55,12 +64,28 @@ export default function ReviewPage() {
     loadConversation()
   }, [conversationId])
 
+  // 清理动画
+  useEffect(() => {
+    return () => {
+      if (savingIntervalRef.current) {
+        clearInterval(savingIntervalRef.current)
+      }
+    }
+  }, [])
+
   const handleFieldChange = (field: keyof ParsedInfo, value: string) => {
     setParsedInfo(prev => ({ ...prev, [field]: value }))
   }
 
   const handleConfirm = async () => {
     setIsSaving(true)
+    setSavingStep(0)
+
+    // 启动加载动画
+    savingIntervalRef.current = setInterval(() => {
+      setSavingStep(prev => Math.min(prev + 1, SAVING_STEPS.length - 1))
+    }, 2000)
+
     try {
       // Save updated info
       await fetch(`/api/conversation/${conversationId}/schema`, {
@@ -81,10 +106,18 @@ export default function ReviewPage() {
           },
         }),
       })
-      
+
+      // 清理动画
+      if (savingIntervalRef.current) {
+        clearInterval(savingIntervalRef.current)
+      }
+
       // Navigate to questions page (Step 3)
       router.push(`/questions/${conversationId}`)
     } catch (err) {
+      if (savingIntervalRef.current) {
+        clearInterval(savingIntervalRef.current)
+      }
       setError('保存失败，请重试')
       setIsSaving(false)
     }
@@ -94,12 +127,89 @@ export default function ReviewPage() {
     router.push('/')
   }
 
+  // 初始加载状态
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">正在分析你的想法...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
+        <div className="text-center max-w-md mx-auto p-6">
+          {/* 骨架卡片 */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div className="space-y-4">
+              {/* 骨架标题 */}
+              <div className="h-6 bg-gray-100 rounded-lg w-3/4 mx-auto animate-pulse" />
+              <div className="h-4 bg-gray-50 rounded w-1/2 mx-auto animate-pulse" />
+
+              {/* 骨架输入框 */}
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-4 bg-gray-100 rounded w-24 animate-pulse" />
+                  <div className="h-12 bg-gray-50 rounded-xl animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 加载提示 */}
+          <div className="flex items-center justify-center gap-3">
+            <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-gray-500">正在分析你的想法...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 保存/跳转加载状态
+  if (isSaving) {
+    const currentStep = SAVING_STEPS[savingStep]
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
+        <div className="text-center max-w-md mx-auto p-6">
+          {/* 动画图标 */}
+          <div className="relative w-20 h-20 mx-auto mb-6">
+            <div className="absolute inset-0 rounded-full border-4 border-primary-100 border-t-primary-500 animate-spin" />
+            <div className="absolute inset-2 rounded-full bg-white shadow-lg flex items-center justify-center">
+              <span className="text-2xl">{currentStep.icon}</span>
+            </div>
+          </div>
+
+          {/* 当前步骤 */}
+          <p className="text-lg font-medium text-gray-700 mb-4">{currentStep.text}</p>
+
+          {/* 步骤指示器 */}
+          <div className="flex justify-center gap-3 mb-6">
+            {SAVING_STEPS.map((step, idx) => (
+              <div
+                key={idx}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-all',
+                  idx < savingStep
+                    ? 'bg-green-100 text-green-700'
+                    : idx === savingStep
+                    ? 'bg-primary-100 text-primary-700'
+                    : 'bg-gray-100 text-gray-400'
+                )}
+              >
+                {idx < savingStep ? (
+                  <span>✓</span>
+                ) : idx === savingStep ? (
+                  <div className="w-3 h-3 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span className="w-3 h-3 rounded-full bg-gray-300" />
+                )}
+                <span className="hidden sm:inline">{step.text.replace('...', '')}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* 项目信息回显 */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-left">
+            <p className="text-sm text-gray-400 mb-2">项目信息</p>
+            <p className="text-gray-700 font-medium">{parsedInfo.projectName}</p>
+            {parsedInfo.coreFeature && (
+              <p className="text-gray-500 text-sm mt-1 line-clamp-2">{parsedInfo.coreFeature}</p>
+            )}
+          </div>
         </div>
       </div>
     )

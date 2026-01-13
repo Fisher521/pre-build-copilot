@@ -1,53 +1,152 @@
 'use client'
 
 import { useRouter, useParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { StepCard } from '@/components/wizard'
 import { cn } from '@/lib/utils'
 import type { VibeReport, ProductApproach } from '@/lib/types'
 
-// 骨架屏组件
-function ReportSkeleton() {
+// 加载步骤配置
+const LOADING_STEPS = [
+  { id: 'analyze', label: '分析项目信息', duration: 3000 },
+  { id: 'market', label: '搜索市场竞品', duration: 5000 },
+  { id: 'approach', label: '设计产品方案', duration: 4000 },
+  { id: 'tech', label: '匹配技术栈', duration: 3000 },
+  { id: 'path', label: '规划实施路径', duration: 3000 },
+  { id: 'report', label: '生成完整报告', duration: 2000 },
+]
+
+// 有趣的等待提示语
+const WAITING_TIPS = [
+  '💡 好的产品想法比代码更重要',
+  '🚀 先做出来，再慢慢完善',
+  '📊 80%的项目失败是因为没人用，不是技术问题',
+  '⚡ Vibe Coding 的精髓：能用就行',
+  '🎯 找到第一个愿意付费的用户比10000行代码更有价值',
+  '💪 一个周末做出MVP，比一个月做出完美产品更好',
+]
+
+// 进度加载组件
+function LoadingProgress({
+  currentStep,
+  progress,
+  estimatedTime
+}: {
+  currentStep: number
+  progress: number
+  estimatedTime: number
+}) {
+  const [tipIndex, setTipIndex] = useState(0)
+  const [elapsedTime, setElapsedTime] = useState(0)
+
+  // 轮换提示语
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTipIndex(prev => (prev + 1) % WAITING_TIPS.length)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // 计时器
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsedTime(prev => prev + 1)
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const remainingTime = Math.max(0, estimatedTime - elapsedTime)
+
   return (
     <div className="min-h-screen py-12 px-6 bg-gradient-to-b from-gray-50 to-white">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* 标题骨架 */}
+      <div className="max-w-xl mx-auto">
+        {/* 标题 */}
         <div className="text-center mb-8">
-          <div className="h-8 w-48 bg-gray-200 rounded-lg mx-auto mb-2 animate-pulse" />
-          <div className="h-4 w-32 bg-gray-100 rounded mx-auto animate-pulse" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">正在生成评估报告</h1>
+          <p className="text-gray-500">预计需要 {remainingTime > 0 ? `${remainingTime}` : '即将完成'} 秒</p>
         </div>
 
-        {/* 评分卡片骨架 */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
-          <div className="text-center">
-            <div className="h-16 w-20 bg-gray-200 rounded-xl mx-auto mb-4 animate-pulse" />
-            <div className="h-6 w-64 bg-gray-100 rounded mx-auto mb-6 animate-pulse" />
-            <div className="grid grid-cols-4 gap-4">
-              {[1,2,3,4].map(i => (
-                <div key={i} className="h-12 bg-gray-50 rounded-lg animate-pulse" />
-              ))}
+        {/* 进度条 */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm mb-6">
+          <div className="mb-4">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-gray-600">整体进度</span>
+              <span className="text-primary-600 font-medium">{Math.round(progress)}%</span>
             </div>
+            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-primary-500 to-indigo-500 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          {/* 步骤列表 */}
+          <div className="space-y-3">
+            {LOADING_STEPS.map((step, idx) => {
+              const isCompleted = idx < currentStep
+              const isCurrent = idx === currentStep
+              const isPending = idx > currentStep
+
+              return (
+                <div
+                  key={step.id}
+                  className={cn(
+                    'flex items-center gap-3 py-2 px-3 rounded-lg transition-all duration-300',
+                    isCompleted && 'bg-green-50',
+                    isCurrent && 'bg-primary-50',
+                    isPending && 'opacity-40'
+                  )}
+                >
+                  <div className={cn(
+                    'w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all',
+                    isCompleted && 'bg-green-500 text-white',
+                    isCurrent && 'bg-primary-500 text-white animate-pulse',
+                    isPending && 'bg-gray-200 text-gray-500'
+                  )}>
+                    {isCompleted ? '✓' : idx + 1}
+                  </div>
+                  <span className={cn(
+                    'text-sm',
+                    isCompleted && 'text-green-700',
+                    isCurrent && 'text-primary-700 font-medium',
+                    isPending && 'text-gray-500'
+                  )}>
+                    {step.label}
+                    {isCurrent && <span className="ml-2 text-primary-500">处理中...</span>}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </div>
 
-        {/* 内容区骨架 */}
-        {[1,2,3].map(i => (
-          <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <div className="h-6 w-32 bg-gray-200 rounded mb-4 animate-pulse" />
-            <div className="space-y-3">
-              <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
-              <div className="h-4 w-3/4 bg-gray-100 rounded animate-pulse" />
-              <div className="h-4 w-5/6 bg-gray-100 rounded animate-pulse" />
-            </div>
-          </div>
-        ))}
-
-        {/* 加载提示 */}
-        <div className="text-center py-8">
-          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">正在生成评估报告...</p>
-          <p className="text-sm text-gray-400 mt-1">AI 正在综合分析你的项目，请稍候</p>
+        {/* 提示语卡片 */}
+        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-6 text-center">
+          <div className="text-2xl mb-2">💭</div>
+          <p className="text-indigo-800 font-medium transition-all duration-500">
+            {WAITING_TIPS[tipIndex]}
+          </p>
         </div>
+
+        {/* 小提示 */}
+        <p className="text-center text-xs text-gray-400 mt-6">
+          AI 正在综合分析你的项目，生成个性化建议
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// 骨架屏 - 用于报告加载完成后的渐进显示
+function ReportSectionSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm animate-pulse">
+      <div className="h-6 w-32 bg-gray-200 rounded mb-4" />
+      <div className="space-y-3">
+        <div className="h-4 w-full bg-gray-100 rounded" />
+        <div className="h-4 w-3/4 bg-gray-100 rounded" />
+        <div className="h-4 w-5/6 bg-gray-100 rounded" />
       </div>
     </div>
   )
@@ -63,6 +162,40 @@ export default function ReportPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedApproach, setSelectedApproach] = useState<string | null>(null)
 
+  // 加载进度状态
+  const [currentStep, setCurrentStep] = useState(0)
+  const [progress, setProgress] = useState(0)
+  const startTimeRef = useRef(Date.now())
+
+  // 模拟进度推进
+  useEffect(() => {
+    if (!isLoading) return
+
+    const totalDuration = LOADING_STEPS.reduce((sum, s) => sum + s.duration, 0)
+    let elapsed = 0
+
+    const interval = setInterval(() => {
+      elapsed += 200
+
+      // 计算当前步骤
+      let cumulative = 0
+      for (let i = 0; i < LOADING_STEPS.length; i++) {
+        cumulative += LOADING_STEPS[i].duration
+        if (elapsed < cumulative) {
+          setCurrentStep(i)
+          break
+        }
+      }
+
+      // 计算进度（最多到95%，剩下的等API返回）
+      const rawProgress = (elapsed / totalDuration) * 100
+      setProgress(Math.min(rawProgress, 95))
+
+    }, 200)
+
+    return () => clearInterval(interval)
+  }, [isLoading])
+
   useEffect(() => {
     async function generateReport() {
       try {
@@ -73,14 +206,22 @@ export default function ReportPage() {
         if (!response.ok) throw new Error('生成报告失败')
 
         const data = await response.json()
-        setReport(data.report)
-        // 默认选中推荐方案
-        if (data.report?.product_approaches?.recommended_id) {
-          setSelectedApproach(data.report.product_approaches.recommended_id)
-        }
+
+        // 完成进度
+        setProgress(100)
+        setCurrentStep(LOADING_STEPS.length)
+
+        // 短暂延迟后显示报告
+        setTimeout(() => {
+          setReport(data.report)
+          if (data.report?.product_approaches?.recommended_id) {
+            setSelectedApproach(data.report.product_approaches.recommended_id)
+          }
+          setIsLoading(false)
+        }, 500)
+
       } catch (err) {
         setError(err instanceof Error ? err.message : '生成失败')
-      } finally {
         setIsLoading(false)
       }
     }
@@ -115,14 +256,21 @@ export default function ReportPage() {
     }
   }
 
-  // 获取当前选中的产品方案
   const getSelectedApproachData = (): ProductApproach | undefined => {
     if (!report?.product_approaches?.approaches || !selectedApproach) return undefined
     return report.product_approaches.approaches.find(a => a.id === selectedApproach)
   }
 
+  // 显示加载进度
   if (isLoading) {
-    return <ReportSkeleton />
+    const estimatedSeconds = Math.ceil(LOADING_STEPS.reduce((sum, s) => sum + s.duration, 0) / 1000)
+    return (
+      <LoadingProgress
+        currentStep={currentStep}
+        progress={progress}
+        estimatedTime={estimatedSeconds}
+      />
+    )
   }
 
   if (error || !report) {
@@ -158,7 +306,7 @@ export default function ReportPage() {
 
         {/* Score Card */}
         <div className={cn(
-          'rounded-2xl border p-8 mb-6 text-center shadow-sm bg-white',
+          'rounded-2xl border p-8 mb-6 text-center shadow-sm bg-white animate-in fade-in slide-in-from-bottom-4 duration-500',
           getScoreBg(report.score.feasibility)
         )}>
           <div className={cn('text-6xl font-bold mb-2', getScoreColor(report.score.feasibility))}>
@@ -191,7 +339,7 @@ export default function ReportPage() {
         </div>
 
         {/* Strengths & Risks */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <span>💪</span> 为什么值得做
@@ -222,7 +370,7 @@ export default function ReportPage() {
         </div>
 
         {/* Market Analysis */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6">
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <span>📈</span> 市场分析
           </h3>
@@ -267,9 +415,9 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* Product Approach Selection - NEW V2.1 */}
+        {/* Product Approach Selection */}
         {report.product_approaches && report.product_approaches.approaches.length > 0 && (
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
             <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
               <span>🎯</span> 产品实现方案
             </h3>
@@ -305,7 +453,6 @@ export default function ReportPage() {
                     </div>
                     <p className="text-sm text-gray-600 mb-3">{approach.description}</p>
 
-                    {/* Workflow Steps */}
                     <div className="flex items-center gap-2 text-xs text-gray-500 mb-3 flex-wrap">
                       {approach.workflow.map((step, idx) => (
                         <span key={idx} className="flex items-center gap-1">
@@ -315,7 +462,6 @@ export default function ReportPage() {
                       ))}
                     </div>
 
-                    {/* Pros/Cons Preview */}
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="text-green-600">✓ {approach.pros[0]}</div>
                       <div className="text-amber-600">⚠ {approach.cons[0]}</div>
@@ -325,13 +471,11 @@ export default function ReportPage() {
               })}
             </div>
 
-            {/* Recommendation Reason */}
             <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800">
               <span className="font-medium">💡 建议：</span>
               {report.product_approaches.recommendation_reason}
             </div>
 
-            {/* Selected Approach Details */}
             {selectedApproachData && (
               <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
                 <h4 className="font-medium text-gray-900 mb-3">详细流程</h4>
@@ -381,13 +525,12 @@ export default function ReportPage() {
         )}
 
         {/* Tech Stack */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6">
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <span>⚙️</span> 技术方案选择
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Option A */}
             <div className="border border-gray-100 rounded-xl p-4 bg-gray-50">
               <div className="text-center mb-3">
                 <div className="font-bold text-gray-900">{report.tech_options.option_a.name}</div>
@@ -413,7 +556,6 @@ export default function ReportPage() {
               </div>
             </div>
 
-            {/* Option B */}
             <div className="border-2 border-primary-200 rounded-xl p-4 bg-primary-50">
               <div className="text-center mb-3">
                 <div className="font-bold text-gray-900">{report.tech_options.option_b.name}</div>
@@ -447,7 +589,7 @@ export default function ReportPage() {
         </div>
 
         {/* Fastest Path */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6">
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <span>🚀</span> 最快上手路径
           </h3>
@@ -489,7 +631,7 @@ export default function ReportPage() {
         </div>
 
         {/* Cost & Pitfalls */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-600">
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <span>💰</span> 成本预估
@@ -522,7 +664,7 @@ export default function ReportPage() {
         </div>
 
         {/* Learning */}
-        <div className="rounded-2xl border border-gray-100 bg-gradient-to-br from-indigo-50 to-purple-50 p-6 shadow-sm mb-6">
+        <div className="rounded-2xl border border-gray-100 bg-gradient-to-br from-indigo-50 to-purple-50 p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-700">
           <h3 className="text-lg font-semibold text-indigo-900 mb-4 flex items-center gap-2">
             <span>🎓</span> 学习收获
           </h3>

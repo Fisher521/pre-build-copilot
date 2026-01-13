@@ -6,12 +6,23 @@ import { VoiceButton } from '@/components/chat/VoiceButton'
 import { StepCard } from '@/components/wizard'
 import { cn } from '@/lib/utils'
 
+// 加载过程中的提示语
+const LOADING_MESSAGES = [
+  { text: '正在理解你的想法...', icon: '🧠' },
+  { text: '分析项目关键信息...', icon: '🔍' },
+  { text: '提取核心功能点...', icon: '✨' },
+  { text: '识别目标用户群体...', icon: '👥' },
+  { text: '马上就好...', icon: '🚀' },
+]
+
 export default function HomePage() {
   const router = useRouter()
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [loadingStep, setLoadingStep] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const loadingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Auto-resize textarea
   useEffect(() => {
@@ -27,12 +38,27 @@ export default function HomePage() {
     textareaRef.current?.focus()
   }, [])
 
+  // 清理加载动画
+  useEffect(() => {
+    return () => {
+      if (loadingIntervalRef.current) {
+        clearInterval(loadingIntervalRef.current)
+      }
+    }
+  }, [])
+
   const handleSubmit = async () => {
     const trimmed = input.trim()
     if (!trimmed || isLoading) return
 
     setError(null)
     setIsLoading(true)
+    setLoadingStep(0)
+
+    // 启动加载动画
+    loadingIntervalRef.current = setInterval(() => {
+      setLoadingStep(prev => (prev + 1) % LOADING_MESSAGES.length)
+    }, 1500)
 
     try {
       // Create conversation with initial input
@@ -50,9 +76,17 @@ export default function HomePage() {
         throw new Error(result.error || '创建对话失败')
       }
 
+      // 清理动画
+      if (loadingIntervalRef.current) {
+        clearInterval(loadingIntervalRef.current)
+      }
+
       // Navigate to review page (Step 2)
       router.push(`/review/${result.conversationId}`)
     } catch (err) {
+      if (loadingIntervalRef.current) {
+        clearInterval(loadingIntervalRef.current)
+      }
       setError(err instanceof Error ? err.message : '网络错误，请检查连接后重试')
       setIsLoading(false)
     }
@@ -68,6 +102,55 @@ export default function HomePage() {
   const handleVoiceTranscript = (transcript: string) => {
     setInput((prev) => prev + transcript)
     textareaRef.current?.focus()
+  }
+
+  // 加载状态的全屏遮罩
+  if (isLoading) {
+    const currentMessage = LOADING_MESSAGES[loadingStep]
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-gray-50 to-white">
+        <div className="text-center max-w-md mx-auto">
+          {/* 动画图标 */}
+          <div className="relative w-24 h-24 mx-auto mb-6">
+            {/* 外圈旋转 */}
+            <div className="absolute inset-0 rounded-full border-4 border-primary-100 border-t-primary-500 animate-spin" />
+            {/* 内圈图标 */}
+            <div className="absolute inset-2 rounded-full bg-white shadow-lg flex items-center justify-center">
+              <span className="text-3xl animate-pulse">{currentMessage.icon}</span>
+            </div>
+          </div>
+
+          {/* 加载文字 */}
+          <div className="h-8 flex items-center justify-center">
+            <p
+              className="text-lg font-medium text-gray-700 animate-in fade-in duration-300"
+              key={loadingStep}
+            >
+              {currentMessage.text}
+            </p>
+          </div>
+
+          {/* 进度指示器 */}
+          <div className="flex justify-center gap-2 mt-6">
+            {LOADING_MESSAGES.map((_, idx) => (
+              <div
+                key={idx}
+                className={cn(
+                  'w-2 h-2 rounded-full transition-all duration-300',
+                  idx === loadingStep ? 'bg-primary-500 scale-125' : 'bg-gray-200'
+                )}
+              />
+            ))}
+          </div>
+
+          {/* 用户输入回显 */}
+          <div className="mt-8 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+            <p className="text-sm text-gray-400 mb-2">你的想法：</p>
+            <p className="text-gray-700 line-clamp-3">{input}</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
