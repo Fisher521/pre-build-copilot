@@ -216,7 +216,10 @@ export default function ReportPageV2() {
         {/* 成本估算 */}
         {report.cost_estimate && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500">
-            <CostEstimateCard costEstimate={report.cost_estimate} />
+              <CostEstimateCard
+                timeBreakdown={report.cost_estimate.time_breakdown}
+                moneyBreakdown={report.cost_estimate.money_breakdown}
+              />
           </div>
         )}
 
@@ -237,7 +240,11 @@ export default function ReportPageV2() {
         {/* 下一步建议 */}
         {report.next_steps && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-650">
-            <NextStepsCard nextSteps={report.next_steps} />
+            <NextStepsCard
+              today={report.next_steps.today}
+              thisWeek={report.next_steps.this_week}
+              later={report.next_steps.later}
+            />
           </div>
         )}
 
