@@ -415,15 +415,15 @@ export default function ReportPage() {
                     <div key={i} className="p-4 bg-gray-50 border border-gray-100 rounded-xl">
                       <div className="flex items-center justify-between mb-2">
                         <div className="font-semibold text-gray-900">{comp.name}</div>
-                        {comp.url && (
-                          <a href={comp.url} target="_blank" className="text-xs text-primary-600 hover:text-primary-700 hover:underline">
+                        {comp.urls?.official && (
+                          <a href={comp.urls.official} target="_blank" className="text-xs text-primary-600 hover:text-primary-700 hover:underline">
                             查看 →
                           </a>
                         )}
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="text-green-600">✓ {comp.pros}</div>
-                        <div className="text-red-500">✗ {comp.cons}</div>
+                        <div className="text-green-600">✓ {comp.pros[0]}</div>
+                        <div className="text-red-500">✗ {comp.cons[0]}</div>
                       </div>
                     </div>
                   ))}
