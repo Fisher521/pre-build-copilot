@@ -569,58 +569,60 @@ export default function ReportPage() {
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="border border-gray-100 rounded-xl p-4 bg-gray-50">
-              <div className="text-center mb-3">
-                <div className="font-bold text-gray-900">{report.tech_options.option_a.name}</div>
-                <div className="text-xs text-gray-500">{report.tech_options.option_a.fit_for}</div>
+            {/* Option A - 极简方案 */}
+            <div className="border border-gray-100 rounded-xl p-5 bg-gray-50">
+              <div className="text-center mb-4">
+                <div className="font-bold text-gray-900 text-base">{report.tech_options.option_a.name}</div>
+                <div className="text-xs text-gray-500 mt-1">{report.tech_options.option_a.fit_for}</div>
               </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between border-b border-gray-100 pb-1">
-                  <span className="text-gray-500">工具</span>
-                  <span className="font-medium text-right max-w-[60%] text-gray-700">{report.tech_options.option_a.tools.join(' + ')}</span>
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-[60px_1fr] gap-2 items-start border-b border-gray-200 pb-2">
+                  <span className="text-gray-500 flex-shrink-0">工具</span>
+                  <span className="font-medium text-gray-700">{report.tech_options.option_a.tools.join(' + ')}</span>
                 </div>
-                <div className="flex justify-between border-b border-gray-100 pb-1">
-                  <span className="text-gray-500">能力</span>
+                <div className="grid grid-cols-[60px_1fr] gap-2 items-start border-b border-gray-200 pb-2">
+                  <span className="text-gray-500 flex-shrink-0">能力</span>
                   <span className="text-gray-700">{report.tech_options.option_a.capability}</span>
                 </div>
-                <div className="flex justify-between border-b border-gray-100 pb-1">
-                  <span className="text-gray-500">时间</span>
+                <div className="grid grid-cols-[60px_1fr] gap-2 items-start border-b border-gray-200 pb-2">
+                  <span className="text-gray-500 flex-shrink-0">时间</span>
                   <span className="text-gray-700">{report.tech_options.option_a.dev_time}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">成本</span>
+                <div className="grid grid-cols-[60px_1fr] gap-2 items-start">
+                  <span className="text-gray-500 flex-shrink-0">成本</span>
                   <span className="text-green-600 font-medium">{report.tech_options.option_a.cost}</span>
                 </div>
               </div>
             </div>
 
-            <div className="border-2 border-primary-200 rounded-xl p-4 bg-primary-50">
-              <div className="text-center mb-3">
-                <div className="font-bold text-gray-900">{report.tech_options.option_b.name}</div>
-                <div className="text-xs text-primary-600">{report.tech_options.option_b.fit_for}</div>
+            {/* Option B - 标准方案（推荐） */}
+            <div className="border-2 border-primary-200 rounded-xl p-5 bg-primary-50">
+              <div className="text-center mb-4">
+                <div className="font-bold text-gray-900 text-base">{report.tech_options.option_b.name}</div>
+                <div className="text-xs text-primary-600 mt-1">{report.tech_options.option_b.fit_for}</div>
               </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between border-b border-primary-100 pb-1">
-                  <span className="text-gray-500">工具</span>
-                  <span className="font-medium text-right max-w-[60%] text-gray-700">{report.tech_options.option_b.tools.join(' + ')}</span>
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-[60px_1fr] gap-2 items-start border-b border-primary-200 pb-2">
+                  <span className="text-gray-500 flex-shrink-0">工具</span>
+                  <span className="font-medium text-gray-700">{report.tech_options.option_b.tools.join(' + ')}</span>
                 </div>
-                <div className="flex justify-between border-b border-primary-100 pb-1">
-                  <span className="text-gray-500">能力</span>
+                <div className="grid grid-cols-[60px_1fr] gap-2 items-start border-b border-primary-200 pb-2">
+                  <span className="text-gray-500 flex-shrink-0">能力</span>
                   <span className="text-gray-700">{report.tech_options.option_b.capability}</span>
                 </div>
-                <div className="flex justify-between border-b border-primary-100 pb-1">
-                  <span className="text-gray-500">时间</span>
+                <div className="grid grid-cols-[60px_1fr] gap-2 items-start border-b border-primary-200 pb-2">
+                  <span className="text-gray-500 flex-shrink-0">时间</span>
                   <span className="text-gray-700">{report.tech_options.option_b.dev_time}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">成本</span>
+                <div className="grid grid-cols-[60px_1fr] gap-2 items-start">
+                  <span className="text-gray-500 flex-shrink-0">成本</span>
                   <span className="text-green-600 font-medium">{report.tech_options.option_b.cost}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800">
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800 leading-relaxed">
             <span className="font-medium">💡 建议：</span>
             {report.tech_options.advice}
           </div>
