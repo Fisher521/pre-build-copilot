@@ -549,6 +549,10 @@ export const translations = {
       zh: '下一题 →',
       en: 'Next →',
     },
+    doubleClickHint: {
+      zh: '双击选项可直接进入下一题',
+      en: 'Double-click to proceed directly',
+    },
   },
 
   // ===== Question Bank =====

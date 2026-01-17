@@ -1,17 +1,16 @@
 'use client'
 
 import { useRouter, useParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
-import { StepCard, WizardProgress, ActionButtons } from '@/components/wizard'
+import { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/lib/i18n'
-import type { Question, QuestionOption } from '@/lib/types'
+import type { Question } from '@/lib/types'
 
 export default function QuestionsPage() {
   const router = useRouter()
   const params = useParams()
   const conversationId = params.id as string
-  const { t, lang } = useTranslation()
+  const { t } = useTranslation()
 
   const [isLoading, setIsLoading] = useState(true)
   const [questions, setQuestions] = useState<Question[]>([])
@@ -19,6 +18,7 @@ export default function QuestionsPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [isSaving, setIsSaving] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
+  const lastClickRef = useRef<{ value: string; time: number } | null>(null)
 
   // Load questions from metadata
   useEffect(() => {
@@ -26,16 +26,13 @@ export default function QuestionsPage() {
       try {
         const response = await fetch(`/api/conversation/${conversationId}`)
         if (!response.ok) throw new Error(t('review.loadFailed'))
-        
+
         const data = await response.json()
         const generated = data.metadata?.generatedQuestions as Question[]
-        
+
         if (generated && generated.length > 0) {
           setQuestions(generated)
         } else {
-          // Check if we need to generate them or show a loading state
-          // Ideally this page shouldn't be loaded until questions are ready
-          // For now, let's assume they might be missing and handle gracefully
           console.warn('No generated questions found')
         }
       } catch (err) {
@@ -46,18 +43,42 @@ export default function QuestionsPage() {
     }
 
     loadData()
-  }, [conversationId])
+  }, [conversationId, t])
 
   const currentQuestion = questions[currentIndex]
   const isLastQuestion = currentIndex === questions.length - 1
   const selectedValue = currentQuestion ? answers[currentQuestion.id] : undefined
-  
+
   // Find selected option object to get feedback
   const selectedOption = currentQuestion?.options?.find(opt => opt.value === selectedValue)
 
   const handleOptionClick = (value: string) => {
-    if (showFeedback) return // Prevent changing answer while showing feedback (optional design choice)
-    
+    const now = Date.now()
+    const lastClick = lastClickRef.current
+
+    // Check for double-click (within 400ms on same option)
+    if (lastClick && lastClick.value === value && now - lastClick.time < 400) {
+      // Double-click: select and proceed immediately
+      setAnswers(prev => ({ ...prev, [currentQuestion!.id]: value }))
+      lastClickRef.current = null
+
+      // Proceed to next
+      setTimeout(() => {
+        if (!isLastQuestion) {
+          setShowFeedback(false)
+          setCurrentIndex(prev => prev + 1)
+        } else {
+          handleFinish()
+        }
+      }, 100)
+      return
+    }
+
+    // Single click: select and show feedback
+    lastClickRef.current = { value, time: now }
+
+    if (showFeedback && selectedValue === value) return
+
     setAnswers(prev => ({ ...prev, [currentQuestion!.id]: value }))
     setShowFeedback(true)
   }
@@ -83,14 +104,12 @@ export default function QuestionsPage() {
   const handleFinish = async () => {
     setIsSaving(true)
     try {
-      // Save answers to schema
       await fetch(`/api/conversation/${conversationId}/answers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ answers }),
       })
-      
-      // Navigate directly to Report (skip summary)
+
       router.push(`/report/${conversationId}`)
     } catch (err) {
       console.error('Save failed:', err)
@@ -100,115 +119,130 @@ export default function QuestionsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center pt-14 bg-gray-50">
+        <div className="w-8 h-8 border-2 border-gray-300 border-t-indigo-500 rounded-full animate-spin" />
       </div>
     )
   }
 
   if (!currentQuestion) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-500 mb-4">{t('questions.generating')}</p>
-          <p className="text-sm text-gray-400">{t('questions.refreshHint')}</p>
+      <div className="min-h-screen flex items-center justify-center pt-14 bg-gray-50">
+        <div className="text-center px-4">
+          <p className="text-gray-500 mb-2 text-sm">{t('questions.generating')}</p>
+          <p className="text-xs text-gray-400">{t('questions.refreshHint')}</p>
         </div>
       </div>
     )
   }
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-gray-50 to-white">
-      <div className="w-full max-w-xl">
-        {/* Progress */}
-        <WizardProgress
-          currentStep={currentIndex + 1}
-          totalSteps={questions.length}
-          className="mb-8"
-        />
+  const progress = ((currentIndex + 1) / questions.length) * 100
 
-        {/* Question Card */}
-        <StepCard maxWidth="xl">
-          <div className="space-y-6">
+  return (
+    <div className="min-h-screen flex flex-col bg-gray-50 pt-14 sm:pt-16">
+      {/* Progress bar */}
+      <div className="fixed top-12 sm:top-14 left-0 right-0 h-1 bg-gray-200 z-40">
+        <div
+          className="h-full bg-indigo-500 transition-all duration-300"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      <div className="flex-1 flex flex-col p-4 sm:p-6">
+        <div className="w-full max-w-lg mx-auto flex-1 flex flex-col">
+          {/* Question number */}
+          <div className="text-xs text-gray-400 mb-2 sm:mb-4">
+            {currentIndex + 1} / {questions.length}
+          </div>
+
+          {/* Question Card */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 flex-1 flex flex-col">
             {/* Header */}
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-2 leading-relaxed">
                 {currentQuestion.question}
               </h2>
               {currentQuestion.insight && (
-                <div className="flex items-start gap-2 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <span className="text-lg">💡</span>
-                  <p className="leading-relaxed">{currentQuestion.insight}</p>
-                </div>
+                <p className="text-xs sm:text-sm text-gray-500 bg-gray-50 p-2 sm:p-3 rounded-md border border-gray-100 leading-relaxed">
+                  {currentQuestion.insight}
+                </p>
               )}
             </div>
 
-            {/* Options Grid */}
-            <div className="grid grid-cols-1 gap-3">
+            {/* Options */}
+            <div className="space-y-2 sm:space-y-3 flex-1">
               {currentQuestion.options?.map((option) => {
                 const isSelected = selectedValue === option.value
                 const isOtherSelected = selectedValue && selectedValue !== option.value
-                
+
                 return (
                   <button
                     key={option.value}
                     onClick={() => handleOptionClick(option.value)}
-                    disabled={showFeedback}
                     className={cn(
-                      'text-left px-5 py-4 rounded-xl text-base transition-all duration-200 relative overflow-hidden',
-                      'border-2',
+                      'w-full text-left px-3 sm:px-4 py-3 sm:py-3.5 rounded-md text-sm transition-all',
+                      'border',
                       isSelected
-                        ? 'border-primary-500 bg-primary-50 text-primary-900 shadow-sm'
-                        : 'border-gray-100 bg-white text-gray-700 hover:border-primary-200 hover:bg-gray-50',
-                      showFeedback && isOtherSelected && 'opacity-40 grayscale'
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-900'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-indigo-300 hover:bg-gray-50',
+                      showFeedback && isOtherSelected && 'opacity-40'
                     )}
                   >
-                    <div className="flex items-center justify-between">
-                      <span>{option.label}</span>
-                      {isSelected && (
-                        <span className="text-primary-600">
-                          {showFeedback ? ' ' : '✓'}
-                        </span>
-                      )}
-                    </div>
+                    <span className="leading-relaxed">{option.label}</span>
                   </button>
                 )
               })}
             </div>
 
-            {/* Immediate Feedback Card - V2.0 Core Feature */}
+            {/* Feedback */}
             {showFeedback && selectedOption?.feedback && (
               <div className={cn(
-                "rounded-xl p-4 border animate-in fade-in slide-in-from-top-2 duration-300",
-                selectedOption.feedback.type === 'warning' 
-                  ? "bg-amber-50 border-amber-200 text-amber-900" 
+                "mt-4 rounded-md p-3 border text-sm",
+                selectedOption.feedback.type === 'warning'
+                  ? "bg-amber-50 border-amber-200 text-amber-800"
                   : selectedOption.feedback.type === 'positive'
-                    ? "bg-green-50 border-green-200 text-green-900"
-                    : "bg-blue-50 border-blue-200 text-blue-900"
+                    ? "bg-green-50 border-green-200 text-green-800"
+                    : "bg-blue-50 border-blue-200 text-blue-800"
               )}>
-                <div className="flex items-start gap-3">
-                  <span className="text-xl">
-                    {selectedOption.feedback.type === 'warning' ? '⚠️' : selectedOption.feedback.type === 'positive' ? '👍' : '💬'}
-                  </span>
-                  <div>
-                    <p className="font-medium text-sm leading-relaxed">
-                      {selectedOption.feedback.message}
-                    </p>
-                  </div>
-                </div>
+                <p className="leading-relaxed">{selectedOption.feedback.message}</p>
               </div>
             )}
 
-            <ActionButtons
-              onBack={handleBack}
-              onNext={handleNext}
-              backLabel={t('questions.prevStep')}
-              nextLabel={isLastQuestion ? t('questions.generateReport') : t('questions.nextQuestion')}
-              nextDisabled={!selectedValue || !showFeedback} // Force user to see feedback
-              nextLoading={isSaving}
-            />
+            {/* Double-click hint */}
+            {showFeedback && (
+              <p className="text-xs text-gray-400 mt-3 text-center">
+                {t('questions.doubleClickHint')}
+              </p>
+            )}
           </div>
-        </StepCard>
+
+          {/* Action buttons */}
+          <div className="flex items-center justify-between mt-4 sm:mt-6 gap-4">
+            <button
+              onClick={handleBack}
+              className="text-sm text-gray-500 hover:text-gray-900 transition-colors py-2"
+            >
+              {t('questions.prevStep')}
+            </button>
+
+            <button
+              onClick={handleNext}
+              disabled={!selectedValue || isSaving}
+              className={cn(
+                'px-5 sm:px-6 py-2 sm:py-2.5 rounded-md text-sm font-medium transition-colors',
+                'bg-indigo-600 text-white hover:bg-indigo-700',
+                'disabled:opacity-40 disabled:cursor-not-allowed',
+                'flex items-center gap-2'
+              )}
+            >
+              {isSaving ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                isLastQuestion ? t('questions.generateReport') : t('questions.nextQuestion')
+              )}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
