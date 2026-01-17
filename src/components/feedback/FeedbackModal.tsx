@@ -80,7 +80,9 @@ export function FeedbackModal({
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || '提交失败')
+        const errorMsg = result.error || '提交失败'
+        const hint = result.hint ? `\n${result.hint}` : ''
+        throw new Error(errorMsg + hint)
       }
 
       setSubmitted(true)

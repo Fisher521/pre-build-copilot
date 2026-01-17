@@ -34,13 +34,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if feedback already exists
-    const existingFeedback = await getFeedbackByConversation(conversation_id)
-    if (existingFeedback) {
-      return NextResponse.json(
-        { error: '已经提交过反馈', feedback: existingFeedback },
-        { status: 409 }
-      )
+    // Check if feedback already exists (skip if table doesn't exist)
+    try {
+      const existingFeedback = await getFeedbackByConversation(conversation_id)
+      if (existingFeedback) {
+        return NextResponse.json(
+          { error: '已经提交过反馈', feedback: existingFeedback },
+          { status: 409 }
+        )
+      }
+    } catch (checkError) {
+      // If table doesn't exist, continue to create (will fail with clearer error)
+      console.log('Check existing feedback error (may be table missing):', checkError)
     }
 
     // Create feedback
@@ -55,8 +60,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, feedback })
   } catch (error) {
     console.error('Feedback API error:', error)
+    const errorMessage = error instanceof Error ? error.message : '提交反馈失败'
     return NextResponse.json(
-      { error: '提交反馈失败' },
+      { error: errorMessage, hint: '可能需要在 Supabase 中创建 feedback 表' },
       { status: 500 }
     )
   }

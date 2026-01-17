@@ -43,7 +43,14 @@ export async function createFeedback(input: CreateFeedbackInput): Promise<Feedba
 
   if (error) {
     console.error('Error creating feedback:', error)
-    throw new Error('Failed to create feedback')
+    // Provide detailed error message
+    if (error.code === '42P01') {
+      throw new Error('feedback 表不存在，请在 Supabase 中运行 schema.sql 创建表')
+    }
+    if (error.code === '23503') {
+      throw new Error('conversation_id 不存在')
+    }
+    throw new Error(`数据库错误: ${error.message}`)
   }
 
   return data as Feedback

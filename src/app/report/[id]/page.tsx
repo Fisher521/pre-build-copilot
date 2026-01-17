@@ -281,91 +281,61 @@ export default function ReportPage() {
     router.push('/')
   }
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!report) return
 
-    // Generate markdown content
-    const markdown = `# 项目评估报告
+    // Dynamic import for client-side only
+    const html2canvas = (await import('html2canvas')).default
+    const { jsPDF } = await import('jspdf')
 
-## 📊 评分: ${report.score.feasibility}/100
+    // Find the report content element
+    const reportElement = document.getElementById('report-content')
+    if (!reportElement) {
+      // Fallback to print
+      window.print()
+      return
+    }
 
-**结论**: ${report.one_liner_conclusion}
+    try {
+      // Capture the report as canvas
+      const canvas = await html2canvas(reportElement, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      })
 
-### 评分细分
-- 技术可行: ${report.score.breakdown.tech}
-- 市场机会: ${report.score.breakdown.market}
-- 上手难度: ${report.score.breakdown.onboarding}
-- 用户匹配: ${report.score.breakdown.user_match}
+      // Calculate dimensions
+      const imgWidth = 210 // A4 width in mm
+      const pageHeight = 297 // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      let heightLeft = imgHeight
+      let position = 0
 
----
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const imgData = canvas.toDataURL('image/png')
 
-## 💪 为什么值得做
-${report.why_worth_it.map(item => `- ${item}`).join('\n')}
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
 
-## ⚠️ 需要注意的风险
-${report.risks.map(item => `- ${item}`).join('\n')}
+      // Add additional pages if needed
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight
+        pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+      }
 
----
-
-## 📈 市场分析
-
-**机会洞察**: ${report.market_analysis.opportunity}
-
-### 现有竞品
-${report.market_analysis.competitors.map(comp => `- **${comp.name}**
-  - 优势: ${comp.pros[0] || 'N/A'}
-  - 劣势: ${comp.cons[0] || 'N/A'}`).join('\n')}
-
----
-
-## ⚙️ 技术方案
-
-### ${report.tech_options.option_a.name}
-- 工具: ${report.tech_options.option_a.tools.join(' + ')}
-- 能力: ${report.tech_options.option_a.capability}
-- 时间: ${report.tech_options.option_a.dev_time}
-- 成本: ${report.tech_options.option_a.cost}
-
-### ${report.tech_options.option_b.name}
-- 工具: ${report.tech_options.option_b.tools.join(' + ')}
-- 能力: ${report.tech_options.option_b.capability}
-- 时间: ${report.tech_options.option_b.dev_time}
-- 成本: ${report.tech_options.option_b.cost}
-
-**建议**: ${report.tech_options.advice}
-
----
-
-## 🚀 最快上手路径
-${report.fastest_path.map((step, i) => `### Step ${i + 1}: ${step.title}
-${step.description}
-${step.copy_text ? `\n**提示词**:\n\`\`\`\n${step.copy_text}\n\`\`\`` : ''}`).join('\n\n')}
-
----
-
-## 💰 成本预估
-- **时间投入**: ${report.cost_estimate.time_breakdown}
-- **金钱投入**: ${report.cost_estimate.money_breakdown}
-
-## ⚠️ 避坑指南
-${report.pitfalls.map(pit => `- ${pit}`).join('\n')}
-
----
-
-*报告生成时间: ${new Date().toLocaleString('zh-CN')}*
-*由 Vibe Checker 2.0 生成*
-`
-
-    // Create blob and download
-    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `项目评估报告_${new Date().toISOString().split('T')[0]}.md`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+      // Download PDF
+      pdf.save(`项目评估报告_${new Date().toISOString().split('T')[0]}.pdf`)
+    } catch (error) {
+      console.error('PDF generation failed:', error)
+      // Fallback to browser print
+      window.print()
+    }
   }
 
   const getScoreColor = (score: number) => {
