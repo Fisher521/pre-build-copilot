@@ -2,14 +2,63 @@
  * Speech Recognition API Route
  * POST /api/speech - Transcribe audio using Qwen2-Audio or OpenAI Whisper
  * Supports Chinese-English mixed speech recognition
+ * Includes AI optimization to clean up recognition results
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import OpenAI from 'openai'
+
+/**
+ * Use AI to optimize and clean up voice recognition text
+ * - Fix punctuation and formatting
+ * - Correct common recognition errors
+ * - Make the text more coherent
+ */
+async function optimizeTranscript(rawText: string): Promise<string> {
+  const qwenKey = process.env.QWEN_API_KEY
+  if (!qwenKey || !rawText.trim()) return rawText
+
+  try {
+    const client = new OpenAI({
+      apiKey: qwenKey,
+      baseURL: process.env.QWEN_API_BASE || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+    })
+
+    const response = await client.chat.completions.create({
+      model: 'qwen-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: `你是一个语音转文字优化助手。用户的输入是语音识别的原始结果，可能有以下问题：
+1. 缺少标点符号
+2. 存在口语化表达
+3. 有重复或冗余的词
+4. 语音识别的错字
+
+请优化文本，但保持原意不变。只输出优化后的文本，不要加任何解释。如果原文已经很好，直接返回原文。`
+        },
+        {
+          role: 'user',
+          content: rawText
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 500,
+    })
+
+    const optimized = response.choices[0]?.message?.content?.trim()
+    return optimized || rawText
+  } catch (error) {
+    console.error('Voice optimization error:', error)
+    return rawText
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const audioFile = formData.get('audio') as Blob | null
+    const skipOptimize = formData.get('skipOptimize') === 'true'
 
     if (!audioFile) {
       return NextResponse.json(
@@ -77,8 +126,12 @@ export async function POST(request: NextRequest) {
             .trim()
 
           if (cleanText) {
+            // AI optimization for better accuracy
+            const optimizedText = skipOptimize ? cleanText : await optimizeTranscript(cleanText)
             return NextResponse.json({
-              text: cleanText,
+              text: optimizedText,
+              rawText: cleanText,
+              optimized: !skipOptimize && optimizedText !== cleanText,
               success: true,
             })
           }
@@ -111,8 +164,13 @@ export async function POST(request: NextRequest) {
 
         if (response.ok) {
           const result = await response.json()
+          const rawText = result.text || ''
+          // AI optimization for better accuracy
+          const optimizedText = skipOptimize ? rawText : await optimizeTranscript(rawText)
           return NextResponse.json({
-            text: result.text || '',
+            text: optimizedText,
+            rawText: rawText,
+            optimized: !skipOptimize && optimizedText !== rawText,
             success: true,
           })
         }
