@@ -344,8 +344,8 @@ export default function ReportPage() {
 
   const handleShare = async (method: 'copy' | 'native' | 'twitter' | 'weibo') => {
     const shareUrl = window.location.href
-    const shareTitle = `项目评估报告 - ${report?.one_liner_conclusion || 'Vibe Checker'}`
-    const shareText = `我用 Vibe Checker 评估了一个项目想法，可行性评分 ${report?.score.feasibility || 0} 分！`
+    const shareTitle = `项目评估报告 - ${report?.one_liner_conclusion || 'JustArt'}`
+    const shareText = `我用 justart.today 评估了一个项目想法，可行性评分 ${report?.score.feasibility || 0} 分！`
 
     switch (method) {
       case 'copy':
@@ -567,7 +567,7 @@ export default function ReportPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">项目评估报告</h1>
-          <p className="text-gray-500 mt-2">Vibe Checker 2.0</p>
+          <p className="text-gray-500 mt-2">JustArt 2.0</p>
         </div>
 
         {/* Score Card */}
