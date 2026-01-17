@@ -133,7 +133,8 @@ export default function HomePage() {
     )
   }
 
-  const examples = translations.home.examples
+  // 根据语言选择对应的案例列表
+  const examples = lang === 'zh' ? translations.home.examplesZh : translations.home.examplesEn
   const steps = translations.home.steps
 
   return (
@@ -218,18 +219,18 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Examples */}
+          {/* Examples - 完全分开的中英文案例 */}
           <div className="mt-4 sm:mt-6 pt-4 sm:pt-5 border-t border-gray-100">
             <p className="text-xs text-gray-400 mb-2 sm:mb-3">{t('home.hotIdeas')}</p>
             <div className="flex flex-wrap gap-2">
               {examples.map((example) => (
                 <button
-                  key={example.title[lang]}
-                  onClick={() => setInput(example.desc[lang])}
+                  key={example.title}
+                  onClick={() => setInput(example.desc)}
                   disabled={isLoading}
                   className="px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs text-gray-600 bg-gray-50 hover:bg-indigo-50 hover:text-indigo-600 border border-gray-200 hover:border-indigo-200 rounded-md transition-colors disabled:opacity-50"
                 >
-                  {example.title[lang]}
+                  {example.title}
                 </button>
               ))}
             </div>

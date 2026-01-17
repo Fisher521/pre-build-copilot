@@ -101,21 +101,58 @@ export const translations = {
       zh: '试试这些热门想法：',
       en: 'Try these popular ideas:',
     },
-    examples: [
+    // 中文版案例 - 适合中国市场
+    examplesZh: [
       {
         icon: '📰',
-        title: { zh: 'AI 新闻站', en: 'AI News Site' },
-        desc: { zh: '每日新闻 AI 摘要', en: 'Daily AI news digest' },
+        title: 'AI 新闻站',
+        desc: '做一个AI科技新闻聚合网站，自动抓取36氪、虎嗅等来源的文章，用AI生成每日摘要，目标用户是科技从业者，解决他们每天花大量时间刷新闻的痛点',
       },
       {
         icon: '🧠',
-        title: { zh: '思维导图', en: 'Mind Map' },
-        desc: { zh: '读书笔记自动生成', en: 'Auto-generate reading notes' },
+        title: '阅读笔记助手',
+        desc: '一个帮用户把文章或书籍自动转成结构化笔记的工具，核心功能是粘贴内容后一键生成思维导图，面向学生和知识工作者，解决他们整理笔记费时费力的问题',
       },
       {
         icon: '🎯',
-        title: { zh: '落地页生成', en: 'Landing Page' },
-        desc: { zh: '一句话生成落地页', en: 'One-liner to landing page' },
+        title: '落地页生成器',
+        desc: '输入一句产品描述就能生成完整落地页的SaaS工具，包含标题、卖点、CTA按钮，目标用户是独立开发者和小团队，解决他们不会设计、没时间做营销页的痛点',
+      },
+    ],
+    // 英文版案例 - 适合国际市场（完全不同的案例）
+    examplesEn: [
+      {
+        icon: '📬',
+        title: 'Newsletter Curator',
+        desc: 'An AI-powered tool that curates industry newsletters, summarizes key insights, and delivers a personalized daily digest. Target users are busy professionals who subscribe to too many newsletters. Solves the problem of email overload and FOMO.',
+      },
+      {
+        icon: '🔖',
+        title: 'Bookmark Brain',
+        desc: 'A smart bookmark manager that uses AI to auto-tag, categorize and surface relevant saved links when you need them. Built for knowledge workers and researchers who save hundreds of links but never find them again.',
+      },
+      {
+        icon: '🚀',
+        title: 'Ship Page',
+        desc: 'Generate a beautiful product landing page from a single sentence description. Includes hero section, features, pricing table and email signup. Perfect for indie hackers and makers who want to validate ideas fast without design skills.',
+      },
+    ],
+    // 保持向后兼容
+    examples: [
+      {
+        icon: '📰',
+        title: { zh: 'AI 新闻站', en: 'Newsletter Curator' },
+        desc: { zh: '做一个AI科技新闻聚合网站，自动抓取36氪、虎嗅等来源的文章，用AI生成每日摘要，目标用户是科技从业者，解决他们每天花大量时间刷新闻的痛点', en: 'An AI-powered tool that curates industry newsletters, summarizes key insights, and delivers a personalized daily digest. Target users are busy professionals who subscribe to too many newsletters. Solves the problem of email overload and FOMO.' },
+      },
+      {
+        icon: '🧠',
+        title: { zh: '阅读笔记助手', en: 'Bookmark Brain' },
+        desc: { zh: '一个帮用户把文章或书籍自动转成结构化笔记的工具，核心功能是粘贴内容后一键生成思维导图，面向学生和知识工作者，解决他们整理笔记费时费力的问题', en: 'A smart bookmark manager that uses AI to auto-tag, categorize and surface relevant saved links when you need them. Built for knowledge workers and researchers who save hundreds of links but never find them again.' },
+      },
+      {
+        icon: '🎯',
+        title: { zh: '落地页生成器', en: 'Ship Page' },
+        desc: { zh: '输入一句产品描述就能生成完整落地页的SaaS工具，包含标题、卖点、CTA按钮，目标用户是独立开发者和小团队，解决他们不会设计、没时间做营销页的痛点', en: 'Generate a beautiful product landing page from a single sentence description. Includes hero section, features, pricing table and email signup. Perfect for indie hackers and makers who want to validate ideas fast without design skills.' },
       },
     ],
     threeSteps: {
