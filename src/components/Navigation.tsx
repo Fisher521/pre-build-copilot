@@ -18,8 +18,14 @@ export function Navigation() {
   const isHome = pathname === '/' || pathname.startsWith('/review') || pathname.startsWith('/report') || pathname.startsWith('/questions')
   const isAIPulse = pathname.startsWith('/ai-pulse')
 
+  // 报告页在移动端隐藏全局导航（报告页有自己的导航）
+  const isReportPage = pathname.startsWith('/report')
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+    <nav className={cn(
+      "fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200",
+      isReportPage && "hidden sm:block" // 移动端报告页隐藏
+    )}>
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center h-12 sm:h-14">
           {/* Logo */}

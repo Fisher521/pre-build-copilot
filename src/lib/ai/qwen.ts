@@ -20,6 +20,7 @@ import {
   FEW_SHOT_EXAMPLES,
   BRIEF_GENERATION_PROMPT,
 } from './prompts'
+import { withRetry, parseAIError } from './utils'
 import {
   createEmptySchema,
   updateSchema,
@@ -213,12 +214,21 @@ export async function processUserInput(params: {
   })
 
   try {
-    const response = await getClient().chat.completions.create({
-      model: FAST_MODEL, // Use faster model for initial interactions
-      messages,
-      temperature: 0.6,
-      max_tokens: 500, // Reduced for faster response
-    })
+    const response = await withRetry(
+      async () => {
+        return await getClient().chat.completions.create({
+          model: FAST_MODEL, // Use faster model for initial interactions
+          messages,
+          temperature: 0.6,
+          max_tokens: 500, // Reduced for faster response
+        })
+      },
+      {
+        maxRetries: 2,
+        timeoutMs: 30000, // 30秒超时
+        initialDelayMs: 1000,
+      }
+    )
 
     const content = response.choices[0]?.message?.content || ''
     const { text, metadata } = parseAIResponse(content)
@@ -241,7 +251,7 @@ export async function processUserInput(params: {
     }
   } catch (error) {
     console.error('Qwen API error:', error)
-    throw new Error('AI 服务暂时不可用，请稍后再试')
+    throw new Error(parseAIError(error))
   }
 }
 
@@ -652,29 +662,46 @@ Each question object:
   }
 
   try {
-    const response = await getClient().chat.completions.create({
-      model: FAST_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: isEnglish
-            ? 'Output valid JSON only. All content must be in English.'
-            : '只输出有效的JSON，所有内容用中文。',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      response_format: { type: 'json_object' },
-    })
+    // 使用重试机制包装 AI 调用
+    const result = await withRetry(
+      async () => {
+        const response = await getClient().chat.completions.create({
+          model: FAST_MODEL,
+          messages: [
+            {
+              role: 'system',
+              content: isEnglish
+                ? 'Output valid JSON only. All content must be in English.'
+                : '只输出有效的JSON，所有内容用中文。',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+          response_format: { type: 'json_object' },
+        })
 
-    const content = response.choices[0]?.message?.content || '{}'
-    const result = JSON.parse(content)
+        const content = response.choices[0]?.message?.content || '{}'
+        const parsed = JSON.parse(content)
+
+        if (!parsed.questions || !Array.isArray(parsed.questions)) {
+          throw new Error('Invalid response format: missing questions array')
+        }
+
+        return parsed
+      },
+      {
+        maxRetries: 2,
+        timeoutMs: 30000, // 30秒超时
+        initialDelayMs: 1000,
+      }
+    )
+
     return result.questions || []
   } catch (error) {
-    console.error('Generate questions error:', error)
+    console.error('Generate questions error:', parseAIError(error))
     // Fallback if AI fails
     return fallbackQuestions
   }

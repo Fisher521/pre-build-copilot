@@ -5,7 +5,8 @@
       "Bash(git push)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd feedback collection system with privacy reassurance\n\n- Create feedback database table and storage functions\n- Add feedback API endpoint \\(POST /api/feedback\\)\n- Create FeedbackModal component with reason selection\n- Integrate feedback into report page with submit flow\n- Add privacy reassurance text throughout:\n  - Homepage: \"你的想法仅用于本次评估，不会被存储或分享\"\n  - Report feedback: \"反馈仅用于改进产品，不会关联你的项目内容\"\n  - Modal: \"你的反馈完全匿名，不会关联到你的项目想法\"\n- Update Supabase schema with feedback table\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

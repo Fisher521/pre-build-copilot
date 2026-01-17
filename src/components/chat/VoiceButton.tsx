@@ -70,12 +70,16 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
 
   // Web Speech API refs
   const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const startupTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Fallback MediaRecorder refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
+
+  // Flag to trigger fallback recording
+  const [triggerFallback, setTriggerFallback] = useState(false)
 
   // Check Web Speech API support
   useEffect(() => {
@@ -114,6 +118,9 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
       if (recognitionRef.current) {
         recognitionRef.current.abort()
       }
+      if (startupTimeoutRef.current) {
+        clearTimeout(startupTimeoutRef.current)
+      }
     }
   }, [])
 
@@ -137,7 +144,20 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
 
       let finalTranscript = ''
 
+      // Set timeout for API startup - if it takes too long, fallback to MediaRecorder
+      startupTimeoutRef.current = setTimeout(() => {
+        console.warn('Web Speech API startup timeout, falling back to MediaRecorder')
+        recognition.abort()
+        setUseWebSpeech(false)
+        setTriggerFallback(true)
+      }, 5000)
+
       recognition.onstart = () => {
+        // Clear startup timeout since API started successfully
+        if (startupTimeoutRef.current) {
+          clearTimeout(startupTimeoutRef.current)
+          startupTimeoutRef.current = null
+        }
         setIsRecording(true)
       }
 
@@ -160,11 +180,29 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
       }
 
       recognition.onerror = (event) => {
+        // Clear startup timeout
+        if (startupTimeoutRef.current) {
+          clearTimeout(startupTimeoutRef.current)
+          startupTimeoutRef.current = null
+        }
+
         console.error('Speech recognition error:', event.error)
         if (event.error === 'not-allowed') {
           setError('麦克风权限被拒绝')
         } else if (event.error === 'no-speech') {
           setError('未检测到语音')
+        } else if (event.error === 'network') {
+          // Network error - fallback to MediaRecorder silently
+          console.warn('Web Speech API network error, falling back to MediaRecorder')
+          setUseWebSpeech(false)
+          setTriggerFallback(true)
+          return // Don't set recording false, will start MediaRecorder via effect
+        } else if (event.error === 'aborted') {
+          // User aborted, no error needed
+        } else if (event.error === 'audio-capture') {
+          setError('无法访问麦克风')
+        } else if (event.error === 'service-not-allowed') {
+          setError('语音服务不可用')
         } else {
           setError('语音识别出错')
         }
@@ -253,6 +291,14 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
       setError('无法访问麦克风')
     }
   }, [disabled, isProcessing])
+
+  // Effect to trigger fallback recording when Web Speech API fails
+  useEffect(() => {
+    if (triggerFallback && !useWebSpeech) {
+      setTriggerFallback(false)
+      startMediaRecording()
+    }
+  }, [triggerFallback, useWebSpeech, startMediaRecording])
 
   const stopMediaRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
@@ -363,7 +409,7 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
             ? 'bg-blue-500 text-white cursor-wait'
             : isRecording
               ? 'bg-red-500 text-white'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-primary-600',
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-indigo-600',
           'disabled:opacity-50 disabled:cursor-not-allowed',
           className
         )}

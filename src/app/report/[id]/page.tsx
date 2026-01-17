@@ -509,91 +509,103 @@ export default function ReportPage() {
   }
 
   return (
-    <div className="min-h-screen pt-12 sm:pt-14 bg-gray-50">
-      {/* Sticky Header */}
-      <div className="sticky top-12 sm:top-14 z-30 bg-white border-b border-gray-200">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-2 sm:py-3">
+    <div className="min-h-screen pt-0 sm:pt-14 bg-gray-50">
+      {/* Sticky Header - 移动端从顶部开始，桌面端从导航下方开始 */}
+      <div className="sticky top-0 sm:top-14 z-30 bg-white border-b border-gray-200">
+        <div className="max-w-3xl mx-auto px-3 sm:px-6 py-2 sm:py-3">
           <div className="flex items-center justify-between">
             <button
               onClick={handleRestart}
-              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors p-1 -ml-1"
             >
               <span>←</span>
               <span className="hidden sm:inline">{t('common.back')}</span>
             </button>
+
+            {/* 桌面端标题 */}
             <h1 className="text-sm font-medium text-gray-900 hidden sm:block">{t('report.title')}</h1>
-            <div className="flex items-center gap-1">
-              {/* Share Button */}
-              <div className="relative">
+
+            {/* 操作按钮 */}
+            <div className="flex items-center">
+              {/* 桌面端：分开显示 */}
+              <div className="hidden sm:flex items-center gap-1">
+                <div className="relative">
+                  <button
+                    onClick={() => setShowShareMenu(!showShareMenu)}
+                    className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    {copySuccess ? `✅ ${t('report.copied')}` : `🔗 ${t('report.share')}`}
+                  </button>
+
+                  {showShareMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowShareMenu(false)} />
+                      <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                        <button onClick={() => handleShare('copy')} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                          <span>📋</span><span>{t('report.shareMenu.copyLink')}</span>
+                        </button>
+                        {typeof window !== 'undefined' && 'share' in navigator && (
+                          <button onClick={() => handleShare('native')} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                            <span>📤</span><span>{t('report.shareMenu.systemShare')}</span>
+                          </button>
+                        )}
+                        <div className="border-t border-gray-100 my-1" />
+                        <button onClick={() => handleShare('weibo')} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                          <span>🔴</span><span>{t('report.shareMenu.weibo')}</span>
+                        </button>
+                        <button onClick={() => handleShare('twitter')} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                          <span>🐦</span><span>{t('report.shareMenu.twitter')}</span>
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <button onClick={handleDownload} className="px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors">
+                  📥 {t('report.download')}
+                </button>
+              </div>
+
+              {/* 移动端：更多菜单 */}
+              <div className="sm:hidden relative">
                 <button
                   onClick={() => setShowShareMenu(!showShareMenu)}
-                  className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  {copySuccess ? `✅ ${t('report.copied')}` : `🔗 ${t('report.share')}`}
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                  </svg>
                 </button>
 
-                {/* Share Dropdown Menu */}
                 {showShareMenu && (
                   <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setShowShareMenu(false)}
-                    />
-                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                      <button
-                        onClick={() => handleShare('copy')}
-                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
-                      >
-                        <span>📋</span>
-                        <span>{t('report.shareMenu.copyLink')}</span>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowShareMenu(false)} />
+                    <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
+                      <button onClick={() => handleShare('copy')} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                        <span>📋</span><span>{t('report.shareMenu.copyLink')}</span>
+                      </button>
+                      <button onClick={handleDownload} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                        <span>📥</span><span>{t('report.download')}</span>
                       </button>
                       {typeof window !== 'undefined' && 'share' in navigator && (
-                        <button
-                          onClick={() => handleShare('native')}
-                          className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
-                        >
-                          <span>📤</span>
-                          <span>{t('report.shareMenu.systemShare')}</span>
+                        <button onClick={() => handleShare('native')} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                          <span>📤</span><span>{t('report.shareMenu.systemShare')}</span>
                         </button>
                       )}
-                      <div className="border-t border-gray-100 my-1" />
-                      <button
-                        onClick={() => handleShare('weibo')}
-                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
-                      >
-                        <span>🔴</span>
-                        <span>{t('report.shareMenu.weibo')}</span>
-                      </button>
-                      <button
-                        onClick={() => handleShare('twitter')}
-                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
-                      >
-                        <span>🐦</span>
-                        <span>{t('report.shareMenu.twitter')}</span>
-                      </button>
                     </div>
                   </>
                 )}
               </div>
-
-              {/* Download Button */}
-              <button
-                onClick={handleDownload}
-                className="px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
-              >
-                📥 {t('report.download')}
-              </button>
             </div>
           </div>
         </div>
-        {/* Quick Nav */}
+        {/* Quick Nav - 章节导航 */}
         <div className="border-t border-gray-100 overflow-x-auto scrollbar-hide">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-1.5 sm:py-2 flex gap-1">
+          <div className="max-w-3xl mx-auto px-3 sm:px-6 py-1.5 flex gap-0.5 sm:gap-1">
             {navSections.map((section) => (
               <button
                 key={section.id}
                 onClick={() => scrollToSection(section.id)}
-                className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 text-xs text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md whitespace-nowrap transition-colors"
+                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md whitespace-nowrap transition-colors flex-shrink-0"
               >
                 <span className="hidden sm:inline">{section.icon}</span>
                 <span>{section.label}</span>
@@ -603,9 +615,9 @@ export default function ReportPage() {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
-        {/* Header */}
-        <div className="text-center mb-6 sm:mb-8">
+      <div className="max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
+        {/* Header - 移动端隐藏（已经在导航中显示了） */}
+        <div className="text-center mb-4 sm:mb-8 hidden sm:block">
           <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{t('report.title')}</h1>
           <p className="text-sm text-gray-500 mt-1">justart.today</p>
         </div>
@@ -614,35 +626,35 @@ export default function ReportPage() {
         <div
           id="score"
           className={cn(
-            'rounded-lg border p-4 sm:p-6 mb-4 sm:mb-6 bg-white scroll-mt-32',
+            'rounded-lg border p-3 sm:p-6 mb-3 sm:mb-6 bg-white scroll-mt-24 sm:scroll-mt-32',
             getScoreBg(report.score.feasibility)
           )}
         >
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
             {/* Score Ring */}
             <div className="flex-shrink-0">
-              <ScoreRing score={report.score.feasibility} size={120} strokeWidth={10} />
+              <ScoreRing score={report.score.feasibility} size={100} strokeWidth={8} />
             </div>
 
             {/* Score Details */}
-            <div className="flex-1 text-center sm:text-left w-full">
+            <div className="flex-1 text-center sm:text-left w-full min-w-0">
               <div className="text-xs text-gray-500 mb-1">{t('report.feasibilityScore')}</div>
-              <div className="bg-white/80 rounded-md p-3 border border-gray-100 mb-3">
-                <p className="text-sm sm:text-base font-medium text-gray-800">{report.one_liner_conclusion}</p>
+              <div className="bg-white/80 rounded-md p-2.5 sm:p-3 border border-gray-100 mb-3">
+                <p className="text-sm font-medium text-gray-800 break-words">{report.one_liner_conclusion}</p>
               </div>
 
-              {/* Score Breakdown - Horizontal bars */}
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              {/* Score Breakdown - 移动端单列，桌面端双列 */}
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-2 text-sm">
                 {[
                   { label: translations.report.scoreBreakdown.tech[lang], value: report.score.breakdown.tech, color: 'bg-indigo-500' },
                   { label: translations.report.scoreBreakdown.market[lang], value: report.score.breakdown.market, color: 'bg-purple-500' },
                   { label: translations.report.scoreBreakdown.onboarding[lang], value: report.score.breakdown.onboarding, color: 'bg-pink-500' },
                   { label: translations.report.scoreBreakdown.userMatch[lang], value: report.score.breakdown.user_match, color: 'bg-cyan-500' },
                 ].map((item) => (
-                  <div key={item.label} className="bg-gray-50 rounded-md p-2 sm:p-3">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-gray-500 text-xs">{item.label}</span>
-                      <span className="font-bold text-gray-900 text-xs sm:text-sm">{item.value}</span>
+                  <div key={item.label} className="bg-gray-50 rounded-md p-2 sm:p-3 min-w-0">
+                    <div className="flex justify-between items-center mb-1 gap-1">
+                      <span className="text-gray-500 text-xs truncate">{item.label}</span>
+                      <span className="font-bold text-gray-900 text-xs flex-shrink-0">{item.value}</span>
                     </div>
                     <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
                       <div
@@ -658,8 +670,8 @@ export default function ReportPage() {
         </div>
 
         {/* Strengths & Risks */}
-        <div id="analysis" className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6 scroll-mt-32">
-          <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
+        <div id="analysis" className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
+          <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-5">
             <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
               {t('report.whyWorthIt')}
             </h3>
@@ -667,13 +679,13 @@ export default function ReportPage() {
               {report.why_worth_it.map((item, i) => (
                 <li key={i} className="flex items-start gap-2 text-gray-700">
                   <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
-                  <span className="text-xs sm:text-sm leading-relaxed">{item}</span>
+                  <span className="text-xs sm:text-sm leading-relaxed break-words">{item}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
+          <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-5">
             <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
               {t('report.risks')}
             </h3>
@@ -681,7 +693,7 @@ export default function ReportPage() {
               {report.risks.map((item, i) => (
                 <li key={i} className="flex items-start gap-2 text-gray-700">
                   <span className="text-amber-500 mt-0.5 flex-shrink-0">!</span>
-                  <span className="text-xs sm:text-sm leading-relaxed">{item}</span>
+                  <span className="text-xs sm:text-sm leading-relaxed break-words">{item}</span>
                 </li>
               ))}
             </ul>
@@ -689,7 +701,7 @@ export default function ReportPage() {
         </div>
 
         {/* Market Analysis */}
-        <div id="market" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5 mb-4 sm:mb-6 scroll-mt-32">
+        <div id="market" className="rounded-lg border border-gray-200 bg-white p-3 sm:p-5 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
           <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">
             {t('report.marketAnalysis')}
           </h3>
@@ -736,7 +748,7 @@ export default function ReportPage() {
 
         {/* Product Approach Selection */}
         {report.product_approaches && report.product_approaches.approaches.length > 0 && (
-          <div id="approach" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5 mb-4 sm:mb-6 scroll-mt-32">
+          <div id="approach" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
             <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">
               {t('report.productApproach')}
             </h3>
@@ -845,7 +857,7 @@ export default function ReportPage() {
         )}
 
         {/* Tech Stack */}
-        <div id="tech" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5 mb-4 sm:mb-6 scroll-mt-32">
+        <div id="tech" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
           <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4 sm:mb-5">
             {t('report.techOptions')}
           </h3>
@@ -983,7 +995,7 @@ export default function ReportPage() {
         </div>
 
         {/* Fastest Path */}
-        <div id="path" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5 mb-4 sm:mb-6 scroll-mt-32">
+        <div id="path" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
           <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">
             {t('report.fastestPath')}
           </h3>
@@ -1025,7 +1037,7 @@ export default function ReportPage() {
         </div>
 
         {/* Cost & Pitfalls */}
-        <div id="cost" className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6 scroll-mt-32">
+        <div id="cost" className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
           {/* Cost Estimate */}
           <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
             <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">

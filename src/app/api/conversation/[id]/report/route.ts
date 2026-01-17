@@ -6,7 +6,14 @@
 import { NextRequest } from 'next/server'
 import { getConversation, updateConversation } from '@/lib/db/conversations'
 import { searchCompetitors } from '@/lib/ai/search'
+import { withRetry, parseAIError, StreamTimeoutWrapper } from '@/lib/ai/utils'
 import OpenAI from 'openai'
+
+// 配置常量
+const AI_REQUEST_TIMEOUT = 60000 // 60秒总超时
+const STREAM_CHUNK_TIMEOUT = 15000 // 15秒无数据则超时
+const SEARCH_TIMEOUT = 5000 // 搜索超时5秒
+const MAX_RETRIES = 2 // 最大重试次数
 
 // 根据经验等级调整语气
 const TONE_GUIDES = {
@@ -49,7 +56,7 @@ export async function POST(
   try {
     const searchPromise = searchCompetitors(schema.idea.one_liner)
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Search timeout')), 3000)
+      setTimeout(() => reject(new Error('Search timeout')), SEARCH_TIMEOUT)
     )
     const searchResult = await Promise.race([searchPromise, timeoutPromise])
     searchContext = JSON.stringify(searchResult)
@@ -128,76 +135,153 @@ ${toneInstruction}
 
   const stream = new ReadableStream({
     async start(controller) {
-      try {
-        // 发送开始信号
-        controller.enqueue(encoder.encode(`data: {"type":"start"}\n\n`))
+      let retryCount = 0
+      let lastError: Error | null = null
 
-        const response = await client.chat.completions.create({
-          model: process.env.QWEN_MODEL || 'qwen-plus',
-          messages: [
-            {
-              role: 'system',
-              content: '你是务实的独立开发顾问。只输出有效JSON，中文内容。',
-            },
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          temperature: 0.7,
-          response_format: { type: 'json_object' },
-          stream: true,
-        })
-
-        let fullContent = ''
-        let chunkCount = 0
-
-        for await (const chunk of response) {
-          const content = chunk.choices[0]?.delta?.content || ''
-          if (content) {
-            fullContent += content
-            chunkCount++
-
-            // 每5个chunk发送一次进度更新
-            if (chunkCount % 5 === 0) {
-              const progressData = {
-                type: 'progress',
-                length: fullContent.length,
-                preview: fullContent.slice(0, 100),
-              }
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify(progressData)}\n\n`))
-            }
-          }
-        }
-
-        // 解析完整JSON
-        let report
+      // 重试循环
+      while (retryCount <= MAX_RETRIES) {
         try {
-          report = JSON.parse(fullContent)
-        } catch (parseError) {
-          console.error('JSON parse error:', parseError, 'Content:', fullContent.slice(0, 500))
-          controller.enqueue(encoder.encode(`data: {"type":"error","message":"解析失败"}\n\n`))
-          controller.close()
-          return
-        }
+          // 发送开始信号
+          controller.enqueue(encoder.encode(`data: {"type":"start","retry":${retryCount}}\n\n`))
 
-        // 保存到数据库
-        await updateConversation(id, {
-          metadata: {
-            ...conversation.metadata,
-            v2_report: report
+          // 创建带超时的 AbortController
+          const abortController = new AbortController()
+          const timeoutId = setTimeout(() => {
+            abortController.abort()
+          }, AI_REQUEST_TIMEOUT)
+
+          let response
+          try {
+            response = await client.chat.completions.create({
+              model: process.env.QWEN_MODEL || 'qwen-plus',
+              messages: [
+                {
+                  role: 'system',
+                  content: '你是务实的独立开发顾问。只输出有效JSON，中文内容。',
+                },
+                {
+                  role: 'user',
+                  content: prompt,
+                },
+              ],
+              temperature: 0.7,
+              response_format: { type: 'json_object' },
+              stream: true,
+            }, {
+              signal: abortController.signal
+            })
+          } catch (initError) {
+            clearTimeout(timeoutId)
+            throw initError
           }
-        })
 
-        // 发送完整报告
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'complete', report })}\n\n`))
-        controller.close()
+          let fullContent = ''
+          let chunkCount = 0
+          let chunkTimeoutId: NodeJS.Timeout | null = null
+          let streamAborted = false
 
-      } catch (error) {
-        console.error('Stream error:', error)
-        controller.enqueue(encoder.encode(`data: {"type":"error","message":"生成失败"}\n\n`))
-        controller.close()
+          // 设置流超时检测函数
+          const resetChunkTimeout = () => {
+            if (chunkTimeoutId) clearTimeout(chunkTimeoutId)
+            chunkTimeoutId = setTimeout(() => {
+              console.warn('Stream chunk timeout - no data received for', STREAM_CHUNK_TIMEOUT, 'ms')
+              streamAborted = true
+              abortController.abort()
+            }, STREAM_CHUNK_TIMEOUT)
+          }
+
+          try {
+            resetChunkTimeout() // 开始计时
+
+            for await (const chunk of response) {
+              if (streamAborted) break
+
+              resetChunkTimeout() // 每次收到数据重置计时
+
+              const content = chunk.choices[0]?.delta?.content || ''
+              if (content) {
+                fullContent += content
+                chunkCount++
+
+                // 每5个chunk发送一次进度更新
+                if (chunkCount % 5 === 0) {
+                  const progressData = {
+                    type: 'progress',
+                    length: fullContent.length,
+                    preview: fullContent.slice(0, 100),
+                  }
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify(progressData)}\n\n`))
+                }
+              }
+            }
+
+            // 清理超时
+            if (chunkTimeoutId) clearTimeout(chunkTimeoutId)
+            clearTimeout(timeoutId)
+
+            if (streamAborted) {
+              throw new Error('Stream timeout - 流式响应超时')
+            }
+
+            // 检查是否有内容
+            if (!fullContent || fullContent.length < 100) {
+              throw new Error('Empty response - AI返回内容为空')
+            }
+
+            // 解析完整JSON
+            let report
+            try {
+              report = JSON.parse(fullContent)
+            } catch (parseError) {
+              console.error('JSON parse error:', parseError, 'Content:', fullContent.slice(0, 500))
+              throw new Error('JSON解析失败 - AI返回格式错误')
+            }
+
+            // 保存到数据库
+            try {
+              await updateConversation(id, {
+                metadata: {
+                  ...conversation.metadata,
+                  v2_report: report
+                }
+              })
+            } catch (dbError) {
+              console.error('Database save error:', dbError)
+              // 继续，不影响返回报告
+            }
+
+            // 发送完整报告
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'complete', report })}\n\n`))
+            controller.close()
+            return // 成功，退出重试循环
+
+          } catch (streamError) {
+            if (chunkTimeoutId) clearTimeout(chunkTimeoutId)
+            clearTimeout(timeoutId)
+            throw streamError
+          }
+
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error))
+          console.error(`Report generation attempt ${retryCount + 1}/${MAX_RETRIES + 1} failed:`, lastError.message)
+
+          retryCount++
+
+          // 如果还有重试机会，等待后重试
+          if (retryCount <= MAX_RETRIES) {
+            const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000) // 1s, 2s, 4s...
+            console.log(`Retrying in ${delay}ms...`)
+            await new Promise(resolve => setTimeout(resolve, delay))
+            continue
+          }
+        }
       }
+
+      // 所有重试都失败了
+      const errorMessage = parseAIError(lastError)
+      console.error('All retries failed:', errorMessage)
+      controller.enqueue(encoder.encode(`data: {"type":"error","message":"${errorMessage}"}\n\n`))
+      controller.close()
     },
   })
 

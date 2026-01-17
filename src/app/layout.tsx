@@ -21,7 +21,7 @@ export default function RootLayout({
       <body className="min-h-screen antialiased flex flex-col">
         <LanguageProvider>
           <Navigation />
-          <main className="pt-14 flex-1">{children}</main>
+          <main className="flex-1">{children}</main>
           <Footer />
         </LanguageProvider>
       </body>
