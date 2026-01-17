@@ -73,37 +73,53 @@ export async function POST(
 
 ${toneInstruction}
 
-工具库（请根据用户场景推荐国内方案或海外方案）：
+工具库（请根据用户场景推荐3个方案：纯国内、海外、Vibe Coder）：
 
-【国内方案 - 适合微信生态、国内用户、需备案】
+【纯国内方案 - 适合微信生态、国内用户、需备案】
 - AI编程IDE：Cursor、Trae(字节)、通义灵码、MarsCode
-- 全栈生成：Lovable、Bolt.new（需翻墙）
-- 部署托管：腾讯云开发、微信小程序云开发、阿里云函数计算、LeanCloud
-- 数据库：腾讯云数据库、阿里云PolarDB、LeanCloud
-- 大模型API：通义千问、DeepSeek、智谱GLM、月之暗面Kimi、百川
-- 语音API：阿里云语音、腾讯云ASR/TTS、讯飞语音
-- 图像API：通义万相、百度文心一格、智谱CogView
+- 全栈生成：Lovable（需翻墙）、Bolt.new（需翻墙）
+- 部署托管：腾讯云开发、微信小程序云开发、阿里云函数计算、LeanCloud、字节轻服务
+- 数据库：腾讯云数据库、阿里云PolarDB、LeanCloud、字节云数据库
+- 大模型API：通义千问(Qwen)、DeepSeek、智谱GLM、月之暗面Kimi、百川、字节豆包
+- 语音API：阿里云语音(Qwen-ASR)、腾讯云ASR/TTS、讯飞语音
+- 图像API：通义万相、百度文心一格、智谱CogView、Kolors
 - 支付：微信支付、支付宝
 - 小程序/App：微信小程序、uni-app、Taro
-- 自动化：飞书多维表格、简道云
+- 自动化：飞书多维表格、简道云、腾讯文档
 
 【海外方案 - 适合全球用户、无需备案、英文产品】
-- AI编程IDE：Cursor、Windsurf、GitHub Copilot、Claude Code、Aider
+- AI编程IDE：Cursor、Windsurf、GitHub Copilot、Aider
 - 全栈生成：Lovable、Bolt.new、v0.dev、Replit Agent
 - 部署托管：Vercel、Cloudflare Pages/Workers、Netlify、Railway、Render、Fly.io
-- 数据库：Supabase、PlanetScale、Neon、Firebase
-- 大模型API：OpenAI GPT、Anthropic Claude、Google Gemini
-- 语音API：OpenAI Whisper、ElevenLabs、Azure Speech
-- 图像API：DALL-E、Midjourney API、Stable Diffusion
+- 数据库：Supabase、PlanetScale、Neon、Firebase、Turso
+- 大模型API：OpenAI GPT-4o、Anthropic Claude、Google Gemini
+- 语音API：OpenAI Whisper、ElevenLabs、Azure Speech、AssemblyAI
+- 图像API：DALL-E 3、Midjourney API、Stable Diffusion、Flux
 - 支付：Stripe、Paddle、LemonSqueezy
-- 身份验证：Clerk、Auth0、NextAuth
+- 身份验证：Clerk、Auth0、NextAuth、Supabase Auth
 - 自动化：n8n、Make、Zapier
 
+【Vibe Coder 方案 - 适合个人工具、效率提升、快速原型】
+核心理念：用 AI 编程助手 + 现代全栈工具，快速实现个人想法
+- AI编程：Claude Code（终端AI编程）、Cursor（AI IDE）、GitHub Copilot
+- 特色：Claude Code 支持 Skills（自定义命令）、MCP（Model Context Protocol）
+- 代码托管：GitHub（免费私有仓库）
+- 数据库：Supabase（免费额度大，带 Auth）
+- 部署：Vercel（免费部署 Next.js）、Cloudflare Pages
+- 框架：Next.js、Remix、Astro
+- UI：shadcn/ui、Tailwind CSS、Radix
+- 工作流：Claude Code + GitHub + Supabase + Vercel 一键部署
+- 适合场景：个人效率工具、内部工具、快速验证想法、学习项目
+- 成本：基本免费（在免费额度内）
+
 货币单位：所有成本必须用人民币(¥)标注，例如"¥0"、"¥50/月"
-方案命名：option_a用"国内极简方案"或"海外极简方案"，option_b用"国内进阶方案"或"海外进阶方案"，根据项目目标用户选择
+方案命名规则：
+- option_a: "纯国内方案" - 完全使用国内服务，无需翻墙
+- option_b: "海外方案" - 使用国际主流服务，全球可用
+- option_c: "Vibe Coder 方案" - Claude Code/Cursor + GitHub + Supabase + Vercel，适合个人开发者快速实现想法
 
 输出JSON(2-3个产品方案,每个3-4步workflow)：
-{"one_liner_conclusion":"一句话结论","score":{"feasibility":0-100,"breakdown":{"tech":0-100,"market":0-100,"onboarding":0-100,"user_match":0-100}},"why_worth_it":["理由1","理由2","理由3"],"risks":["风险1","风险2"],"market_analysis":{"opportunity":"机会","search_trends":"趋势","competitors":[{"name":"名称","url":"链接","pros":"优点","cons":"缺点"}]},"product_approaches":{"approaches":[{"id":"a","name":"方案名","description":"描述","workflow":[{"step":1,"action":"动作","detail":"详情"}],"pros":["优势"],"cons":["劣势"],"best_for":"适合场景","complexity":"low|medium|high"}],"recommended_id":"推荐id","recommendation_reason":"理由"},"tech_options":{"option_a":{"name":"极简方案","tools":["工具"],"fit_for":"场景","capability":"能力","dev_time":"时间","cost":"成本"},"option_b":{"name":"进阶方案","tools":["工具"],"fit_for":"场景","capability":"能力","dev_time":"时间","cost":"成本"},"advice":"建议"},"fastest_path":[{"title":"标题","description":"描述","copy_text":"提示词","action_label":"按钮文字","action_url":"链接"}],"cost_estimate":{"time_breakdown":"时间","money_breakdown":"金钱"},"pitfalls":["避坑1","避坑2"],"learning_takeaways":["收获1","收获2"],"next_steps":{"today":["今天"],"this_week":["本周"],"later":["以后"]}}`
+{"one_liner_conclusion":"一句话结论","score":{"feasibility":0-100,"breakdown":{"tech":0-100,"market":0-100,"onboarding":0-100,"user_match":0-100}},"why_worth_it":["理由1","理由2","理由3"],"risks":["风险1","风险2"],"market_analysis":{"opportunity":"机会","search_trends":"趋势","competitors":[{"name":"名称","url":"链接","pros":"优点","cons":"缺点"}]},"product_approaches":{"approaches":[{"id":"a","name":"方案名","description":"描述","workflow":[{"step":1,"action":"动作","detail":"详情"}],"pros":["优势"],"cons":["劣势"],"best_for":"适合场景","complexity":"low|medium|high"}],"recommended_id":"推荐id","recommendation_reason":"理由"},"tech_options":{"option_a":{"name":"纯国内方案","tools":[{"name":"工具名","purpose":"用途/要做的事"}],"fit_for":"微信生态/国内用户","capability":"能力","dev_time":"时间","cost":"成本"},"option_b":{"name":"海外方案","tools":[{"name":"工具名","purpose":"用途/要做的事"}],"fit_for":"全球用户/无需备案","capability":"能力","dev_time":"时间","cost":"成本"},"option_c":{"name":"Vibe Coder 方案","tools":[{"name":"Claude Code","purpose":"AI终端编程"},{"name":"GitHub","purpose":"代码托管"},{"name":"Supabase","purpose":"数据库+认证"},{"name":"Vercel","purpose":"一键部署"}],"fit_for":"个人工具/快速原型","capability":"能力","dev_time":"时间","cost":"成本"},"advice":"建议"},"fastest_path":[{"title":"标题","description":"描述","copy_text":"提示词","action_label":"按钮文字","action_url":"链接"}],"cost_estimate":{"time_breakdown":"时间","money_breakdown":"金钱"},"pitfalls":["避坑1","避坑2"],"learning_takeaways":["收获1","收获2"],"next_steps":{"today":["今天"],"this_week":["本周"],"later":["以后"]}}`
 
   const client = getClient()
 

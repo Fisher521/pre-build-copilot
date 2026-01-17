@@ -271,12 +271,17 @@ export interface ReportScore {
   }
 }
 
+export interface TechTool {
+  name: string
+  purpose: string
+}
+
 export interface TechStackOption {
-  id: string
+  id?: string
   name: string // "方案A：极简版"
-  tools: string[] // ["v0", "Vercel"]
+  tools: (string | TechTool)[] // ["v0", "Vercel"] or [{name: "Cursor", purpose: "AI编程"}]
   capability: string // "展示、简单交互"
-  difficulty: number // 1-5 stars
+  difficulty?: number // 1-5 stars
   dev_time: string // "2-4 hours"
   cost: string // "0 元"
   fit_for: string // "先验证想法"
@@ -312,6 +317,7 @@ export interface VibeReport {
   tech_options: {
     option_a: TechStackOption
     option_b: TechStackOption
+    option_c?: TechStackOption  // Vibe Coder 方案
     advice: string
   }
 

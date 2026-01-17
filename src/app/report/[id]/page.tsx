@@ -338,6 +338,59 @@ export default function ReportPage() {
     }
   }
 
+  // Share functionality
+  const [showShareMenu, setShowShareMenu] = useState(false)
+  const [copySuccess, setCopySuccess] = useState(false)
+
+  const handleShare = async (method: 'copy' | 'native' | 'twitter' | 'weibo') => {
+    const shareUrl = window.location.href
+    const shareTitle = `项目评估报告 - ${report?.one_liner_conclusion || 'Vibe Checker'}`
+    const shareText = `我用 Vibe Checker 评估了一个项目想法，可行性评分 ${report?.score.feasibility || 0} 分！`
+
+    switch (method) {
+      case 'copy':
+        try {
+          await navigator.clipboard.writeText(shareUrl)
+          setCopySuccess(true)
+          setTimeout(() => setCopySuccess(false), 2000)
+        } catch (err) {
+          console.error('Copy failed:', err)
+        }
+        break
+
+      case 'native':
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: shareTitle,
+              text: shareText,
+              url: shareUrl,
+            })
+          } catch (err) {
+            if ((err as Error).name !== 'AbortError') {
+              console.error('Share failed:', err)
+            }
+          }
+        }
+        break
+
+      case 'twitter':
+        window.open(
+          `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+          '_blank'
+        )
+        break
+
+      case 'weibo':
+        window.open(
+          `https://service.weibo.com/share/share.php?title=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+          '_blank'
+        )
+        break
+    }
+    setShowShareMenu(false)
+  }
+
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600'
     if (score >= 60) return 'text-primary-600'
@@ -429,7 +482,61 @@ export default function ReportPage() {
               <span className="hidden sm:inline">返回</span>
             </button>
             <h1 className="text-sm font-medium text-gray-900">项目评估报告</h1>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              {/* Share Button */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowShareMenu(!showShareMenu)}
+                  className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  {copySuccess ? '✅ 已复制' : '🔗 分享'}
+                </button>
+
+                {/* Share Dropdown Menu */}
+                {showShareMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowShareMenu(false)}
+                    />
+                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <button
+                        onClick={() => handleShare('copy')}
+                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                      >
+                        <span>📋</span>
+                        <span>复制链接</span>
+                      </button>
+                      {typeof window !== 'undefined' && 'share' in navigator && (
+                        <button
+                          onClick={() => handleShare('native')}
+                          className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                        >
+                          <span>📤</span>
+                          <span>系统分享</span>
+                        </button>
+                      )}
+                      <div className="border-t border-gray-100 my-1" />
+                      <button
+                        onClick={() => handleShare('weibo')}
+                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                      >
+                        <span>🔴</span>
+                        <span>分享到微博</span>
+                      </button>
+                      <button
+                        onClick={() => handleShare('twitter')}
+                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                      >
+                        <span>🐦</span>
+                        <span>分享到 X</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Download Button */}
               <button
                 onClick={handleDownload}
                 className="px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
@@ -702,58 +809,130 @@ export default function ReportPage() {
             <span>⚙️</span> 技术方案选择
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Option A - 极简方案 */}
-            <div className="border border-gray-100 rounded-xl p-5 bg-gray-50">
-              <div className="text-center mb-4">
-                <div className="font-bold text-gray-900 text-base">{report.tech_options.option_a.name}</div>
-                <div className="text-xs text-gray-500 mt-1">{report.tech_options.option_a.fit_for}</div>
+          <div className="space-y-4">
+            {/* Option A - 纯国内方案 */}
+            <div className="border border-gray-200 rounded-xl p-5 bg-gray-50">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="font-bold text-gray-900 text-base flex items-center gap-2">
+                    🇨🇳 {report.tech_options.option_a.name}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">{report.tech_options.option_a.fit_for}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-green-600 font-bold">{report.tech_options.option_a.cost}</div>
+                  <div className="text-xs text-gray-500">{report.tech_options.option_a.dev_time}</div>
+                </div>
               </div>
-              <div className="space-y-3 text-sm">
-                <div className="grid grid-cols-[60px_1fr] gap-2 items-start border-b border-gray-200 pb-2">
-                  <span className="text-gray-500 flex-shrink-0">工具</span>
-                  <span className="font-medium text-gray-700">{report.tech_options.option_a.tools.join(' + ')}</span>
+
+              {/* Tools with purposes */}
+              <div className="mb-4">
+                <div className="text-xs font-medium text-gray-500 mb-2">🛠️ 技术栈</div>
+                <div className="flex flex-wrap gap-2">
+                  {(Array.isArray(report.tech_options.option_a.tools) ? report.tech_options.option_a.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
+                    <div key={i} className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                      {typeof tool === 'string' ? (
+                        <span className="font-medium text-gray-700">{tool}</span>
+                      ) : (
+                        <>
+                          <span className="font-medium text-gray-900">{tool.name}</span>
+                          <span className="text-gray-400 mx-1">·</span>
+                          <span className="text-gray-500">{tool.purpose}</span>
+                        </>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                <div className="grid grid-cols-[60px_1fr] gap-2 items-start border-b border-gray-200 pb-2">
-                  <span className="text-gray-500 flex-shrink-0">能力</span>
-                  <span className="text-gray-700">{report.tech_options.option_a.capability}</span>
-                </div>
-                <div className="grid grid-cols-[60px_1fr] gap-2 items-start border-b border-gray-200 pb-2">
-                  <span className="text-gray-500 flex-shrink-0">时间</span>
-                  <span className="text-gray-700">{report.tech_options.option_a.dev_time}</span>
-                </div>
-                <div className="grid grid-cols-[60px_1fr] gap-2 items-start">
-                  <span className="text-gray-500 flex-shrink-0">成本</span>
-                  <span className="text-green-600 font-medium">{report.tech_options.option_a.cost}</span>
-                </div>
+              </div>
+
+              <div className="text-sm text-gray-600 bg-white rounded-lg p-3 border border-gray-100">
+                <span className="font-medium text-gray-700">能力：</span>{report.tech_options.option_a.capability}
               </div>
             </div>
 
-            {/* Option B - 标准方案（推荐） */}
-            <div className="border-2 border-primary-200 rounded-xl p-5 bg-primary-50">
-              <div className="text-center mb-4">
-                <div className="font-bold text-gray-900 text-base">{report.tech_options.option_b.name}</div>
-                <div className="text-xs text-primary-600 mt-1">{report.tech_options.option_b.fit_for}</div>
+            {/* Option B - 海外方案 */}
+            <div className="border border-blue-200 rounded-xl p-5 bg-blue-50">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="font-bold text-gray-900 text-base flex items-center gap-2">
+                    🌍 {report.tech_options.option_b.name}
+                  </div>
+                  <div className="text-xs text-blue-600 mt-1">{report.tech_options.option_b.fit_for}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-green-600 font-bold">{report.tech_options.option_b.cost}</div>
+                  <div className="text-xs text-gray-500">{report.tech_options.option_b.dev_time}</div>
+                </div>
               </div>
-              <div className="space-y-3 text-sm">
-                <div className="grid grid-cols-[60px_1fr] gap-2 items-start border-b border-primary-200 pb-2">
-                  <span className="text-gray-500 flex-shrink-0">工具</span>
-                  <span className="font-medium text-gray-700">{report.tech_options.option_b.tools.join(' + ')}</span>
+
+              {/* Tools with purposes */}
+              <div className="mb-4">
+                <div className="text-xs font-medium text-gray-500 mb-2">🛠️ 技术栈</div>
+                <div className="flex flex-wrap gap-2">
+                  {(Array.isArray(report.tech_options.option_b.tools) ? report.tech_options.option_b.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
+                    <div key={i} className="bg-white border border-blue-200 rounded-lg px-3 py-2 text-sm">
+                      {typeof tool === 'string' ? (
+                        <span className="font-medium text-gray-700">{tool}</span>
+                      ) : (
+                        <>
+                          <span className="font-medium text-gray-900">{tool.name}</span>
+                          <span className="text-gray-400 mx-1">·</span>
+                          <span className="text-gray-500">{tool.purpose}</span>
+                        </>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                <div className="grid grid-cols-[60px_1fr] gap-2 items-start border-b border-primary-200 pb-2">
-                  <span className="text-gray-500 flex-shrink-0">能力</span>
-                  <span className="text-gray-700">{report.tech_options.option_b.capability}</span>
-                </div>
-                <div className="grid grid-cols-[60px_1fr] gap-2 items-start border-b border-primary-200 pb-2">
-                  <span className="text-gray-500 flex-shrink-0">时间</span>
-                  <span className="text-gray-700">{report.tech_options.option_b.dev_time}</span>
-                </div>
-                <div className="grid grid-cols-[60px_1fr] gap-2 items-start">
-                  <span className="text-gray-500 flex-shrink-0">成本</span>
-                  <span className="text-green-600 font-medium">{report.tech_options.option_b.cost}</span>
-                </div>
+              </div>
+
+              <div className="text-sm text-gray-600 bg-white rounded-lg p-3 border border-blue-100">
+                <span className="font-medium text-gray-700">能力：</span>{report.tech_options.option_b.capability}
               </div>
             </div>
+
+            {/* Option C - Vibe Coder 方案 */}
+            {report.tech_options.option_c && (
+              <div className="border-2 border-purple-300 rounded-xl p-5 bg-gradient-to-br from-purple-50 to-indigo-50 relative overflow-hidden">
+                <div className="absolute top-2 right-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
+                  ⚡ 推荐
+                </div>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <div className="font-bold text-gray-900 text-base flex items-center gap-2">
+                      🚀 {report.tech_options.option_c.name}
+                    </div>
+                    <div className="text-xs text-purple-600 mt-1">{report.tech_options.option_c.fit_for}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-green-600 font-bold">{report.tech_options.option_c.cost}</div>
+                    <div className="text-xs text-gray-500">{report.tech_options.option_c.dev_time}</div>
+                  </div>
+                </div>
+
+                {/* Tools with purposes - highlighted */}
+                <div className="mb-4">
+                  <div className="text-xs font-medium text-purple-600 mb-2">🛠️ Vibe Coding 工具链</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {(Array.isArray(report.tech_options.option_c.tools) ? report.tech_options.option_c.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
+                      <div key={i} className="bg-white border border-purple-200 rounded-lg p-3 text-center shadow-sm">
+                        {typeof tool === 'string' ? (
+                          <span className="font-medium text-gray-700 text-sm">{tool}</span>
+                        ) : (
+                          <>
+                            <div className="font-bold text-purple-700 text-sm">{tool.name}</div>
+                            <div className="text-xs text-gray-500 mt-1">{tool.purpose}</div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="text-sm text-gray-600 bg-white/80 rounded-lg p-3 border border-purple-100">
+                  <span className="font-medium text-gray-700">能力：</span>{report.tech_options.option_c.capability}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800 leading-relaxed">
