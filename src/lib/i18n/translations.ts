@@ -376,12 +376,12 @@ export const translations = {
       en: 'View',
     },
     productApproach: {
-      zh: '产品逻辑方案',
-      en: 'Product Logic',
+      zh: '产品策略',
+      en: 'Product Strategy',
     },
     approachDesc: {
-      zh: '选择产品实现的核心逻辑，决定用户如何与产品交互',
-      en: 'Choose the core logic of how users interact with your product',
+      zh: '选择产品的功能范围和 MVP 策略，决定先做什么、后做什么',
+      en: 'Choose product scope and MVP strategy - what to build first',
     },
     recommended: {
       zh: '推荐',
@@ -414,8 +414,8 @@ export const translations = {
       en: 'Best for:',
     },
     techOptions: {
-      zh: '技术方案选择',
-      en: 'Tech Stack Options',
+      zh: '技术实现方案',
+      en: 'Tech Implementation',
     },
     techStack: {
       zh: '技术栈',

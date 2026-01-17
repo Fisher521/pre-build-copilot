@@ -41,6 +41,17 @@ export async function POST(
 ) {
   const { id } = await params
 
+  // 获取语言参数
+  let language: 'zh' | 'en' = 'zh'
+  try {
+    const body = await request.json()
+    language = body.language === 'en' ? 'en' : 'zh'
+  } catch {
+    // 默认中文
+  }
+
+  const isEnglish = language === 'en'
+
   const conversation = await getConversation(id)
   if (!conversation) {
     return new Response(JSON.stringify({ error: '对话不存在' }), {
@@ -66,10 +77,61 @@ export async function POST(
 
   // Determine Tone
   const expLevel = (schema.user.experience_level || 'small_project') as keyof typeof TONE_GUIDES
-  const toneInstruction = TONE_GUIDES[expLevel] || TONE_GUIDES['small_project']
+  const toneInstruction = isEnglish ? '' : (TONE_GUIDES[expLevel] || TONE_GUIDES['small_project'])
 
-  // 精简的 prompt
-  const prompt = `为以下项目生成评估报告。
+  // 根据语言生成不同的 prompt
+  const prompt = isEnglish
+    ? `Generate an evaluation report for this project.
+
+【Project】${schema.idea.one_liner}
+【User】${schema.user.primary_user}
+【Feature】${schema.mvp.first_job || 'Not specified'}
+【Experience】${schema.user.experience_level}
+【Survey】${JSON.stringify(conversation.metadata?.answers || {})}
+【Market】${searchContext}
+
+Tech Stack Library (recommend 2 options: Full-Stack and Vibe Coder):
+
+【Full-Stack Option - For global users, production-ready apps】
+- AI Coding IDE: Cursor, Windsurf, GitHub Copilot, Aider
+- Full-Stack Generation: Lovable, Bolt.new, v0.dev, Replit Agent
+- Deployment: Vercel, Cloudflare Pages/Workers, Netlify, Railway, Render, Fly.io
+- Database: Supabase, PlanetScale, Neon, Firebase, Turso
+- LLM API: OpenAI GPT-4o, Anthropic Claude, Google Gemini
+- Speech API: OpenAI Whisper, ElevenLabs, Azure Speech, AssemblyAI
+- Image API: DALL-E 3, Midjourney API, Stable Diffusion, Flux
+- Payment: Stripe, Paddle, LemonSqueezy
+- Auth: Clerk, Auth0, NextAuth, Supabase Auth
+- Automation: n8n, Make, Zapier
+
+【Vibe Coder Option - For personal tools, quick prototypes】
+Philosophy: AI coding assistant + modern full-stack tools for rapid implementation
+- AI Coding: Claude Code (terminal AI), Cursor (AI IDE), GitHub Copilot
+- Features: Claude Code supports Skills (custom commands), MCP (Model Context Protocol)
+- Code Hosting: GitHub (free private repos)
+- Database: Supabase (generous free tier, includes Auth)
+- Deployment: Vercel (free for Next.js), Cloudflare Pages
+- Framework: Next.js, Remix, Astro
+- UI: shadcn/ui, Tailwind CSS, Radix
+- Workflow: Claude Code + GitHub + Supabase + Vercel one-click deploy
+- Best for: Personal productivity tools, internal tools, rapid prototyping, learning projects
+- Cost: Basically free (within free tiers)
+
+Currency: Use USD ($) for all costs, e.g., "$0", "$10/month"
+
+【Important Distinction】
+1. product_approaches (Product Strategy): Focus on feature scope, user flow, MVP strategy
+   - Examples: "Minimal MVP" (core features only), "Full Version" (more features), "Community Version" (UGC content)
+   - About "what features to build" and "how to design the product"
+   - Names should reflect product strategy, NOT tech regions
+
+2. tech_options (Tech Stack): Focus on tools and technologies
+   - Two options for international version: Full-Stack Option, Vibe Coder Option
+   - About "what technology to use"
+
+Output JSON (ALL CONTENT IN ENGLISH):
+{"one_liner_conclusion":"one sentence conclusion","score":{"feasibility":0-100,"breakdown":{"tech":0-100,"market":0-100,"onboarding":0-100,"user_match":0-100}},"why_worth_it":["reason1","reason2","reason3"],"risks":["risk1","risk2"],"market_analysis":{"opportunity":"opportunity","search_trends":"trends","competitors":[{"name":"name","url":"link","pros":"pros","cons":"cons"}]},"product_approaches":{"approaches":[{"id":"a","name":"Strategy name (e.g. Minimal MVP/Full Version)","description":"describe product form and user flow","workflow":[{"step":1,"action":"user action","detail":"details"}],"pros":["product pros"],"cons":["product cons"],"best_for":"suitable scenario","complexity":"low|medium|high"}],"recommended_id":"recommended id","recommendation_reason":"reason"},"tech_options":{"option_a":{"name":"Full-Stack Option","tools":[{"name":"tool name","purpose":"purpose"}],"fit_for":"Global users/Production apps","capability":"capability","dev_time":"time","cost":"cost"},"option_b":{"name":"Vibe Coder Option","tools":[{"name":"Claude Code","purpose":"AI terminal coding"},{"name":"GitHub","purpose":"code hosting"},{"name":"Supabase","purpose":"database+auth"},{"name":"Vercel","purpose":"one-click deploy"}],"fit_for":"Personal tools/Quick prototypes","capability":"capability","dev_time":"time","cost":"cost"},"advice":"advice"},"fastest_path":[{"title":"title","description":"description","copy_text":"prompt","action_label":"button text","action_url":"link"}],"cost_estimate":{"time_breakdown":"time","money_breakdown":"money"},"pitfalls":["pitfall1","pitfall2"],"learning_takeaways":["takeaway1","takeaway2"],"next_steps":{"today":["today"],"this_week":["this week"],"later":["later"]}}`
+    : `为以下项目生成评估报告。
 
 【项目】${schema.idea.one_liner}
 【用户】${schema.user.primary_user}
@@ -120,13 +182,19 @@ ${toneInstruction}
 - 成本：基本免费（在免费额度内）
 
 货币单位：所有成本必须用人民币(¥)标注，例如"¥0"、"¥50/月"
-方案命名规则：
-- option_a: "纯国内方案" - 完全使用国内服务，无需翻墙
-- option_b: "海外方案" - 使用国际主流服务，全球可用
-- option_c: "Vibe Coder 方案" - Claude Code/Cursor + GitHub + Supabase + Vercel，适合个人开发者快速实现想法
 
-输出JSON(2-3个产品方案,每个3-4步workflow)：
-{"one_liner_conclusion":"一句话结论","score":{"feasibility":0-100,"breakdown":{"tech":0-100,"market":0-100,"onboarding":0-100,"user_match":0-100}},"why_worth_it":["理由1","理由2","理由3"],"risks":["风险1","风险2"],"market_analysis":{"opportunity":"机会","search_trends":"趋势","competitors":[{"name":"名称","url":"链接","pros":"优点","cons":"缺点"}]},"product_approaches":{"approaches":[{"id":"a","name":"方案名","description":"描述","workflow":[{"step":1,"action":"动作","detail":"详情"}],"pros":["优势"],"cons":["劣势"],"best_for":"适合场景","complexity":"low|medium|high"}],"recommended_id":"推荐id","recommendation_reason":"理由"},"tech_options":{"option_a":{"name":"纯国内方案","tools":[{"name":"工具名","purpose":"用途/要做的事"}],"fit_for":"微信生态/国内用户","capability":"能力","dev_time":"时间","cost":"成本"},"option_b":{"name":"海外方案","tools":[{"name":"工具名","purpose":"用途/要做的事"}],"fit_for":"全球用户/无需备案","capability":"能力","dev_time":"时间","cost":"成本"},"option_c":{"name":"Vibe Coder 方案","tools":[{"name":"Claude Code","purpose":"AI终端编程"},{"name":"GitHub","purpose":"代码托管"},{"name":"Supabase","purpose":"数据库+认证"},{"name":"Vercel","purpose":"一键部署"}],"fit_for":"个人工具/快速原型","capability":"能力","dev_time":"时间","cost":"成本"},"advice":"建议"},"fastest_path":[{"title":"标题","description":"描述","copy_text":"提示词","action_label":"按钮文字","action_url":"链接"}],"cost_estimate":{"time_breakdown":"时间","money_breakdown":"金钱"},"pitfalls":["避坑1","避坑2"],"learning_takeaways":["收获1","收获2"],"next_steps":{"today":["今天"],"this_week":["本周"],"later":["以后"]}}`
+【重要区分】
+1. product_approaches（产品策略）：关注产品的功能范围、用户流程、MVP策略
+   - 例如："极简MVP"（只做核心功能）、"完整版"（多功能）、"社区版"（UGC内容）
+   - 这是关于"做什么功能"和"产品怎么设计"
+   - 命名要体现产品策略，不要用技术地域命名
+
+2. tech_options（技术栈）：关注用什么工具和技术实现
+   - 固定三个选项：纯国内方案、海外方案、Vibe Coder方案
+   - 这是关于"用什么技术实现"
+
+输出JSON：
+{"one_liner_conclusion":"一句话结论","score":{"feasibility":0-100,"breakdown":{"tech":0-100,"market":0-100,"onboarding":0-100,"user_match":0-100}},"why_worth_it":["理由1","理由2","理由3"],"risks":["风险1","风险2"],"market_analysis":{"opportunity":"机会","search_trends":"趋势","competitors":[{"name":"名称","url":"链接","pros":"优点","cons":"缺点"}]},"product_approaches":{"approaches":[{"id":"a","name":"产品策略名(如:极简MVP/完整版/社区版)","description":"描述产品形态和用户流程","workflow":[{"step":1,"action":"用户操作","detail":"详情"}],"pros":["产品优势"],"cons":["产品劣势"],"best_for":"适合场景","complexity":"low|medium|high"}],"recommended_id":"推荐id","recommendation_reason":"理由"},"tech_options":{"option_a":{"name":"纯国内方案","tools":[{"name":"工具名","purpose":"用途"}],"fit_for":"微信生态/国内用户","capability":"能力","dev_time":"时间","cost":"成本"},"option_b":{"name":"海外方案","tools":[{"name":"工具名","purpose":"用途"}],"fit_for":"全球用户/无需备案","capability":"能力","dev_time":"时间","cost":"成本"},"option_c":{"name":"Vibe Coder 方案","tools":[{"name":"Claude Code","purpose":"AI终端编程"},{"name":"GitHub","purpose":"代码托管"},{"name":"Supabase","purpose":"数据库+认证"},{"name":"Vercel","purpose":"一键部署"}],"fit_for":"个人工具/快速原型","capability":"能力","dev_time":"时间","cost":"成本"},"advice":"建议"},"fastest_path":[{"title":"标题","description":"描述","copy_text":"提示词","action_label":"按钮文字","action_url":"链接"}],"cost_estimate":{"time_breakdown":"时间","money_breakdown":"金钱"},"pitfalls":["避坑1","避坑2"],"learning_takeaways":["收获1","收获2"],"next_steps":{"today":["今天"],"this_week":["本周"],"later":["以后"]}}`
 
   const client = getClient()
 

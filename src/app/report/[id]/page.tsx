@@ -206,6 +206,8 @@ export default function ReportPage() {
       try {
         const response = await fetch(`/api/conversation/${conversationId}/report`, {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ language: lang }),
         })
 
         if (!response.ok) {
