@@ -25,8 +25,8 @@ function LoadingProgress({
   currentStep: number
   progress: number
   estimatedTime: number
-  loadingSteps: Array<{ id: string; label: { zh: string; en: string } }>
-  waitingTips: Array<{ zh: string; en: string }>
+  loadingSteps: readonly { id: string; label: { zh: string; en: string } }[]
+  waitingTips: readonly { zh: string; en: string }[]
   t: (key: string, params?: Record<string, string | number>) => string
   lang: 'zh' | 'en'
 }) {
