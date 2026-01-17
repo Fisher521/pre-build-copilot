@@ -70,10 +70,6 @@ export default function ReviewPage() {
     }
   }, [])
 
-  const handleFieldChange = (field: keyof ParsedInfo, value: string) => {
-    setParsedInfo(prev => ({ ...prev, [field]: value }))
-  }
-
   const handleConfirm = async () => {
     setIsSaving(true)
     setSavingStep(0)
@@ -207,24 +203,22 @@ export default function ReviewPage() {
             <div className="space-y-4 sm:space-y-5">
               {/* Project Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1.5">
+                <label htmlFor="projectName" className="block text-sm font-medium text-gray-900 mb-1.5">
                   {t('review.projectName')}
                 </label>
-                <div className="relative flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <input
+                    id="projectName"
+                    name="projectName"
                     type="text"
+                    autoComplete="off"
                     value={parsedInfo.projectName}
-                    onChange={(e) => handleFieldChange('projectName', e.target.value)}
-                    className={cn(
-                      'flex-1 px-3 py-2.5 rounded-md text-sm',
-                      'bg-gray-50 border border-gray-200',
-                      'focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-100',
-                      'transition-colors'
-                    )}
+                    onChange={(e) => setParsedInfo(prev => ({ ...prev, projectName: e.target.value }))}
+                    className="flex-1 px-3 py-2.5 rounded-md text-sm bg-white border border-gray-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-colors"
                     placeholder={t('review.projectNamePlaceholder')}
                   />
                   <VoiceButton
-                    onTranscript={(text) => handleFieldChange('projectName', parsedInfo.projectName + text)}
+                    onTranscript={(text) => setParsedInfo(prev => ({ ...prev, projectName: prev.projectName + text }))}
                     className="flex-shrink-0"
                   />
                 </div>
@@ -232,24 +226,22 @@ export default function ReviewPage() {
 
               {/* Core Feature */}
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1.5">
+                <label htmlFor="coreFeature" className="block text-sm font-medium text-gray-900 mb-1.5">
                   {t('review.coreFeature')}
                 </label>
-                <div className="relative flex items-start gap-2">
+                <div className="flex items-start gap-2">
                   <textarea
+                    id="coreFeature"
+                    name="coreFeature"
+                    autoComplete="off"
                     value={parsedInfo.coreFeature}
-                    onChange={(e) => handleFieldChange('coreFeature', e.target.value)}
+                    onChange={(e) => setParsedInfo(prev => ({ ...prev, coreFeature: e.target.value }))}
                     rows={2}
-                    className={cn(
-                      'flex-1 px-3 py-2.5 rounded-md text-sm resize-none',
-                      'bg-gray-50 border border-gray-200',
-                      'focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-100',
-                      'transition-colors'
-                    )}
+                    className="flex-1 px-3 py-2.5 rounded-md text-sm resize-none bg-white border border-gray-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-colors"
                     placeholder={t('review.coreFeaturePlaceholder')}
                   />
                   <VoiceButton
-                    onTranscript={(text) => handleFieldChange('coreFeature', parsedInfo.coreFeature + text)}
+                    onTranscript={(text) => setParsedInfo(prev => ({ ...prev, coreFeature: prev.coreFeature + text }))}
                     className="flex-shrink-0 mt-1"
                   />
                 </div>
@@ -257,24 +249,22 @@ export default function ReviewPage() {
 
               {/* Target User */}
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1.5">
+                <label htmlFor="targetUser" className="block text-sm font-medium text-gray-900 mb-1.5">
                   {t('review.targetUser')}
                 </label>
-                <div className="relative flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <input
+                    id="targetUser"
+                    name="targetUser"
                     type="text"
+                    autoComplete="off"
                     value={parsedInfo.targetUser}
-                    onChange={(e) => handleFieldChange('targetUser', e.target.value)}
-                    className={cn(
-                      'flex-1 px-3 py-2.5 rounded-md text-sm',
-                      'bg-gray-50 border border-gray-200',
-                      'focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-100',
-                      'transition-colors'
-                    )}
+                    onChange={(e) => setParsedInfo(prev => ({ ...prev, targetUser: e.target.value }))}
+                    className="flex-1 px-3 py-2.5 rounded-md text-sm bg-white border border-gray-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-colors"
                     placeholder={t('review.targetUserPlaceholder')}
                   />
                   <VoiceButton
-                    onTranscript={(text) => handleFieldChange('targetUser', parsedInfo.targetUser + text)}
+                    onTranscript={(text) => setParsedInfo(prev => ({ ...prev, targetUser: prev.targetUser + text }))}
                     className="flex-shrink-0"
                   />
                 </div>
@@ -282,24 +272,22 @@ export default function ReviewPage() {
 
               {/* Problem Solved */}
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1.5">
+                <label htmlFor="problemSolved" className="block text-sm font-medium text-gray-900 mb-1.5">
                   {t('review.problemSolved')}
                 </label>
-                <div className="relative flex items-start gap-2">
+                <div className="flex items-start gap-2">
                   <textarea
+                    id="problemSolved"
+                    name="problemSolved"
+                    autoComplete="off"
                     value={parsedInfo.problemSolved}
-                    onChange={(e) => handleFieldChange('problemSolved', e.target.value)}
+                    onChange={(e) => setParsedInfo(prev => ({ ...prev, problemSolved: e.target.value }))}
                     rows={2}
-                    className={cn(
-                      'flex-1 px-3 py-2.5 rounded-md text-sm resize-none',
-                      'bg-gray-50 border border-gray-200',
-                      'focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-100',
-                      'transition-colors'
-                    )}
+                    className="flex-1 px-3 py-2.5 rounded-md text-sm resize-none bg-white border border-gray-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-colors"
                     placeholder={t('review.problemSolvedPlaceholder')}
                   />
                   <VoiceButton
-                    onTranscript={(text) => handleFieldChange('problemSolved', parsedInfo.problemSolved + text)}
+                    onTranscript={(text) => setParsedInfo(prev => ({ ...prev, problemSolved: prev.problemSolved + text }))}
                     className="flex-shrink-0 mt-1"
                   />
                 </div>
