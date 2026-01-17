@@ -73,17 +73,34 @@ export async function POST(
 
 ${toneInstruction}
 
-工具库（优先推荐国内可直接访问的）：
-- AI编程：Cursor、Windsurf、通义灵码
-- 前端生成：v0.dev、Lovable、Bolt.new
-- 全栈：Lovable、Bolt.new
-- 后端/数据库：Supabase、腾讯云开发、阿里云Serverless、LeanCloud
-- 部署：Vercel、腾讯云、阿里云、Railway
-- AI接口：通义千问API、DeepSeek API、月之暗面Kimi API、智谱GLM
+工具库（请根据用户场景推荐国内方案或海外方案）：
+
+【国内方案 - 适合微信生态、国内用户、需备案】
+- AI编程IDE：Cursor、Trae(字节)、通义灵码、MarsCode
+- 全栈生成：Lovable、Bolt.new（需翻墙）
+- 部署托管：腾讯云开发、微信小程序云开发、阿里云函数计算、LeanCloud
+- 数据库：腾讯云数据库、阿里云PolarDB、LeanCloud
+- 大模型API：通义千问、DeepSeek、智谱GLM、月之暗面Kimi、百川
+- 语音API：阿里云语音、腾讯云ASR/TTS、讯飞语音
+- 图像API：通义万相、百度文心一格、智谱CogView
 - 支付：微信支付、支付宝
-- 小程序：微信小程序云开发、uni-app
+- 小程序/App：微信小程序、uni-app、Taro
+- 自动化：飞书多维表格、简道云
+
+【海外方案 - 适合全球用户、无需备案、英文产品】
+- AI编程IDE：Cursor、Windsurf、GitHub Copilot、Claude Code、Aider
+- 全栈生成：Lovable、Bolt.new、v0.dev、Replit Agent
+- 部署托管：Vercel、Cloudflare Pages/Workers、Netlify、Railway、Render、Fly.io
+- 数据库：Supabase、PlanetScale、Neon、Firebase
+- 大模型API：OpenAI GPT、Anthropic Claude、Google Gemini
+- 语音API：OpenAI Whisper、ElevenLabs、Azure Speech
+- 图像API：DALL-E、Midjourney API、Stable Diffusion
+- 支付：Stripe、Paddle、LemonSqueezy
+- 身份验证：Clerk、Auth0、NextAuth
+- 自动化：n8n、Make、Zapier
 
 货币单位：所有成本必须用人民币(¥)标注，例如"¥0"、"¥50/月"
+方案命名：option_a用"国内极简方案"或"海外极简方案"，option_b用"国内进阶方案"或"海外进阶方案"，根据项目目标用户选择
 
 输出JSON(2-3个产品方案,每个3-4步workflow)：
 {"one_liner_conclusion":"一句话结论","score":{"feasibility":0-100,"breakdown":{"tech":0-100,"market":0-100,"onboarding":0-100,"user_match":0-100}},"why_worth_it":["理由1","理由2","理由3"],"risks":["风险1","风险2"],"market_analysis":{"opportunity":"机会","search_trends":"趋势","competitors":[{"name":"名称","url":"链接","pros":"优点","cons":"缺点"}]},"product_approaches":{"approaches":[{"id":"a","name":"方案名","description":"描述","workflow":[{"step":1,"action":"动作","detail":"详情"}],"pros":["优势"],"cons":["劣势"],"best_for":"适合场景","complexity":"low|medium|high"}],"recommended_id":"推荐id","recommendation_reason":"理由"},"tech_options":{"option_a":{"name":"极简方案","tools":["工具"],"fit_for":"场景","capability":"能力","dev_time":"时间","cost":"成本"},"option_b":{"name":"进阶方案","tools":["工具"],"fit_for":"场景","capability":"能力","dev_time":"时间","cost":"成本"},"advice":"建议"},"fastest_path":[{"title":"标题","description":"描述","copy_text":"提示词","action_label":"按钮文字","action_url":"链接"}],"cost_estimate":{"time_breakdown":"时间","money_breakdown":"金钱"},"pitfalls":["避坑1","避坑2"],"learning_takeaways":["收获1","收获2"],"next_steps":{"today":["今天"],"this_week":["本周"],"later":["以后"]}}`
