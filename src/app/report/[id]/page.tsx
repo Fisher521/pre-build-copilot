@@ -494,16 +494,16 @@ export default function ReportPage() {
 
   const selectedApproachData = getSelectedApproachData()
 
-  // Navigation sections
+  // Navigation sections - simplified without emojis
   const navSectionsData = translations.report.navSections
   const navSections = [
-    { id: 'score', label: navSectionsData.score[lang], icon: '📊' },
-    { id: 'analysis', label: navSectionsData.analysis[lang], icon: '💪' },
-    { id: 'market', label: navSectionsData.market[lang], icon: '📈' },
-    { id: 'approach', label: navSectionsData.approach[lang], icon: '🎯' },
-    { id: 'tech', label: navSectionsData.tech[lang], icon: '⚙️' },
-    { id: 'path', label: navSectionsData.path[lang], icon: '🚀' },
-    { id: 'cost', label: navSectionsData.cost[lang], icon: '💰' },
+    { id: 'score', label: navSectionsData.score[lang] },
+    { id: 'analysis', label: navSectionsData.analysis[lang] },
+    { id: 'market', label: navSectionsData.market[lang] },
+    { id: 'approach', label: navSectionsData.approach[lang] },
+    { id: 'tech', label: navSectionsData.tech[lang] },
+    { id: 'path', label: navSectionsData.path[lang] },
+    { id: 'cost', label: navSectionsData.cost[lang] },
   ]
 
   const scrollToSection = (id: string) => {
@@ -525,45 +525,45 @@ export default function ReportPage() {
             </button>
 
             {/* 桌面端标题 */}
-            <h1 className="text-sm font-medium text-gray-900 hidden sm:block">{t('report.title')}</h1>
+            <h1 className="text-sm sm:text-base font-medium text-gray-900 hidden sm:block">{t('report.title')}</h1>
 
             {/* 操作按钮 */}
             <div className="flex items-center">
-              {/* 桌面端：分开显示 */}
-              <div className="hidden sm:flex items-center gap-1">
+              {/* 桌面端：简洁按钮 */}
+              <div className="hidden sm:flex items-center gap-2">
                 <div className="relative">
                   <button
                     onClick={() => setShowShareMenu(!showShareMenu)}
-                    className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors border border-gray-200"
                   >
-                    {copySuccess ? `✅ ${t('report.copied')}` : `🔗 ${t('report.share')}`}
+                    {copySuccess ? t('report.copied') : t('report.share')}
                   </button>
 
                   {showShareMenu && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setShowShareMenu(false)} />
-                      <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
-                        <button onClick={() => handleShare('copy')} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                          <span>📋</span><span>{t('report.shareMenu.copyLink')}</span>
+                      <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                        <button onClick={() => handleShare('copy')} className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50">
+                          {t('report.shareMenu.copyLink')}
                         </button>
                         {typeof window !== 'undefined' && 'share' in navigator && (
-                          <button onClick={() => handleShare('native')} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                            <span>📤</span><span>{t('report.shareMenu.systemShare')}</span>
+                          <button onClick={() => handleShare('native')} className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50">
+                            {t('report.shareMenu.systemShare')}
                           </button>
                         )}
                         <div className="border-t border-gray-100 my-1" />
-                        <button onClick={() => handleShare('weibo')} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                          <span>🔴</span><span>{t('report.shareMenu.weibo')}</span>
+                        <button onClick={() => handleShare('weibo')} className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50">
+                          {t('report.shareMenu.weibo')}
                         </button>
-                        <button onClick={() => handleShare('twitter')} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                          <span>🐦</span><span>{t('report.shareMenu.twitter')}</span>
+                        <button onClick={() => handleShare('twitter')} className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50">
+                          Twitter
                         </button>
                       </div>
                     </>
                   )}
                 </div>
-                <button onClick={handleDownload} className="px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors">
-                  📥 {t('report.download')}
+                <button onClick={handleDownload} className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors">
+                  {t('report.download')}
                 </button>
               </div>
 
@@ -571,7 +571,7 @@ export default function ReportPage() {
               <div className="sm:hidden relative">
                 <button
                   onClick={() => setShowShareMenu(!showShareMenu)}
-                  className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -581,16 +581,16 @@ export default function ReportPage() {
                 {showShareMenu && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setShowShareMenu(false)} />
-                    <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
-                      <button onClick={() => handleShare('copy')} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                        <span>📋</span><span>{t('report.shareMenu.copyLink')}</span>
+                    <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                      <button onClick={() => handleShare('copy')} className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
+                        {t('report.shareMenu.copyLink')}
                       </button>
-                      <button onClick={handleDownload} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                        <span>📥</span><span>{t('report.download')}</span>
+                      <button onClick={handleDownload} className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
+                        {t('report.download')}
                       </button>
                       {typeof window !== 'undefined' && 'share' in navigator && (
-                        <button onClick={() => handleShare('native')} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                          <span>📤</span><span>{t('report.shareMenu.systemShare')}</span>
+                        <button onClick={() => handleShare('native')} className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
+                          {t('report.shareMenu.systemShare')}
                         </button>
                       )}
                     </div>
@@ -600,30 +600,26 @@ export default function ReportPage() {
             </div>
           </div>
         </div>
-        {/* Quick Nav - 章节导航 */}
+        {/* Quick Nav - 章节导航（简化版，无emoji） */}
         <div className="border-t border-gray-100 overflow-x-auto scrollbar-hide">
-          <div className="max-w-3xl mx-auto px-3 sm:px-6 py-1.5 flex gap-0.5 sm:gap-1">
-            {navSections.map((section) => (
+          <div className="max-w-3xl mx-auto px-3 sm:px-6 py-1.5 sm:py-2 flex gap-1 sm:justify-center">
+            {navSections.map((section, index) => (
               <button
                 key={section.id}
                 onClick={() => scrollToSection(section.id)}
-                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md whitespace-nowrap transition-colors flex-shrink-0"
+                className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs sm:text-sm text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md whitespace-nowrap transition-colors flex-shrink-0 relative"
               >
-                <span className="hidden sm:inline">{section.icon}</span>
-                <span>{section.label}</span>
+                {section.label}
+                {index < navSections.length - 1 && (
+                  <span className="hidden sm:inline absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 text-gray-300 pointer-events-none">·</span>
+                )}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
-        {/* Header - 移动端隐藏（已经在导航中显示了） */}
-        <div className="text-center mb-4 sm:mb-8 hidden sm:block">
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{t('report.title')}</h1>
-          <p className="text-sm text-gray-500 mt-1">justart.today</p>
-        </div>
-
+      <div className="max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
         {/* Score Card */}
         <div
           id="score"
@@ -640,13 +636,13 @@ export default function ReportPage() {
 
             {/* Score Details */}
             <div className="flex-1 text-center sm:text-left w-full min-w-0">
-              <div className="text-xs text-gray-500 mb-1">{t('report.feasibilityScore')}</div>
-              <div className="bg-white/80 rounded-md p-2.5 sm:p-3 border border-gray-100 mb-3">
-                <p className="text-sm font-medium text-gray-800 break-words">{report.one_liner_conclusion}</p>
+              <div className="text-xs sm:text-sm text-gray-500 mb-1">{t('report.feasibilityScore')}</div>
+              <div className="bg-white/80 rounded-md p-2.5 sm:p-4 border border-gray-100 mb-3 sm:mb-4">
+                <p className="text-sm sm:text-base font-medium text-gray-800 break-words sm:leading-relaxed">{report.one_liner_conclusion}</p>
               </div>
 
               {/* Score Breakdown - 移动端单列，桌面端双列 */}
-              <div className="grid grid-cols-2 gap-1.5 sm:gap-2 text-sm">
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-3 text-sm">
                 {[
                   { label: translations.report.scoreBreakdown.tech[lang], value: report.score.breakdown.tech, color: 'bg-indigo-500' },
                   { label: translations.report.scoreBreakdown.market[lang], value: report.score.breakdown.market, color: 'bg-purple-500' },
@@ -654,11 +650,11 @@ export default function ReportPage() {
                   { label: translations.report.scoreBreakdown.userMatch[lang], value: report.score.breakdown.user_match, color: 'bg-cyan-500' },
                 ].map((item) => (
                   <div key={item.label} className="bg-gray-50 rounded-md p-2 sm:p-3 min-w-0">
-                    <div className="flex justify-between items-center mb-1 gap-1">
-                      <span className="text-gray-500 text-xs truncate">{item.label}</span>
-                      <span className="font-bold text-gray-900 text-xs flex-shrink-0">{item.value}</span>
+                    <div className="flex justify-between items-center mb-1 sm:mb-1.5 gap-1">
+                      <span className="text-gray-500 text-xs sm:text-sm truncate">{item.label}</span>
+                      <span className="font-bold text-gray-900 text-xs sm:text-sm flex-shrink-0">{item.value}</span>
                     </div>
-                    <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-1 sm:h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className={cn('h-full rounded-full transition-all duration-1000', item.color)}
                         style={{ width: `${item.value}%` }}
@@ -672,30 +668,30 @@ export default function ReportPage() {
         </div>
 
         {/* Strengths & Risks */}
-        <div id="analysis" className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
-          <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-5">
-            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+        <div id="analysis" className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
+          <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-6">
+            <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
               {t('report.whyWorthIt')}
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-2 sm:space-y-3">
               {report.why_worth_it.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-gray-700">
+                <li key={i} className="flex items-start gap-2 sm:gap-3 text-gray-700">
                   <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
-                  <span className="text-xs sm:text-sm leading-relaxed break-words">{item}</span>
+                  <span className="text-xs sm:text-sm sm:leading-relaxed break-words">{item}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-5">
-            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-6">
+            <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
               {t('report.risks')}
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-2 sm:space-y-3">
               {report.risks.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-gray-700">
+                <li key={i} className="flex items-start gap-2 sm:gap-3 text-gray-700">
                   <span className="text-amber-500 mt-0.5 flex-shrink-0">!</span>
-                  <span className="text-xs sm:text-sm leading-relaxed break-words">{item}</span>
+                  <span className="text-xs sm:text-sm sm:leading-relaxed break-words">{item}</span>
                 </li>
               ))}
             </ul>
@@ -703,20 +699,20 @@ export default function ReportPage() {
         </div>
 
         {/* Market Analysis */}
-        <div id="market" className="rounded-lg border border-gray-200 bg-white p-3 sm:p-5 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
-          <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">
+        <div id="market" className="rounded-lg border border-gray-200 bg-white p-3 sm:p-6 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
+          <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-5">
             {t('report.marketAnalysis')}
           </h3>
-          <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-3 sm:space-y-5">
             <div className="p-3 sm:p-4 bg-indigo-50 rounded-md border border-indigo-100">
-              <div className="text-xs font-medium text-indigo-700 mb-1">{t('report.opportunity')}</div>
-              <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">{report.market_analysis.opportunity}</p>
+              <div className="text-xs sm:text-sm font-medium text-indigo-700 mb-1 sm:mb-2">{t('report.opportunity')}</div>
+              <p className="text-xs sm:text-sm text-gray-700 sm:leading-relaxed">{report.market_analysis.opportunity}</p>
             </div>
 
             {report.market_analysis.search_trends && (
               <div>
-                <div className="text-xs font-medium text-gray-500 mb-2">{t('report.searchTrends')}</div>
-                <div className="text-xs sm:text-sm text-gray-700 bg-gray-50 p-3 rounded-md border border-gray-100">
+                <div className="text-xs sm:text-sm font-medium text-gray-600 mb-2">{t('report.searchTrends')}</div>
+                <div className="text-xs sm:text-sm text-gray-700 bg-gray-50 p-3 sm:p-4 rounded-md border border-gray-100 sm:leading-relaxed">
                   {report.market_analysis.search_trends}
                 </div>
               </div>
@@ -724,19 +720,19 @@ export default function ReportPage() {
 
             {report.market_analysis.competitors.length > 0 && (
               <div>
-                <div className="text-xs font-medium text-gray-500 mb-2">{t('report.competitors')}</div>
-                <div className="grid gap-2 sm:gap-3">
+                <div className="text-xs sm:text-sm font-medium text-gray-600 mb-2 sm:mb-3">{t('report.competitors')}</div>
+                <div className="grid gap-2 sm:gap-4">
                   {report.market_analysis.competitors.map((comp, i) => (
-                    <div key={i} className="p-3 bg-gray-50 border border-gray-100 rounded-md">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="font-medium text-sm text-gray-900">{comp.name}</div>
+                    <div key={i} className="p-3 sm:p-4 bg-gray-50 border border-gray-100 rounded-md">
+                      <div className="flex items-center justify-between mb-2 sm:mb-3">
+                        <div className="font-medium text-sm sm:text-base text-gray-900">{comp.name}</div>
                         {comp.url && (
-                          <a href={comp.url} target="_blank" className="text-xs text-indigo-600 hover:text-indigo-700 hover:underline">
+                          <a href={comp.url} target="_blank" className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 hover:underline">
                             {t('report.view')} →
                           </a>
                         )}
                       </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="grid grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
                         <div className="text-green-600">✓ {comp.pros}</div>
                         <div className="text-red-500">✗ {comp.cons}</div>
                       </div>
@@ -750,13 +746,13 @@ export default function ReportPage() {
 
         {/* Product Approach Selection */}
         {report.product_approaches && report.product_approaches.approaches.length > 0 && (
-          <div id="approach" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
-            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">
+          <div id="approach" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
+            <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-1">
               {t('report.productApproach')}
             </h3>
-            <p className="text-xs text-gray-500 mb-3 sm:mb-4">{t('report.approachDesc')}</p>
+            <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-5">{t('report.approachDesc')}</p>
 
-            <div className="grid gap-3 mb-3 sm:mb-4">
+            <div className="grid gap-3 sm:gap-4 mb-3 sm:mb-5">
               {report.product_approaches.approaches.map((approach) => {
                 const isSelected = selectedApproach === approach.id
                 const isRecommended = approach.id === report.product_approaches.recommended_id
@@ -767,15 +763,15 @@ export default function ReportPage() {
                     key={approach.id}
                     onClick={() => setSelectedApproach(approach.id)}
                     className={cn(
-                      'text-left p-3 sm:p-4 rounded-md border-2 transition-all',
+                      'text-left p-3 sm:p-5 rounded-md border-2 transition-all',
                       isSelected
                         ? 'border-indigo-500 bg-indigo-50'
                         : 'border-gray-100 bg-white hover:border-indigo-200'
                     )}
                   >
-                    <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start justify-between mb-2 sm:mb-3">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-sm text-gray-900">{approach.name}</span>
+                        <span className="font-medium text-sm sm:text-base text-gray-900">{approach.name}</span>
                         {isRecommended && (
                           <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{t('report.recommended')}</span>
                         )}
@@ -784,19 +780,19 @@ export default function ReportPage() {
                         {complexity.text}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-600 mb-2">{approach.description}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 sm:leading-relaxed">{approach.description}</p>
 
-                    <div className="flex items-center gap-1 text-xs text-gray-500 mb-2 flex-wrap">
+                    <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3 flex-wrap">
                       {approach.workflow.slice(0, 3).map((step, idx) => (
                         <span key={idx} className="flex items-center gap-1">
-                          <span className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{step.action}</span>
+                          <span className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs sm:text-sm">{step.action}</span>
                           {idx < Math.min(approach.workflow.length, 3) - 1 && <span>→</span>}
                         </span>
                       ))}
                       {approach.workflow.length > 3 && <span className="text-gray-400">...</span>}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
                       <div className="text-green-600">✓ {approach.pros[0]}</div>
                       <div className="text-amber-600">⚠ {approach.cons[0]}</div>
                     </div>
@@ -805,44 +801,44 @@ export default function ReportPage() {
               })}
             </div>
 
-            <div className="p-2.5 sm:p-3 bg-blue-50 border border-blue-100 rounded-md text-xs sm:text-sm text-blue-800">
+            <div className="p-2.5 sm:p-4 bg-blue-50 border border-blue-100 rounded-md text-xs sm:text-sm text-blue-800 sm:leading-relaxed">
               <span className="font-medium">{t('report.suggestion')}</span>
               {report.product_approaches.recommendation_reason}
             </div>
 
             {selectedApproachData && (
-              <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-gray-50 rounded-md border border-gray-100">
-                <h4 className="font-medium text-sm text-gray-900 mb-3 sm:mb-4">{t('report.detailFlow')}</h4>
-                <div className="space-y-4">
+              <div className="mt-3 sm:mt-5 p-3 sm:p-5 bg-gray-50 rounded-md border border-gray-100">
+                <h4 className="font-medium text-sm sm:text-base text-gray-900 mb-3 sm:mb-5">{t('report.detailFlow')}</h4>
+                <div className="space-y-4 sm:space-y-5">
                   {selectedApproachData.workflow.map((step) => (
-                    <div key={step.step} className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-medium flex-shrink-0">
+                    <div key={step.step} className="flex items-start gap-3 sm:gap-4">
+                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs sm:text-sm font-medium flex-shrink-0">
                         {step.step}
                       </div>
                       <div>
-                        <div className="font-medium text-sm text-gray-900">{step.action}</div>
-                        <div className="text-xs text-gray-600 mt-0.5">{step.detail}</div>
+                        <div className="font-medium text-sm sm:text-base text-gray-900">{step.action}</div>
+                        <div className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1 sm:leading-relaxed">{step.detail}</div>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-4">
+                <div className="mt-4 sm:mt-6 grid grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <div className="text-xs font-medium text-green-700 mb-2">{t('report.pros')}</div>
-                    <ul className="space-y-2">
+                    <div className="text-xs sm:text-sm font-medium text-green-700 mb-2 sm:mb-3">{t('report.pros')}</div>
+                    <ul className="space-y-2 sm:space-y-3">
                       {selectedApproachData.pros.map((pro, i) => (
-                        <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5 leading-relaxed">
+                        <li key={i} className="text-xs sm:text-sm text-gray-600 flex items-start gap-1.5 sm:gap-2 leading-relaxed">
                           <span className="text-green-500 flex-shrink-0">✓</span> {pro}
                         </li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <div className="text-xs font-medium text-amber-700 mb-2">{t('report.cons')}</div>
-                    <ul className="space-y-2">
+                    <div className="text-xs sm:text-sm font-medium text-amber-700 mb-2 sm:mb-3">{t('report.cons')}</div>
+                    <ul className="space-y-2 sm:space-y-3">
                       {selectedApproachData.cons.map((con, i) => (
-                        <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5 leading-relaxed">
+                        <li key={i} className="text-xs sm:text-sm text-gray-600 flex items-start gap-1.5 sm:gap-2 leading-relaxed">
                           <span className="text-amber-500 flex-shrink-0">⚠</span> {con}
                         </li>
                       ))}
@@ -850,7 +846,7 @@ export default function ReportPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 text-xs text-gray-500">
+                <div className="mt-4 sm:mt-5 text-xs sm:text-sm text-gray-500">
                   <span className="font-medium">{t('report.bestFor')}</span>{selectedApproachData.best_for}
                 </div>
               </div>
@@ -859,33 +855,33 @@ export default function ReportPage() {
         )}
 
         {/* Tech Stack */}
-        <div id="tech" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
-          <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4 sm:mb-5">
+        <div id="tech" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
+          <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-5">
             {t('report.techOptions')}
           </h3>
 
-          <div className="space-y-4">
+          <div className="space-y-4 sm:space-y-5">
             {/* Option A - China Stack */}
             <div className="border border-gray-200 rounded-md p-4 sm:p-5 bg-gray-50">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <div className="font-medium text-sm text-gray-900">
+                  <div className="font-medium text-sm sm:text-base text-gray-900">
                     {report.tech_options.option_a.name}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">{report.tech_options.option_a.fit_for}</div>
+                  <div className="text-xs sm:text-sm text-gray-500 mt-1">{report.tech_options.option_a.fit_for}</div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <div className="text-green-600 font-medium text-sm">{report.tech_options.option_a.cost}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{report.tech_options.option_a.dev_time}</div>
+                  <div className="text-green-600 font-medium text-sm sm:text-base">{report.tech_options.option_a.cost}</div>
+                  <div className="text-xs sm:text-sm text-gray-500 mt-0.5">{report.tech_options.option_a.dev_time}</div>
                 </div>
               </div>
 
               {/* Tools with purposes */}
               <div className="mb-4">
-                <div className="text-xs font-medium text-gray-500 mb-2">{t('report.techStack')}</div>
+                <div className="text-xs sm:text-sm font-medium text-gray-500 mb-2 sm:mb-3">{t('report.techStack')}</div>
                 <div className="flex flex-wrap gap-2">
                   {(Array.isArray(report.tech_options.option_a.tools) ? report.tech_options.option_a.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                    <div key={i} className="bg-white border border-gray-200 rounded px-2.5 py-1.5 text-xs">
+                    <div key={i} className="bg-white border border-gray-200 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm">
                       {typeof tool === 'string' ? (
                         <span className="font-medium text-gray-700">{tool}</span>
                       ) : (
@@ -900,7 +896,7 @@ export default function ReportPage() {
                 </div>
               </div>
 
-              <div className="text-xs text-gray-600 bg-white rounded p-2.5 border border-gray-100">
+              <div className="text-xs sm:text-sm text-gray-600 bg-white rounded p-2.5 sm:p-3 border border-gray-100 sm:leading-relaxed">
                 <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_a.capability}
               </div>
             </div>
@@ -909,23 +905,23 @@ export default function ReportPage() {
             <div className="border border-blue-200 rounded-md p-4 sm:p-5 bg-blue-50">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <div className="font-medium text-sm text-gray-900">
+                  <div className="font-medium text-sm sm:text-base text-gray-900">
                     {report.tech_options.option_b.name}
                   </div>
-                  <div className="text-xs text-blue-600 mt-1">{report.tech_options.option_b.fit_for}</div>
+                  <div className="text-xs sm:text-sm text-blue-600 mt-1">{report.tech_options.option_b.fit_for}</div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <div className="text-green-600 font-medium text-sm">{report.tech_options.option_b.cost}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{report.tech_options.option_b.dev_time}</div>
+                  <div className="text-green-600 font-medium text-sm sm:text-base">{report.tech_options.option_b.cost}</div>
+                  <div className="text-xs sm:text-sm text-gray-500 mt-0.5">{report.tech_options.option_b.dev_time}</div>
                 </div>
               </div>
 
               {/* Tools with purposes */}
               <div className="mb-4">
-                <div className="text-xs font-medium text-gray-500 mb-2">{t('report.techStack')}</div>
+                <div className="text-xs sm:text-sm font-medium text-gray-500 mb-2 sm:mb-3">{t('report.techStack')}</div>
                 <div className="flex flex-wrap gap-2">
                   {(Array.isArray(report.tech_options.option_b.tools) ? report.tech_options.option_b.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                    <div key={i} className="bg-white border border-blue-200 rounded px-2.5 py-1.5 text-xs">
+                    <div key={i} className="bg-white border border-blue-200 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm">
                       {typeof tool === 'string' ? (
                         <span className="font-medium text-gray-700">{tool}</span>
                       ) : (
@@ -940,7 +936,7 @@ export default function ReportPage() {
                 </div>
               </div>
 
-              <div className="text-xs text-gray-600 bg-white rounded p-2.5 border border-blue-100">
+              <div className="text-xs sm:text-sm text-gray-600 bg-white rounded p-2.5 sm:p-3 border border-blue-100 sm:leading-relaxed">
                 <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_b.capability}
               </div>
             </div>
@@ -953,29 +949,29 @@ export default function ReportPage() {
                 </div>
                 <div className="flex items-start justify-between mb-4 pr-20 sm:pr-24">
                   <div>
-                    <div className="font-medium text-sm text-gray-900">
+                    <div className="font-medium text-sm sm:text-base text-gray-900">
                       {report.tech_options.option_c.name}
                     </div>
-                    <div className="text-xs text-indigo-600 mt-1">{report.tech_options.option_c.fit_for}</div>
+                    <div className="text-xs sm:text-sm text-indigo-600 mt-1">{report.tech_options.option_c.fit_for}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="text-green-600 font-medium text-sm">{report.tech_options.option_c.cost}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">{report.tech_options.option_c.dev_time}</div>
+                    <div className="text-green-600 font-medium text-sm sm:text-base">{report.tech_options.option_c.cost}</div>
+                    <div className="text-xs sm:text-sm text-gray-500 mt-0.5">{report.tech_options.option_c.dev_time}</div>
                   </div>
                 </div>
 
                 {/* Tools with purposes - highlighted */}
                 <div className="mb-4">
-                  <div className="text-xs font-medium text-indigo-600 mb-2">{t('report.vibeToolchain')}</div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="text-xs sm:text-sm font-medium text-indigo-600 mb-2 sm:mb-3">{t('report.vibeToolchain')}</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                     {(Array.isArray(report.tech_options.option_c.tools) ? report.tech_options.option_c.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                      <div key={i} className="bg-white border border-indigo-200 rounded p-2.5 text-center">
+                      <div key={i} className="bg-white border border-indigo-200 rounded p-2.5 sm:p-3 text-center">
                         {typeof tool === 'string' ? (
-                          <span className="font-medium text-gray-700 text-xs">{tool}</span>
+                          <span className="font-medium text-gray-700 text-xs sm:text-sm">{tool}</span>
                         ) : (
                           <>
-                            <div className="font-medium text-indigo-700 text-xs">{tool.name}</div>
-                            <div className="text-xs text-gray-500 mt-1">{tool.purpose}</div>
+                            <div className="font-medium text-indigo-700 text-xs sm:text-sm">{tool.name}</div>
+                            <div className="text-xs sm:text-sm text-gray-500 mt-1">{tool.purpose}</div>
                           </>
                         )}
                       </div>
@@ -983,42 +979,42 @@ export default function ReportPage() {
                   </div>
                 </div>
 
-                <div className="text-xs text-gray-600 bg-white/80 rounded p-2.5 border border-indigo-100">
+                <div className="text-xs sm:text-sm text-gray-600 bg-white/80 rounded p-2.5 sm:p-3 border border-indigo-100 sm:leading-relaxed">
                   <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_c.capability}
                 </div>
               </div>
             )}
           </div>
 
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md text-xs sm:text-sm text-blue-800 leading-relaxed">
+          <div className="mt-4 sm:mt-5 p-3 sm:p-4 bg-blue-50 border border-blue-100 rounded-md text-xs sm:text-sm text-blue-800 sm:leading-relaxed">
             <span className="font-medium">{t('report.suggestion')}</span>
             {report.tech_options.advice}
           </div>
         </div>
 
         {/* Fastest Path */}
-        <div id="path" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
-          <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">
+        <div id="path" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
+          <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-5">
             {t('report.fastestPath')}
           </h3>
-          <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-3 sm:space-y-5">
             {report.fastest_path.map((step, i) => (
-              <div key={i} className="relative pl-8 sm:pl-10">
-                <div className="absolute left-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-medium text-xs sm:text-sm">
+              <div key={i} className="relative pl-8 sm:pl-12">
+                <div className="absolute left-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-medium text-xs sm:text-sm">
                   {i + 1}
                 </div>
-                <div className="bg-gray-50 border border-gray-100 rounded-md p-3 sm:p-4">
-                  <div className="font-medium text-sm text-gray-900 mb-1.5">{step.title}</div>
-                  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line mb-3">{step.description}</p>
+                <div className="bg-gray-50 border border-gray-100 rounded-md p-3 sm:p-5">
+                  <div className="font-medium text-sm sm:text-base text-gray-900 mb-1.5 sm:mb-2">{step.title}</div>
+                  <p className="text-xs sm:text-sm text-gray-600 sm:leading-relaxed whitespace-pre-line mb-3 sm:mb-4">{step.description}</p>
                   {step.copy_text && (
                     <div
-                      className="bg-white border border-gray-200 p-2.5 sm:p-3 rounded text-xs text-gray-700 mb-3 cursor-pointer hover:bg-gray-50 transition-colors group leading-relaxed whitespace-pre-line"
+                      className="bg-white border border-gray-200 p-2.5 sm:p-4 rounded text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4 cursor-pointer hover:bg-gray-50 transition-colors group sm:leading-relaxed whitespace-pre-line"
                       onClick={() => navigator.clipboard.writeText(step.copy_text!)}
                       title={t('report.clickToCopy')}
                     >
-                      <div className="flex justify-between items-center mb-1.5">
-                        <span className="text-xs font-medium text-gray-500">{t('report.copyablePrompt')}</span>
-                        <span className="text-xs text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">{t('report.clickToCopy')}</span>
+                      <div className="flex justify-between items-center mb-1.5 sm:mb-2">
+                        <span className="text-xs sm:text-sm font-medium text-gray-500">{t('report.copyablePrompt')}</span>
+                        <span className="text-xs sm:text-sm text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">{t('report.clickToCopy')}</span>
                       </div>
                       {step.copy_text}
                     </div>
@@ -1027,7 +1023,7 @@ export default function ReportPage() {
                     <a
                       href={step.action_url}
                       target="_blank"
-                      className="inline-block px-4 py-2 bg-indigo-600 text-white text-xs font-medium rounded-md hover:bg-indigo-700 transition-colors"
+                      className="inline-block px-4 sm:px-5 py-2 sm:py-2.5 bg-indigo-600 text-white text-xs sm:text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
                     >
                       {step.action_label || t('report.goExecute')}
                     </a>
@@ -1039,36 +1035,36 @@ export default function ReportPage() {
         </div>
 
         {/* Cost & Pitfalls */}
-        <div id="cost" className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
+        <div id="cost" className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
           {/* Cost Estimate */}
-          <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
-            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">
+          <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
+            <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-5">
               {t('report.costEstimate')}
             </h3>
-            <div className="space-y-3">
-              <div className="p-3 bg-blue-50 rounded-md border border-blue-100">
-                <div className="text-xs font-medium text-blue-600 mb-1">{t('report.timeInvestment')}</div>
-                <div className="text-xs sm:text-sm text-gray-800 leading-relaxed">{report.cost_estimate.time_breakdown}</div>
+            <div className="space-y-3 sm:space-y-4">
+              <div className="p-3 sm:p-4 bg-blue-50 rounded-md border border-blue-100">
+                <div className="text-xs sm:text-sm font-medium text-blue-600 mb-1 sm:mb-2">{t('report.timeInvestment')}</div>
+                <div className="text-xs sm:text-sm text-gray-800 sm:leading-relaxed">{report.cost_estimate.time_breakdown}</div>
               </div>
-              <div className="p-3 bg-green-50 rounded-md border border-green-100">
-                <div className="text-xs font-medium text-green-600 mb-1">{t('report.moneyInvestment')}</div>
-                <div className="text-xs sm:text-sm text-gray-800 leading-relaxed">{report.cost_estimate.money_breakdown}</div>
+              <div className="p-3 sm:p-4 bg-green-50 rounded-md border border-green-100">
+                <div className="text-xs sm:text-sm font-medium text-green-600 mb-1 sm:mb-2">{t('report.moneyInvestment')}</div>
+                <div className="text-xs sm:text-sm text-gray-800 sm:leading-relaxed">{report.cost_estimate.money_breakdown}</div>
               </div>
             </div>
           </div>
 
           {/* Pitfall Guide */}
-          <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
-            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">
+          <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
+            <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-5">
               {t('report.pitfallGuide')}
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-2 sm:space-y-3">
               {report.pitfalls.map((pit, i) => (
-                <li key={i} className="flex items-start gap-2 p-2 bg-orange-50 rounded-md border border-orange-100">
-                  <span className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-orange-200 text-orange-700 flex items-center justify-center text-xs font-medium mt-0.5">
+                <li key={i} className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-orange-50 rounded-md border border-orange-100">
+                  <span className="flex-shrink-0 w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-orange-200 text-orange-700 flex items-center justify-center text-xs sm:text-sm font-medium mt-0.5">
                     {i + 1}
                   </span>
-                  <span className="text-xs sm:text-sm text-gray-800 leading-relaxed">{pit}</span>
+                  <span className="text-xs sm:text-sm text-gray-800 sm:leading-relaxed">{pit}</span>
                 </li>
               ))}
             </ul>
@@ -1077,36 +1073,36 @@ export default function ReportPage() {
 
 
         {/* Feedback */}
-        <div className="mb-6 sm:mb-8 text-center p-4 sm:p-5 bg-white rounded-lg border border-gray-200">
+        <div className="mb-6 sm:mb-8 text-center p-4 sm:p-6 bg-white rounded-lg border border-gray-200">
           {feedbackSubmitted ? (
             <div className="py-2">
-              <h3 className="text-sm text-gray-700 font-medium">{t('report.feedback.thanks')}</h3>
-              <p className="text-xs text-gray-400 mt-1">{t('report.feedback.thanksDesc')}</p>
+              <h3 className="text-sm sm:text-base text-gray-700 font-medium">{t('report.feedback.thanks')}</h3>
+              <p className="text-xs sm:text-sm text-gray-400 mt-1">{t('report.feedback.thanksDesc')}</p>
             </div>
           ) : (
             <>
-              <h3 className="text-sm text-gray-700 font-medium mb-3">{t('report.feedback.title')}</h3>
-              <div className="flex items-center justify-center gap-3">
+              <h3 className="text-sm sm:text-base text-gray-700 font-medium mb-3 sm:mb-4">{t('report.feedback.title')}</h3>
+              <div className="flex items-center justify-center gap-3 sm:gap-4">
                 <button
                   onClick={() => {
                     setFeedbackRating('helpful')
                     setFeedbackModalOpen(true)
                   }}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 transition-all text-green-700 text-sm"
+                  className="px-4 sm:px-5 py-2 sm:py-2.5 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 transition-all text-green-700 text-sm sm:text-base"
                 >
-                  <span>👍</span> {t('report.feedback.helpful')}
+                  {t('report.feedback.helpful')}
                 </button>
                 <button
                   onClick={() => {
                     setFeedbackRating('not_helpful')
                     setFeedbackModalOpen(true)
                   }}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-all text-gray-600 text-sm"
+                  className="px-4 sm:px-5 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-all text-gray-600 text-sm sm:text-base"
                 >
-                  <span>👎</span> {t('report.feedback.notHelpful')}
+                  {t('report.feedback.notHelpful')}
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mt-3">
+              <p className="text-xs sm:text-sm text-gray-400 mt-3 sm:mt-4">
                 {t('report.feedback.privacyNote')}
               </p>
             </>
@@ -1124,16 +1120,16 @@ export default function ReportPage() {
         />
 
         {/* Actions */}
-        <div className="flex items-center justify-center gap-3 pb-4">
+        <div className="flex items-center justify-center gap-3 sm:gap-4 pb-4 sm:pb-6">
           <button
             onClick={handleRestart}
-            className="px-4 sm:px-5 py-2 rounded-md text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+            className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-md text-sm sm:text-base text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
           >
             {t('report.evalNewProject')}
           </button>
           <button
             onClick={handleDownload}
-            className="px-4 sm:px-5 py-2 rounded-md text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+            className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-md text-sm sm:text-base font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
           >
             {t('report.saveReport')}
           </button>
