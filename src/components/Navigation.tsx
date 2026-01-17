@@ -2,15 +2,19 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const navItems = [
-  { href: '/', label: 'VibeChecker' },
-  { href: '/ai-pulse', label: 'AI Pulse' },
+  { href: '/', label: 'Vibe Checker', icon: '🎯' },
+  { href: '/ai-pulse', label: 'AI Pulse', icon: '📡' },
 ]
 
 export function Navigation() {
   const pathname = usePathname()
+  const [showLangTooltip, setShowLangTooltip] = useState(false)
+  const { language, setLanguage, isEnglishEnabled } = useLanguage()
 
   // 判断是否在首页相关路径
   const isHome = pathname === '/' || pathname.startsWith('/review') || pathname.startsWith('/report')
@@ -28,11 +32,11 @@ export function Navigation() {
             >
               <span className="text-white">💡</span>
             </div>
-            <span className="font-bold text-gray-900">JustArt</span>
+            <span className="font-bold text-gray-900">justart.today</span>
           </Link>
 
-          {/* Navigation Tabs */}
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+          {/* Navigation Buttons */}
+          <div className="flex items-center gap-2">
             {navItems.map((item) => {
               const isActive =
                 (item.href === '/' && isHome) ||
@@ -43,30 +47,62 @@ export function Navigation() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200',
+                    'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-1.5',
                     isActive
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-900'
+                      ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
                   )}
                 >
+                  <span>{item.icon}</span>
                   {item.label}
                 </Link>
               )
             })}
           </div>
 
-          {/* GitHub Link */}
-          <a
-            href="https://github.com/anthropics/claude-code"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 bg-white/80 rounded-full border border-gray-200 hover:border-gray-300 transition-all hover:shadow-sm"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-            </svg>
-            <span className="hidden sm:inline">GitHub</span>
-          </a>
+          {/* Language Switcher */}
+          <div className="relative flex items-center gap-1 bg-gray-100 rounded-full p-1">
+            {/* Chinese */}
+            <button
+              onClick={() => setLanguage('zh')}
+              className={cn(
+                'px-3 py-1 rounded-full text-xs font-medium transition-all',
+                language === 'zh'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              )}
+            >
+              中文
+            </button>
+
+            {/* English - Coming Soon (or active if enabled) */}
+            <div className="relative">
+              <button
+                onClick={() => isEnglishEnabled && setLanguage('en')}
+                className={cn(
+                  'px-3 py-1 rounded-full text-xs font-medium transition-all',
+                  !isEnglishEnabled && 'cursor-not-allowed',
+                  language === 'en' && isEnglishEnabled
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : isEnglishEnabled
+                    ? 'text-gray-500 hover:text-gray-700'
+                    : 'text-gray-400'
+                )}
+                onMouseEnter={() => !isEnglishEnabled && setShowLangTooltip(true)}
+                onMouseLeave={() => setShowLangTooltip(false)}
+              >
+                EN
+              </button>
+
+              {/* Tooltip - Only show when English is not enabled */}
+              {showLangTooltip && !isEnglishEnabled && (
+                <div className="absolute top-full right-0 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap z-50">
+                  Coming Soon
+                  <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-900 rotate-45" />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </nav>

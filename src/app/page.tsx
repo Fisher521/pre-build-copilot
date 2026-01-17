@@ -172,8 +172,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">JustArt</h1>
-        <p className="text-gray-500 text-lg">写代码前，先 vibe 一下</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">justart.today</h1>
+        <p className="text-gray-500 text-lg">Just Start Today - 写代码前，先 vibe 一下</p>
 
         {/* Social Proof */}
         <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-gray-100 shadow-sm">
