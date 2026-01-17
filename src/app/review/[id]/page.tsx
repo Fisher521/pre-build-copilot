@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { StepCard, ActionButtons } from '@/components/wizard'
 import { VoiceButton } from '@/components/chat/VoiceButton'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/lib/i18n'
 
 interface ParsedInfo {
   projectName: string
@@ -13,17 +14,11 @@ interface ParsedInfo {
   problemSolved: string
 }
 
-// 确认后的加载步骤
-const SAVING_STEPS = [
-  { text: '保存项目信息...', icon: '💾' },
-  { text: '生成个性化问题...', icon: '🤔' },
-  { text: '准备下一步...', icon: '✨' },
-]
-
 export default function ReviewPage() {
   const router = useRouter()
   const params = useParams()
   const conversationId = params.id as string
+  const { t, lang, translations } = useTranslation()
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -37,32 +32,35 @@ export default function ReviewPage() {
   })
   const savingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
+  // 确认后的加载步骤
+  const savingSteps = translations.review.savingSteps
+
   // Load conversation data
   useEffect(() => {
     async function loadConversation() {
       try {
         const response = await fetch(`/api/conversation/${conversationId}`)
-        if (!response.ok) throw new Error('加载失败')
-        
+        if (!response.ok) throw new Error(t('review.loadFailed'))
+
         const data = await response.json()
         const schema = data.schema
-        
+
         // Extract info from schema (matching EvaluationSchema structure)
         setParsedInfo({
-          projectName: schema?.idea?.one_liner || '未命名项目',
+          projectName: schema?.idea?.one_liner || (lang === 'zh' ? '未命名项目' : 'Untitled Project'),
           coreFeature: schema?.mvp?.first_job || '',
           targetUser: schema?.user?.primary_user || '',
           problemSolved: schema?.problem?.scenario || '',
         })
       } catch (err) {
-        setError(err instanceof Error ? err.message : '加载失败')
+        setError(err instanceof Error ? err.message : t('review.loadFailed'))
       } finally {
         setIsLoading(false)
       }
     }
 
     loadConversation()
-  }, [conversationId])
+  }, [conversationId, t, lang])
 
   // 清理动画
   useEffect(() => {
@@ -83,7 +81,7 @@ export default function ReviewPage() {
 
     // 启动加载动画
     savingIntervalRef.current = setInterval(() => {
-      setSavingStep(prev => Math.min(prev + 1, SAVING_STEPS.length - 1))
+      setSavingStep(prev => Math.min(prev + 1, savingSteps.length - 1))
     }, 2000)
 
     try {
@@ -118,7 +116,7 @@ export default function ReviewPage() {
       if (savingIntervalRef.current) {
         clearInterval(savingIntervalRef.current)
       }
-      setError('保存失败，请重试')
+      setError(t('review.saveFailed'))
       setIsSaving(false)
     }
   }
@@ -152,7 +150,7 @@ export default function ReviewPage() {
           {/* 加载提示 */}
           <div className="flex items-center justify-center gap-3">
             <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-gray-500">正在分析你的想法...</p>
+            <p className="text-gray-500">{t('review.analyzing')}</p>
           </div>
         </div>
       </div>
@@ -161,7 +159,7 @@ export default function ReviewPage() {
 
   // 保存/跳转加载状态
   if (isSaving) {
-    const currentStep = SAVING_STEPS[savingStep]
+    const currentStep = savingSteps[savingStep]
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
         <div className="text-center max-w-md mx-auto p-6">
@@ -174,11 +172,11 @@ export default function ReviewPage() {
           </div>
 
           {/* 当前步骤 */}
-          <p className="text-lg font-medium text-gray-700 mb-4">{currentStep.text}</p>
+          <p className="text-lg font-medium text-gray-700 mb-4">{currentStep.text[lang]}</p>
 
           {/* 步骤指示器 */}
           <div className="flex justify-center gap-3 mb-6">
-            {SAVING_STEPS.map((step, idx) => (
+            {savingSteps.map((step, idx) => (
               <div
                 key={idx}
                 className={cn(
@@ -197,14 +195,14 @@ export default function ReviewPage() {
                 ) : (
                   <span className="w-3 h-3 rounded-full bg-gray-300" />
                 )}
-                <span className="hidden sm:inline">{step.text.replace('...', '')}</span>
+                <span className="hidden sm:inline">{step.text[lang].replace('...', '')}</span>
               </div>
             ))}
           </div>
 
           {/* 项目信息回显 */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-left">
-            <p className="text-sm text-gray-400 mb-2">项目信息</p>
+            <p className="text-sm text-gray-400 mb-2">{t('review.projectInfo')}</p>
             <p className="text-gray-700 font-medium">{parsedInfo.projectName}</p>
             {parsedInfo.coreFeature && (
               <p className="text-gray-500 text-sm mt-1 line-clamp-2">{parsedInfo.coreFeature}</p>
@@ -217,16 +215,16 @@ export default function ReviewPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-gray-50 to-white">
-      <StepCard 
-        title="✨ 我理解了你的想法"
-        subtitle="请确认以下信息，可以直接修改"
+      <StepCard
+        title={`✨ ${t('review.title')}`}
+        subtitle={t('review.subtitle')}
         maxWidth="xl"
       >
         <div className="space-y-5">
           {/* Project Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              📌 项目名称
+              📌 {t('review.projectName')}
             </label>
             <div className="relative flex items-center gap-2">
               <input
@@ -239,7 +237,7 @@ export default function ReviewPage() {
                   'focus:border-primary-500 focus:bg-white focus:outline-none',
                   'transition-all duration-200'
                 )}
-                placeholder="给你的项目起个名字"
+                placeholder={t('review.projectNamePlaceholder')}
               />
               <VoiceButton
                 onTranscript={(text) => handleFieldChange('projectName', parsedInfo.projectName + text)}
@@ -251,7 +249,7 @@ export default function ReviewPage() {
           {/* Core Feature */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              🎯 核心功能
+              🎯 {t('review.coreFeature')}
             </label>
             <div className="relative flex items-start gap-2">
               <textarea
@@ -264,7 +262,7 @@ export default function ReviewPage() {
                   'focus:border-primary-500 focus:bg-white focus:outline-none',
                   'transition-all duration-200'
                 )}
-                placeholder="这个产品最核心要做什么"
+                placeholder={t('review.coreFeaturePlaceholder')}
               />
               <VoiceButton
                 onTranscript={(text) => handleFieldChange('coreFeature', parsedInfo.coreFeature + text)}
@@ -276,7 +274,7 @@ export default function ReviewPage() {
           {/* Target User */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              👥 目标用户
+              👥 {t('review.targetUser')}
             </label>
             <div className="relative flex items-center gap-2">
               <input
@@ -289,7 +287,7 @@ export default function ReviewPage() {
                   'focus:border-primary-500 focus:bg-white focus:outline-none',
                   'transition-all duration-200'
                 )}
-                placeholder="谁会用这个产品"
+                placeholder={t('review.targetUserPlaceholder')}
               />
               <VoiceButton
                 onTranscript={(text) => handleFieldChange('targetUser', parsedInfo.targetUser + text)}
@@ -301,7 +299,7 @@ export default function ReviewPage() {
           {/* Problem Solved */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              💡 解决什么问题
+              💡 {t('review.problemSolved')}
             </label>
             <div className="relative flex items-start gap-2">
               <textarea
@@ -314,7 +312,7 @@ export default function ReviewPage() {
                   'focus:border-primary-500 focus:bg-white focus:outline-none',
                   'transition-all duration-200'
                 )}
-                placeholder="用户现在遇到什么痛点"
+                placeholder={t('review.problemSolvedPlaceholder')}
               />
               <VoiceButton
                 onTranscript={(text) => handleFieldChange('problemSolved', parsedInfo.problemSolved + text)}
@@ -327,8 +325,8 @@ export default function ReviewPage() {
         <ActionButtons
           onBack={handleBack}
           onNext={handleConfirm}
-          backLabel="← 重新描述"
-          nextLabel="确认继续 →"
+          backLabel={t('review.backLabel')}
+          nextLabel={t('review.nextLabel')}
           nextLoading={isSaving}
           nextDisabled={!parsedInfo.projectName.trim()}
         />

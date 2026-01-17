@@ -526,12 +526,28 @@ export const translations = {
       en: 'Skip to report',
     },
     generateReport: {
-      zh: '生成评估报告',
-      en: 'Generate Report',
+      zh: '生成完整报告 →',
+      en: 'Generate Full Report →',
     },
     notSure: {
       zh: '不确定 / 先跳过',
       en: 'Not sure / Skip',
+    },
+    generating: {
+      zh: '正在生成针对你项目的评估问题...',
+      en: 'Generating evaluation questions for your project...',
+    },
+    refreshHint: {
+      zh: '如果长时间没反应，请刷新重试',
+      en: 'If nothing happens, please refresh and try again',
+    },
+    prevStep: {
+      zh: '上一步',
+      en: 'Previous',
+    },
+    nextQuestion: {
+      zh: '下一题 →',
+      en: 'Next →',
     },
   },
 

@@ -4,12 +4,14 @@ import { useRouter, useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { StepCard, WizardProgress, ActionButtons } from '@/components/wizard'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/lib/i18n'
 import type { Question, QuestionOption } from '@/lib/types'
 
 export default function QuestionsPage() {
   const router = useRouter()
   const params = useParams()
   const conversationId = params.id as string
+  const { t, lang } = useTranslation()
 
   const [isLoading, setIsLoading] = useState(true)
   const [questions, setQuestions] = useState<Question[]>([])
@@ -23,7 +25,7 @@ export default function QuestionsPage() {
     async function loadData() {
       try {
         const response = await fetch(`/api/conversation/${conversationId}`)
-        if (!response.ok) throw new Error('加载失败')
+        if (!response.ok) throw new Error(t('review.loadFailed'))
         
         const data = await response.json()
         const generated = data.metadata?.generatedQuestions as Question[]
@@ -108,8 +110,8 @@ export default function QuestionsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">正在生成针对你项目的评估问题...</p>
-          <p className="text-sm text-gray-400">如果长时间没反应，请刷新重试</p>
+          <p className="text-gray-500 mb-4">{t('questions.generating')}</p>
+          <p className="text-sm text-gray-400">{t('questions.refreshHint')}</p>
         </div>
       </div>
     )
@@ -200,8 +202,8 @@ export default function QuestionsPage() {
             <ActionButtons
               onBack={handleBack}
               onNext={handleNext}
-              backLabel="上一步"
-              nextLabel={isLastQuestion ? "生成完整报告 →" : "下一题 →"}
+              backLabel={t('questions.prevStep')}
+              nextLabel={isLastQuestion ? t('questions.generateReport') : t('questions.nextQuestion')}
               nextDisabled={!selectedValue || !showFeedback} // Force user to see feedback
               nextLoading={isSaving}
             />

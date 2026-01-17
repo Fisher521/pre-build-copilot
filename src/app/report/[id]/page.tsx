@@ -6,37 +6,29 @@ import { StepCard } from '@/components/wizard'
 import { ScoreRing } from '@/components/ui'
 import { FeedbackModal } from '@/components/feedback'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/lib/i18n'
 import type { VibeReport, ProductApproach } from '@/lib/types'
 
-// 加载步骤配置
-const LOADING_STEPS = [
-  { id: 'analyze', label: '分析项目信息', duration: 3000 },
-  { id: 'market', label: '搜索市场竞品', duration: 5000 },
-  { id: 'approach', label: '设计产品方案', duration: 4000 },
-  { id: 'tech', label: '匹配技术栈', duration: 3000 },
-  { id: 'path', label: '规划实施路径', duration: 3000 },
-  { id: 'report', label: '生成完整报告', duration: 2000 },
-]
-
-// 有趣的等待提示语
-const WAITING_TIPS = [
-  '💡 好的产品想法比代码更重要',
-  '🚀 先做出来，再慢慢完善',
-  '📊 80%的项目失败是因为没人用，不是技术问题',
-  '⚡ Vibe Coding 的精髓：能用就行',
-  '🎯 找到第一个愿意付费的用户比10000行代码更有价值',
-  '💪 一个周末做出MVP，比一个月做出完美产品更好',
-]
+// 加载步骤配置 - 使用翻译
+const LOADING_STEPS_DURATION = [3000, 5000, 4000, 3000, 3000, 2000]
 
 // 进度加载组件
 function LoadingProgress({
   currentStep,
   progress,
-  estimatedTime
+  estimatedTime,
+  loadingSteps,
+  waitingTips,
+  t,
+  lang,
 }: {
   currentStep: number
   progress: number
   estimatedTime: number
+  loadingSteps: Array<{ id: string; label: { zh: string; en: string } }>
+  waitingTips: Array<{ zh: string; en: string }>
+  t: (key: string, params?: Record<string, string | number>) => string
+  lang: 'zh' | 'en'
 }) {
   const [tipIndex, setTipIndex] = useState(0)
   const [elapsedTime, setElapsedTime] = useState(0)
@@ -44,10 +36,10 @@ function LoadingProgress({
   // 轮换提示语
   useEffect(() => {
     const interval = setInterval(() => {
-      setTipIndex(prev => (prev + 1) % WAITING_TIPS.length)
+      setTipIndex(prev => (prev + 1) % waitingTips.length)
     }, 4000)
     return () => clearInterval(interval)
-  }, [])
+  }, [waitingTips.length])
 
   // 计时器
   useEffect(() => {
@@ -64,15 +56,15 @@ function LoadingProgress({
       <div className="max-w-xl mx-auto">
         {/* 标题 */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">正在生成评估报告</h1>
-          <p className="text-gray-500">{remainingTime > 0 ? `预计需要 ${remainingTime} 秒` : '即将完成'}</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('report.generating')}</h1>
+          <p className="text-gray-500">{remainingTime > 0 ? t('report.estimatedTime', { time: remainingTime }) : t('report.almostDone')}</p>
         </div>
 
         {/* 进度条 */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm mb-6">
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-gray-600">整体进度</span>
+              <span className="text-gray-600">{t('report.overallProgress')}</span>
               <span className="text-primary-600 font-medium">{Math.round(progress)}%</span>
             </div>
             <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
@@ -85,7 +77,7 @@ function LoadingProgress({
 
           {/* 步骤列表 */}
           <div className="space-y-3">
-            {LOADING_STEPS.map((step, idx) => {
+            {loadingSteps.map((step, idx) => {
               const isCompleted = idx < currentStep
               const isCurrent = idx === currentStep
               const isPending = idx > currentStep
@@ -114,8 +106,8 @@ function LoadingProgress({
                     isCurrent && 'text-primary-700 font-medium',
                     isPending && 'text-gray-500'
                   )}>
-                    {step.label}
-                    {isCurrent && <span className="ml-2 text-primary-500">处理中...</span>}
+                    {step.label[lang]}
+                    {isCurrent && <span className="ml-2 text-primary-500">{t('report.processing')}</span>}
                   </span>
                 </div>
               )
@@ -127,13 +119,13 @@ function LoadingProgress({
         <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-6 text-center">
           <div className="text-2xl mb-2">💭</div>
           <p className="text-indigo-800 font-medium transition-all duration-500">
-            {WAITING_TIPS[tipIndex]}
+            {waitingTips[tipIndex][lang]}
           </p>
         </div>
 
         {/* 小提示 */}
         <p className="text-center text-xs text-gray-400 mt-6">
-          AI 正在综合分析你的项目，生成个性化建议
+          {t('report.aiGenerating')}
         </p>
       </div>
     </div>
@@ -158,6 +150,11 @@ export default function ReportPage() {
   const router = useRouter()
   const params = useParams()
   const conversationId = params.id as string
+  const { t, lang, translations } = useTranslation()
+
+  // 从翻译中获取加载步骤和等待提示
+  const loadingSteps = translations.report.loadingSteps
+  const waitingTips = translations.report.waitingTips
 
   const [isLoading, setIsLoading] = useState(true)
   const [report, setReport] = useState<VibeReport | null>(null)
@@ -178,7 +175,7 @@ export default function ReportPage() {
   useEffect(() => {
     if (!isLoading) return
 
-    const totalDuration = LOADING_STEPS.reduce((sum, s) => sum + s.duration, 0)
+    const totalDuration = LOADING_STEPS_DURATION.reduce((sum, d) => sum + d, 0)
     let elapsed = 0
 
     const interval = setInterval(() => {
@@ -186,8 +183,8 @@ export default function ReportPage() {
 
       // 计算当前步骤
       let cumulative = 0
-      for (let i = 0; i < LOADING_STEPS.length; i++) {
-        cumulative += LOADING_STEPS[i].duration
+      for (let i = 0; i < LOADING_STEPS_DURATION.length; i++) {
+        cumulative += LOADING_STEPS_DURATION[i]
         if (elapsed < cumulative) {
           setCurrentStep(i)
           break
@@ -230,11 +227,11 @@ export default function ReportPage() {
               } else if (data.type === 'progress') {
                 const estimatedProgress = Math.min((data.length / 3000) * 100, 90)
                 setProgress(prev => Math.max(prev, estimatedProgress))
-                const stepIndex = Math.floor((estimatedProgress / 100) * LOADING_STEPS.length)
-                setCurrentStep(prev => Math.max(prev, Math.min(stepIndex, LOADING_STEPS.length - 1)))
+                const stepIndex = Math.floor((estimatedProgress / 100) * LOADING_STEPS_DURATION.length)
+                setCurrentStep(prev => Math.max(prev, Math.min(stepIndex, LOADING_STEPS_DURATION.length - 1)))
               } else if (data.type === 'complete') {
                 setProgress(100)
-                setCurrentStep(LOADING_STEPS.length)
+                setCurrentStep(LOADING_STEPS_DURATION.length)
                 setTimeout(() => {
                   setReport(data.report)
                   if (data.report?.product_approaches?.recommended_id) {
@@ -330,7 +327,8 @@ export default function ReportPage() {
       }
 
       // Download PDF
-      pdf.save(`项目评估报告_${new Date().toISOString().split('T')[0]}.pdf`)
+      const reportName = lang === 'zh' ? '项目评估报告' : 'Project_Report'
+      pdf.save(`${reportName}_${new Date().toISOString().split('T')[0]}.pdf`)
     } catch (error) {
       console.error('PDF generation failed:', error)
       // Fallback to browser print
@@ -344,8 +342,12 @@ export default function ReportPage() {
 
   const handleShare = async (method: 'copy' | 'native' | 'twitter' | 'weibo') => {
     const shareUrl = window.location.href
-    const shareTitle = `项目评估报告 - ${report?.one_liner_conclusion || 'JustArt'}`
-    const shareText = `我用 justart.today 评估了一个项目想法，可行性评分 ${report?.score.feasibility || 0} 分！`
+    const shareTitle = lang === 'zh'
+      ? `项目评估报告 - ${report?.one_liner_conclusion || 'JustArt'}`
+      : `Project Report - ${report?.one_liner_conclusion || 'JustArt'}`
+    const shareText = lang === 'zh'
+      ? `我用 justart.today 评估了一个项目想法，可行性评分 ${report?.score.feasibility || 0} 分！`
+      : `I evaluated a project idea on justart.today, feasibility score: ${report?.score.feasibility || 0}!`
 
     switch (method) {
       case 'copy':
@@ -406,11 +408,12 @@ export default function ReportPage() {
   }
 
   const getComplexityLabel = (complexity: string) => {
+    const labels = translations.report.complexity
     switch (complexity) {
-      case 'low': return { text: '简单', color: 'bg-green-100 text-green-700' }
-      case 'medium': return { text: '中等', color: 'bg-amber-100 text-amber-700' }
-      case 'high': return { text: '复杂', color: 'bg-red-100 text-red-700' }
-      default: return { text: '未知', color: 'bg-gray-100 text-gray-700' }
+      case 'low': return { text: labels.low[lang], color: 'bg-green-100 text-green-700' }
+      case 'medium': return { text: labels.medium[lang], color: 'bg-amber-100 text-amber-700' }
+      case 'high': return { text: labels.high[lang], color: 'bg-red-100 text-red-700' }
+      default: return { text: labels.unknown[lang], color: 'bg-gray-100 text-gray-700' }
     }
   }
 
@@ -421,12 +424,16 @@ export default function ReportPage() {
 
   // 显示加载进度
   if (isLoading) {
-    const estimatedSeconds = Math.ceil(LOADING_STEPS.reduce((sum, s) => sum + s.duration, 0) / 1000)
+    const estimatedSeconds = Math.ceil(LOADING_STEPS_DURATION.reduce((sum, d) => sum + d, 0) / 1000)
     return (
       <LoadingProgress
         currentStep={currentStep}
         progress={progress}
         estimatedTime={estimatedSeconds}
+        loadingSteps={loadingSteps}
+        waitingTips={waitingTips}
+        t={t}
+        lang={lang}
       />
     )
   }
@@ -437,13 +444,13 @@ export default function ReportPage() {
         <StepCard maxWidth="md">
           <div className="text-center py-8">
             <div className="text-4xl mb-4">😔</div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">生成失败</h2>
-            <p className="text-gray-500 mb-6">{error || '请稍后重试'}</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('report.generateFailed')}</h2>
+            <p className="text-gray-500 mb-6">{error || t('report.retryLater')}</p>
             <button
               onClick={handleRestart}
               className="px-6 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors"
             >
-              重新开始
+              {t('report.restart')}
             </button>
           </div>
         </StepCard>
@@ -454,14 +461,15 @@ export default function ReportPage() {
   const selectedApproachData = getSelectedApproachData()
 
   // Navigation sections
+  const navSectionsData = translations.report.navSections
   const navSections = [
-    { id: 'score', label: '评分', icon: '📊' },
-    { id: 'analysis', label: '分析', icon: '💪' },
-    { id: 'market', label: '市场', icon: '📈' },
-    { id: 'approach', label: '方案', icon: '🎯' },
-    { id: 'tech', label: '技术', icon: '⚙️' },
-    { id: 'path', label: '路径', icon: '🚀' },
-    { id: 'cost', label: '成本', icon: '💰' },
+    { id: 'score', label: navSectionsData.score[lang], icon: '📊' },
+    { id: 'analysis', label: navSectionsData.analysis[lang], icon: '💪' },
+    { id: 'market', label: navSectionsData.market[lang], icon: '📈' },
+    { id: 'approach', label: navSectionsData.approach[lang], icon: '🎯' },
+    { id: 'tech', label: navSectionsData.tech[lang], icon: '⚙️' },
+    { id: 'path', label: navSectionsData.path[lang], icon: '🚀' },
+    { id: 'cost', label: navSectionsData.cost[lang], icon: '💰' },
   ]
 
   const scrollToSection = (id: string) => {
@@ -479,9 +487,9 @@ export default function ReportPage() {
               className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors"
             >
               <span>←</span>
-              <span className="hidden sm:inline">返回</span>
+              <span className="hidden sm:inline">{t('common.back')}</span>
             </button>
-            <h1 className="text-sm font-medium text-gray-900">项目评估报告</h1>
+            <h1 className="text-sm font-medium text-gray-900">{t('report.title')}</h1>
             <div className="flex items-center gap-1">
               {/* Share Button */}
               <div className="relative">
@@ -489,7 +497,7 @@ export default function ReportPage() {
                   onClick={() => setShowShareMenu(!showShareMenu)}
                   className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  {copySuccess ? '✅ 已复制' : '🔗 分享'}
+                  {copySuccess ? `✅ ${t('report.copied')}` : `🔗 ${t('report.share')}`}
                 </button>
 
                 {/* Share Dropdown Menu */}
@@ -505,7 +513,7 @@ export default function ReportPage() {
                         className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
                       >
                         <span>📋</span>
-                        <span>复制链接</span>
+                        <span>{t('report.shareMenu.copyLink')}</span>
                       </button>
                       {typeof window !== 'undefined' && 'share' in navigator && (
                         <button
@@ -513,7 +521,7 @@ export default function ReportPage() {
                           className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
                         >
                           <span>📤</span>
-                          <span>系统分享</span>
+                          <span>{t('report.shareMenu.systemShare')}</span>
                         </button>
                       )}
                       <div className="border-t border-gray-100 my-1" />
@@ -522,14 +530,14 @@ export default function ReportPage() {
                         className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
                       >
                         <span>🔴</span>
-                        <span>分享到微博</span>
+                        <span>{t('report.shareMenu.weibo')}</span>
                       </button>
                       <button
                         onClick={() => handleShare('twitter')}
                         className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
                       >
                         <span>🐦</span>
-                        <span>分享到 X</span>
+                        <span>{t('report.shareMenu.twitter')}</span>
                       </button>
                     </div>
                   </>
@@ -541,7 +549,7 @@ export default function ReportPage() {
                 onClick={handleDownload}
                 className="px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
               >
-                📥 下载
+                📥 {t('report.download')}
               </button>
             </div>
           </div>
@@ -566,7 +574,7 @@ export default function ReportPage() {
       <div className="max-w-3xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">项目评估报告</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('report.title')}</h1>
           <p className="text-gray-500 mt-2">JustArt 2.0</p>
         </div>
 
@@ -586,7 +594,7 @@ export default function ReportPage() {
 
             {/* Score Details */}
             <div className="flex-1 text-center md:text-left">
-              <div className="text-sm text-gray-500 mb-1">可行性评分</div>
+              <div className="text-sm text-gray-500 mb-1">{t('report.feasibilityScore')}</div>
               <div className="bg-white/80 rounded-xl p-4 border border-gray-100 mb-4">
                 <p className="text-lg font-medium text-gray-800">{report.one_liner_conclusion}</p>
               </div>
@@ -594,10 +602,10 @@ export default function ReportPage() {
               {/* Score Breakdown - Horizontal bars */}
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {[
-                  { label: '技术可行', value: report.score.breakdown.tech, color: 'bg-indigo-500' },
-                  { label: '市场机会', value: report.score.breakdown.market, color: 'bg-purple-500' },
-                  { label: '上手难度', value: report.score.breakdown.onboarding, color: 'bg-pink-500' },
-                  { label: '用户匹配', value: report.score.breakdown.user_match, color: 'bg-cyan-500' },
+                  { label: translations.report.scoreBreakdown.tech[lang], value: report.score.breakdown.tech, color: 'bg-indigo-500' },
+                  { label: translations.report.scoreBreakdown.market[lang], value: report.score.breakdown.market, color: 'bg-purple-500' },
+                  { label: translations.report.scoreBreakdown.onboarding[lang], value: report.score.breakdown.onboarding, color: 'bg-pink-500' },
+                  { label: translations.report.scoreBreakdown.userMatch[lang], value: report.score.breakdown.user_match, color: 'bg-cyan-500' },
                 ].map((item) => (
                   <div key={item.label} className="bg-gray-50 rounded-lg p-3">
                     <div className="flex justify-between items-center mb-1">
@@ -621,7 +629,7 @@ export default function ReportPage() {
         <div id="analysis" className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 scroll-mt-28">
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span>💪</span> 为什么值得做
+              <span>💪</span> {t('report.whyWorthIt')}
             </h3>
             <ul className="space-y-3">
               {report.why_worth_it.map((item, i) => (
@@ -635,7 +643,7 @@ export default function ReportPage() {
 
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span>⚠️</span> 需要注意的风险
+              <span>⚠️</span> {t('report.risks')}
             </h3>
             <ul className="space-y-3">
               {report.risks.map((item, i) => (
@@ -651,17 +659,17 @@ export default function ReportPage() {
         {/* Market Analysis */}
         <div id="market" className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200 scroll-mt-28">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <span>📈</span> 市场分析
+            <span>📈</span> {t('report.marketAnalysis')}
           </h3>
           <div className="space-y-4">
             <div className="p-4 bg-primary-50 rounded-xl border border-primary-100">
-              <div className="text-sm font-medium text-primary-700 mb-1">机会洞察</div>
+              <div className="text-sm font-medium text-primary-700 mb-1">{t('report.opportunity')}</div>
               <p className="text-gray-700 leading-relaxed">{report.market_analysis.opportunity}</p>
             </div>
 
             {report.market_analysis.search_trends && (
               <div>
-                <div className="text-sm font-medium text-gray-500 mb-2">搜索趋势</div>
+                <div className="text-sm font-medium text-gray-500 mb-2">{t('report.searchTrends')}</div>
                 <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
                   {report.market_analysis.search_trends}
                 </div>
@@ -670,7 +678,7 @@ export default function ReportPage() {
 
             {report.market_analysis.competitors.length > 0 && (
               <div>
-                <div className="text-sm font-medium text-gray-500 mb-3">现有竞品</div>
+                <div className="text-sm font-medium text-gray-500 mb-3">{t('report.competitors')}</div>
                 <div className="grid gap-3">
                   {report.market_analysis.competitors.map((comp, i) => (
                     <div key={i} className="p-4 bg-gray-50 border border-gray-100 rounded-xl">
@@ -678,7 +686,7 @@ export default function ReportPage() {
                         <div className="font-semibold text-gray-900">{comp.name}</div>
                         {comp.url && (
                           <a href={comp.url} target="_blank" className="text-xs text-primary-600 hover:text-primary-700 hover:underline">
-                            查看 →
+                            {t('report.view')} →
                           </a>
                         )}
                       </div>
@@ -698,9 +706,9 @@ export default function ReportPage() {
         {report.product_approaches && report.product_approaches.approaches.length > 0 && (
           <div id="approach" className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 scroll-mt-28">
             <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
-              <span>🎯</span> 产品实现方案
+              <span>🎯</span> {t('report.productApproach')}
             </h3>
-            <p className="text-sm text-gray-500 mb-4">选择一个产品逻辑方案，后续的技术选型和实施路径会基于此调整</p>
+            <p className="text-sm text-gray-500 mb-4">{t('report.approachDesc')}</p>
 
             <div className="grid gap-4 mb-4">
               {report.product_approaches.approaches.map((approach) => {
@@ -723,7 +731,7 @@ export default function ReportPage() {
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-gray-900">{approach.name}</span>
                         {isRecommended && (
-                          <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">推荐</span>
+                          <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">{t('report.recommended')}</span>
                         )}
                       </div>
                       <span className={cn('text-xs px-2 py-1 rounded-full', complexity.color)}>
@@ -751,13 +759,13 @@ export default function ReportPage() {
             </div>
 
             <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800">
-              <span className="font-medium">💡 建议：</span>
+              <span className="font-medium">💡 {t('report.suggestion')}</span>
               {report.product_approaches.recommendation_reason}
             </div>
 
             {selectedApproachData && (
               <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <h4 className="font-medium text-gray-900 mb-3">详细流程</h4>
+                <h4 className="font-medium text-gray-900 mb-3">{t('report.detailFlow')}</h4>
                 <div className="space-y-3">
                   {selectedApproachData.workflow.map((step) => (
                     <div key={step.step} className="flex items-start gap-3">
@@ -774,7 +782,7 @@ export default function ReportPage() {
 
                 <div className="mt-4 grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-sm font-medium text-green-700 mb-2">优势</div>
+                    <div className="text-sm font-medium text-green-700 mb-2">{t('report.pros')}</div>
                     <ul className="space-y-1">
                       {selectedApproachData.pros.map((pro, i) => (
                         <li key={i} className="text-sm text-gray-600 flex items-center gap-1">
@@ -784,7 +792,7 @@ export default function ReportPage() {
                     </ul>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-amber-700 mb-2">劣势</div>
+                    <div className="text-sm font-medium text-amber-700 mb-2">{t('report.cons')}</div>
                     <ul className="space-y-1">
                       {selectedApproachData.cons.map((con, i) => (
                         <li key={i} className="text-sm text-gray-600 flex items-center gap-1">
@@ -796,7 +804,7 @@ export default function ReportPage() {
                 </div>
 
                 <div className="mt-3 text-sm text-gray-500">
-                  <span className="font-medium">最适合：</span>{selectedApproachData.best_for}
+                  <span className="font-medium">{t('report.bestFor')}</span>{selectedApproachData.best_for}
                 </div>
               </div>
             )}
@@ -806,16 +814,16 @@ export default function ReportPage() {
         {/* Tech Stack */}
         <div id="tech" className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400 scroll-mt-28">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <span>⚙️</span> 技术方案选择
+            <span>⚙️</span> {t('report.techOptions')}
           </h3>
 
           <div className="space-y-4">
-            {/* Option A - 纯国内方案 */}
+            {/* Option A - China Stack */}
             <div className="border border-gray-200 rounded-xl p-5 bg-gray-50">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <div className="font-bold text-gray-900 text-base flex items-center gap-2">
-                    🇨🇳 {report.tech_options.option_a.name}
+                    {lang === 'zh' ? '🇨🇳' : '🇨🇳'} {report.tech_options.option_a.name}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">{report.tech_options.option_a.fit_for}</div>
                 </div>
@@ -827,7 +835,7 @@ export default function ReportPage() {
 
               {/* Tools with purposes */}
               <div className="mb-4">
-                <div className="text-xs font-medium text-gray-500 mb-2">🛠️ 技术栈</div>
+                <div className="text-xs font-medium text-gray-500 mb-2">🛠️ {t('report.techStack')}</div>
                 <div className="flex flex-wrap gap-2">
                   {(Array.isArray(report.tech_options.option_a.tools) ? report.tech_options.option_a.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
                     <div key={i} className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm">
@@ -846,11 +854,11 @@ export default function ReportPage() {
               </div>
 
               <div className="text-sm text-gray-600 bg-white rounded-lg p-3 border border-gray-100">
-                <span className="font-medium text-gray-700">能力：</span>{report.tech_options.option_a.capability}
+                <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_a.capability}
               </div>
             </div>
 
-            {/* Option B - 海外方案 */}
+            {/* Option B - Global Stack */}
             <div className="border border-blue-200 rounded-xl p-5 bg-blue-50">
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -867,7 +875,7 @@ export default function ReportPage() {
 
               {/* Tools with purposes */}
               <div className="mb-4">
-                <div className="text-xs font-medium text-gray-500 mb-2">🛠️ 技术栈</div>
+                <div className="text-xs font-medium text-gray-500 mb-2">🛠️ {t('report.techStack')}</div>
                 <div className="flex flex-wrap gap-2">
                   {(Array.isArray(report.tech_options.option_b.tools) ? report.tech_options.option_b.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
                     <div key={i} className="bg-white border border-blue-200 rounded-lg px-3 py-2 text-sm">
@@ -886,15 +894,15 @@ export default function ReportPage() {
               </div>
 
               <div className="text-sm text-gray-600 bg-white rounded-lg p-3 border border-blue-100">
-                <span className="font-medium text-gray-700">能力：</span>{report.tech_options.option_b.capability}
+                <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_b.capability}
               </div>
             </div>
 
-            {/* Option C - Vibe Coder 方案 */}
+            {/* Option C - Vibe Coder Stack */}
             {report.tech_options.option_c && (
               <div className="border-2 border-purple-300 rounded-xl p-5 bg-gradient-to-br from-purple-50 to-indigo-50 relative overflow-hidden">
                 <div className="absolute top-2 right-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
-                  ⚡ 推荐
+                  ⚡ {t('report.recommended')}
                 </div>
                 <div className="flex items-center justify-between mb-4">
                   <div>
@@ -911,7 +919,7 @@ export default function ReportPage() {
 
                 {/* Tools with purposes - highlighted */}
                 <div className="mb-4">
-                  <div className="text-xs font-medium text-purple-600 mb-2">🛠️ Vibe Coding 工具链</div>
+                  <div className="text-xs font-medium text-purple-600 mb-2">🛠️ {t('report.vibeToolchain')}</div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {(Array.isArray(report.tech_options.option_c.tools) ? report.tech_options.option_c.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
                       <div key={i} className="bg-white border border-purple-200 rounded-lg p-3 text-center shadow-sm">
@@ -929,14 +937,14 @@ export default function ReportPage() {
                 </div>
 
                 <div className="text-sm text-gray-600 bg-white/80 rounded-lg p-3 border border-purple-100">
-                  <span className="font-medium text-gray-700">能力：</span>{report.tech_options.option_c.capability}
+                  <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_c.capability}
                 </div>
               </div>
             )}
           </div>
 
           <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800 leading-relaxed">
-            <span className="font-medium">💡 建议：</span>
+            <span className="font-medium">💡 {t('report.suggestion')}</span>
             {report.tech_options.advice}
           </div>
         </div>
@@ -944,7 +952,7 @@ export default function ReportPage() {
         {/* Fastest Path */}
         <div id="path" className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500 scroll-mt-28">
           <h3 className="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
-            <span>🚀</span> 最快上手路径
+            <span>🚀</span> {t('report.fastestPath')}
           </h3>
           <div className="space-y-5">
             {report.fastest_path.map((step, i) => (
@@ -959,11 +967,11 @@ export default function ReportPage() {
                     <div
                       className="bg-white border border-gray-200 p-4 rounded-lg text-sm text-gray-700 mb-4 cursor-pointer hover:bg-gray-50 transition-colors group leading-relaxed whitespace-pre-line"
                       onClick={() => navigator.clipboard.writeText(step.copy_text!)}
-                      title="点击复制"
+                      title={t('report.clickToCopy')}
                     >
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-medium text-gray-500">📋 可复制的提示词</span>
-                        <span className="text-xs text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity">点击复制</span>
+                        <span className="text-xs font-medium text-gray-500">📋 {t('report.copyablePrompt')}</span>
+                        <span className="text-xs text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity">{t('report.clickToCopy')}</span>
                       </div>
                       {step.copy_text}
                     </div>
@@ -974,7 +982,7 @@ export default function ReportPage() {
                       target="_blank"
                       className="inline-block px-5 py-2.5 bg-primary-500 text-white text-sm font-medium rounded-lg hover:bg-primary-600 transition-colors"
                     >
-                      {step.action_label || '去执行 →'}
+                      {step.action_label || t('report.goExecute')}
                     </a>
                   )}
                 </div>
@@ -985,27 +993,27 @@ export default function ReportPage() {
 
         {/* Cost & Pitfalls */}
         <div id="cost" className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-600 scroll-mt-28">
-          {/* 成本预估 */}
+          {/* Cost Estimate */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
-              <span>💰</span> 成本预估
+              <span>💰</span> {t('report.costEstimate')}
             </h3>
             <div className="space-y-4">
               <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
-                <div className="text-xs font-medium text-blue-600 mb-2">⏱️ 时间投入</div>
+                <div className="text-xs font-medium text-blue-600 mb-2">⏱️ {t('report.timeInvestment')}</div>
                 <div className="text-sm text-gray-800 leading-relaxed">{report.cost_estimate.time_breakdown}</div>
               </div>
               <div className="p-4 bg-green-50 rounded-xl border border-green-100">
-                <div className="text-xs font-medium text-green-600 mb-2">💵 金钱投入</div>
+                <div className="text-xs font-medium text-green-600 mb-2">💵 {t('report.moneyInvestment')}</div>
                 <div className="text-sm text-gray-800 leading-relaxed">{report.cost_estimate.money_breakdown}</div>
               </div>
             </div>
           </div>
 
-          {/* 避坑指南 */}
+          {/* Pitfall Guide */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
-              <span>⚠️</span> 避坑指南
+              <span>⚠️</span> {t('report.pitfallGuide')}
             </h3>
             <ul className="space-y-3">
               {report.pitfalls.map((pit, i) => (
@@ -1026,12 +1034,12 @@ export default function ReportPage() {
           {feedbackSubmitted ? (
             <div className="py-4">
               <div className="text-2xl mb-2">🙏</div>
-              <h3 className="text-gray-700 font-medium">感谢你的反馈！</h3>
-              <p className="text-sm text-gray-400 mt-1">你的意见将帮助我们改进</p>
+              <h3 className="text-gray-700 font-medium">{t('report.feedback.thanks')}</h3>
+              <p className="text-sm text-gray-400 mt-1">{t('report.feedback.thanksDesc')}</p>
             </div>
           ) : (
             <>
-              <h3 className="text-gray-700 font-medium mb-4">这份报告对你有帮助吗？</h3>
+              <h3 className="text-gray-700 font-medium mb-4">{t('report.feedback.title')}</h3>
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={() => {
@@ -1040,7 +1048,7 @@ export default function ReportPage() {
                   }}
                   className="flex items-center gap-2 px-5 py-2.5 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 hover:border-green-300 transition-all text-green-700"
                 >
-                  <span>👍</span> 有用
+                  <span>👍</span> {t('report.feedback.helpful')}
                 </button>
                 <button
                   onClick={() => {
@@ -1049,11 +1057,11 @@ export default function ReportPage() {
                   }}
                   className="flex items-center gap-2 px-5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 hover:border-gray-300 transition-all text-gray-600"
                 >
-                  <span>👎</span> 没帮助
+                  <span>👎</span> {t('report.feedback.notHelpful')}
                 </button>
               </div>
               <p className="text-xs text-gray-400 mt-4">
-                🔒 反馈仅用于改进产品，不会关联你的项目内容
+                🔒 {t('report.feedback.privacyNote')}
               </p>
             </>
           )}
@@ -1075,13 +1083,13 @@ export default function ReportPage() {
             onClick={handleRestart}
             className="px-6 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
           >
-            评估新项目
+            {t('report.evalNewProject')}
           </button>
           <button
             onClick={handleDownload}
             className="px-6 py-2.5 rounded-xl text-sm font-medium bg-primary-500 text-white hover:bg-primary-600 transition-colors shadow-sm"
           >
-            保存报告
+            {t('report.saveReport')}
           </button>
         </div>
       </div>
