@@ -212,9 +212,13 @@ export default function ReviewPage() {
                     name="projectName"
                     type="text"
                     autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    readOnly={false}
                     value={parsedInfo.projectName}
                     onChange={(e) => setParsedInfo(prev => ({ ...prev, projectName: e.target.value }))}
-                    className="flex-1 px-3 py-2.5 rounded-md text-sm bg-white border border-gray-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-colors"
+                    className="flex-1 px-3 py-2.5 rounded-md text-sm bg-white border border-gray-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-colors cursor-text"
                     placeholder={t('review.projectNamePlaceholder')}
                   />
                   <VoiceButton
@@ -234,10 +238,14 @@ export default function ReviewPage() {
                     id="coreFeature"
                     name="coreFeature"
                     autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    readOnly={false}
                     value={parsedInfo.coreFeature}
                     onChange={(e) => setParsedInfo(prev => ({ ...prev, coreFeature: e.target.value }))}
                     rows={2}
-                    className="flex-1 px-3 py-2.5 rounded-md text-sm resize-none bg-white border border-gray-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-colors"
+                    className="flex-1 px-3 py-2.5 rounded-md text-sm resize-none bg-white border border-gray-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-colors cursor-text"
                     placeholder={t('review.coreFeaturePlaceholder')}
                   />
                   <VoiceButton
@@ -258,9 +266,13 @@ export default function ReviewPage() {
                     name="targetUser"
                     type="text"
                     autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    readOnly={false}
                     value={parsedInfo.targetUser}
                     onChange={(e) => setParsedInfo(prev => ({ ...prev, targetUser: e.target.value }))}
-                    className="flex-1 px-3 py-2.5 rounded-md text-sm bg-white border border-gray-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-colors"
+                    className="flex-1 px-3 py-2.5 rounded-md text-sm bg-white border border-gray-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-colors cursor-text"
                     placeholder={t('review.targetUserPlaceholder')}
                   />
                   <VoiceButton
@@ -280,10 +292,14 @@ export default function ReviewPage() {
                     id="problemSolved"
                     name="problemSolved"
                     autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    readOnly={false}
                     value={parsedInfo.problemSolved}
                     onChange={(e) => setParsedInfo(prev => ({ ...prev, problemSolved: e.target.value }))}
                     rows={2}
-                    className="flex-1 px-3 py-2.5 rounded-md text-sm resize-none bg-white border border-gray-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-colors"
+                    className="flex-1 px-3 py-2.5 rounded-md text-sm resize-none bg-white border border-gray-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-colors cursor-text"
                     placeholder={t('review.problemSolvedPlaceholder')}
                   />
                   <VoiceButton
