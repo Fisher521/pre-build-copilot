@@ -208,6 +208,9 @@ export default function HomePage() {
           <label className="block text-lg font-medium text-gray-900">
             💡 告诉我你想做什么
           </label>
+          <p className="text-xs text-gray-400 mt-1">
+            🔒 你的想法仅用于本次评估，不会被存储或分享给第三方
+          </p>
           
           <div className="relative">
             <textarea

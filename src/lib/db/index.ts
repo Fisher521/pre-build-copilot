@@ -36,3 +36,12 @@ export {
   deleteBrief,
   getUserBriefs,
 } from './briefs'
+
+// Feedback
+export {
+  createFeedback,
+  getFeedbackByConversation,
+  getAllFeedback,
+  getFeedbackStats,
+} from './feedback'
+export type { Feedback, CreateFeedbackInput } from './feedback'

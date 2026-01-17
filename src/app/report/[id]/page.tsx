@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { StepCard } from '@/components/wizard'
 import { ScoreRing } from '@/components/ui'
+import { FeedbackModal } from '@/components/feedback'
 import { cn } from '@/lib/utils'
 import type { VibeReport, ProductApproach } from '@/lib/types'
 
@@ -162,6 +163,11 @@ export default function ReportPage() {
   const [report, setReport] = useState<VibeReport | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [selectedApproach, setSelectedApproach] = useState<string | null>(null)
+
+  // 反馈状态
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false)
+  const [feedbackRating, setFeedbackRating] = useState<'helpful' | 'not_helpful'>('helpful')
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
 
   // 加载进度状态
   const [currentStep, setCurrentStep] = useState(0)
@@ -868,16 +874,51 @@ ${report.pitfalls.map(pit => `- ${pit}`).join('\n')}
 
         {/* Feedback */}
         <div className="mb-8 text-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
-          <h3 className="text-gray-700 font-medium mb-4">这份报告对你有帮助吗？</h3>
-          <div className="flex items-center justify-center gap-4">
-            <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-all text-gray-700">
-              <span>👍</span> 有用
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-all text-gray-700">
-              <span>👎</span> 没帮助
-            </button>
-          </div>
+          {feedbackSubmitted ? (
+            <div className="py-4">
+              <div className="text-2xl mb-2">🙏</div>
+              <h3 className="text-gray-700 font-medium">感谢你的反馈！</h3>
+              <p className="text-sm text-gray-400 mt-1">你的意见将帮助我们改进</p>
+            </div>
+          ) : (
+            <>
+              <h3 className="text-gray-700 font-medium mb-4">这份报告对你有帮助吗？</h3>
+              <div className="flex items-center justify-center gap-4">
+                <button
+                  onClick={() => {
+                    setFeedbackRating('helpful')
+                    setFeedbackModalOpen(true)
+                  }}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 hover:border-green-300 transition-all text-green-700"
+                >
+                  <span>👍</span> 有用
+                </button>
+                <button
+                  onClick={() => {
+                    setFeedbackRating('not_helpful')
+                    setFeedbackModalOpen(true)
+                  }}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 hover:border-gray-300 transition-all text-gray-600"
+                >
+                  <span>👎</span> 没帮助
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-4">
+                🔒 反馈仅用于改进产品，不会关联你的项目内容
+              </p>
+            </>
+          )}
         </div>
+
+        {/* Feedback Modal */}
+        <FeedbackModal
+          isOpen={feedbackModalOpen}
+          onClose={() => setFeedbackModalOpen(false)}
+          rating={feedbackRating}
+          conversationId={conversationId}
+          reportScore={report.score.feasibility}
+          onSubmitSuccess={() => setFeedbackSubmitted(true)}
+        />
 
         {/* Actions */}
         <div className="flex items-center justify-center gap-4">

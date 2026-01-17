@@ -118,7 +118,35 @@ CREATE INDEX IF NOT EXISTS idx_briefs_conversation_id ON briefs(conversation_id)
 CREATE INDEX IF NOT EXISTS idx_briefs_created_at ON briefs(created_at DESC);
 
 -- ================================================
--- 4. Auto-update updated_at Trigger
+-- 4. Feedback Table
+-- ================================================
+CREATE TABLE IF NOT EXISTS feedback (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+
+  -- Feedback rating
+  rating VARCHAR(20) NOT NULL CHECK (rating IN ('helpful', 'not_helpful')),
+
+  -- Selected reasons (array of strings)
+  reasons TEXT[] DEFAULT '{}',
+
+  -- Optional comment
+  comment TEXT,
+
+  -- Report score at the time of feedback (for correlation analysis)
+  report_score INT,
+
+  -- Timestamp
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Index for faster queries
+CREATE INDEX IF NOT EXISTS idx_feedback_conversation_id ON feedback(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_rating ON feedback(rating);
+CREATE INDEX IF NOT EXISTS idx_feedback_created_at ON feedback(created_at DESC);
+
+-- ================================================
+-- 5. Auto-update updated_at Trigger
 -- ================================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -150,6 +178,7 @@ CREATE TRIGGER update_briefs_updated_at
 ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE briefs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
 
 -- Conversations: Users can only access their own conversations
 -- For MVP without auth, allow all access
@@ -162,6 +191,10 @@ CREATE POLICY "Allow all access to messages" ON messages
 
 -- Briefs: Users can access briefs in their conversations
 CREATE POLICY "Allow all access to briefs" ON briefs
+  FOR ALL USING (true);
+
+-- Feedback: Allow all access for MVP
+CREATE POLICY "Allow all access to feedback" ON feedback
   FOR ALL USING (true);
 
 -- ================================================
