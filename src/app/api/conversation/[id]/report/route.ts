@@ -73,7 +73,17 @@ export async function POST(
 
 ${toneInstruction}
 
-工具库：v0.dev(前端)、Lovable/Bolt(全栈)、Cursor(编辑器)、Supabase(后端)、Vercel(部署)
+工具库（优先推荐国内可直接访问的）：
+- AI编程：Cursor、Windsurf、通义灵码
+- 前端生成：v0.dev、Lovable、Bolt.new
+- 全栈：Lovable、Bolt.new
+- 后端/数据库：Supabase、腾讯云开发、阿里云Serverless、LeanCloud
+- 部署：Vercel、腾讯云、阿里云、Railway
+- AI接口：通义千问API、DeepSeek API、月之暗面Kimi API、智谱GLM
+- 支付：微信支付、支付宝
+- 小程序：微信小程序云开发、uni-app
+
+货币单位：所有成本必须用人民币(¥)标注，例如"¥0"、"¥50/月"
 
 输出JSON(2-3个产品方案,每个3-4步workflow)：
 {"one_liner_conclusion":"一句话结论","score":{"feasibility":0-100,"breakdown":{"tech":0-100,"market":0-100,"onboarding":0-100,"user_match":0-100}},"why_worth_it":["理由1","理由2","理由3"],"risks":["风险1","风险2"],"market_analysis":{"opportunity":"机会","search_trends":"趋势","competitors":[{"name":"名称","url":"链接","pros":"优点","cons":"缺点"}]},"product_approaches":{"approaches":[{"id":"a","name":"方案名","description":"描述","workflow":[{"step":1,"action":"动作","detail":"详情"}],"pros":["优势"],"cons":["劣势"],"best_for":"适合场景","complexity":"low|medium|high"}],"recommended_id":"推荐id","recommendation_reason":"理由"},"tech_options":{"option_a":{"name":"极简方案","tools":["工具"],"fit_for":"场景","capability":"能力","dev_time":"时间","cost":"成本"},"option_b":{"name":"进阶方案","tools":["工具"],"fit_for":"场景","capability":"能力","dev_time":"时间","cost":"成本"},"advice":"建议"},"fastest_path":[{"title":"标题","description":"描述","copy_text":"提示词","action_label":"按钮文字","action_url":"链接"}],"cost_estimate":{"time_breakdown":"时间","money_breakdown":"金钱"},"pitfalls":["避坑1","避坑2"],"learning_takeaways":["收获1","收获2"],"next_steps":{"today":["今天"],"this_week":["本周"],"later":["以后"]}}`

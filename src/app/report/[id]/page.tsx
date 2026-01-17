@@ -3,6 +3,7 @@
 import { useRouter, useParams } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { StepCard } from '@/components/wizard'
+import { ScoreRing } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import type { VibeReport, ProductApproach } from '@/lib/types'
 
@@ -63,7 +64,7 @@ function LoadingProgress({
         {/* 标题 */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">正在生成评估报告</h1>
-          <p className="text-gray-500">预计需要 {remainingTime > 0 ? `${remainingTime}` : '即将完成'} 秒</p>
+          <p className="text-gray-500">{remainingTime > 0 ? `预计需要 ${remainingTime} 秒` : '即将完成'}</p>
         </div>
 
         {/* 进度条 */}
@@ -423,9 +424,63 @@ ${report.pitfalls.map(pit => `- ${pit}`).join('\n')}
 
   const selectedApproachData = getSelectedApproachData()
 
+  // Navigation sections
+  const navSections = [
+    { id: 'score', label: '评分', icon: '📊' },
+    { id: 'analysis', label: '分析', icon: '💪' },
+    { id: 'market', label: '市场', icon: '📈' },
+    { id: 'approach', label: '方案', icon: '🎯' },
+    { id: 'tech', label: '技术', icon: '⚙️' },
+    { id: 'path', label: '路径', icon: '🚀' },
+    { id: 'cost', label: '成本', icon: '💰' },
+  ]
+
+  const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
-    <div className="min-h-screen py-12 px-6 bg-gradient-to-b from-gray-50 to-white">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div className="max-w-3xl mx-auto px-6 py-3">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={handleRestart}
+              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              <span>←</span>
+              <span className="hidden sm:inline">返回</span>
+            </button>
+            <h1 className="text-sm font-medium text-gray-900">项目评估报告</h1>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleDownload}
+                className="px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
+              >
+                📥 下载
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* Quick Nav */}
+        <div className="border-t border-gray-50 overflow-x-auto scrollbar-hide">
+          <div className="max-w-3xl mx-auto px-6 py-2 flex gap-1">
+            {navSections.map((section) => (
+              <button
+                key={section.id}
+                onClick={() => scrollToSection(section.id)}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full whitespace-nowrap transition-colors"
+              >
+                <span>{section.icon}</span>
+                <span>{section.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">项目评估报告</h1>
@@ -433,41 +488,54 @@ ${report.pitfalls.map(pit => `- ${pit}`).join('\n')}
         </div>
 
         {/* Score Card */}
-        <div className={cn(
-          'rounded-2xl border p-8 mb-6 text-center shadow-sm bg-white animate-in fade-in slide-in-from-bottom-4 duration-500',
-          getScoreBg(report.score.feasibility)
-        )}>
-          <div className={cn('text-6xl font-bold mb-2', getScoreColor(report.score.feasibility))}>
-            {report.score.feasibility}
-          </div>
-          <div className="text-gray-500 text-sm mb-4">可行性评分 / 100</div>
+        <div
+          id="score"
+          className={cn(
+            'rounded-2xl border p-8 mb-6 shadow-sm bg-white animate-in fade-in slide-in-from-bottom-4 duration-500 scroll-mt-28',
+            getScoreBg(report.score.feasibility)
+          )}
+        >
+          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
+            {/* Score Ring */}
+            <div className="flex-shrink-0">
+              <ScoreRing score={report.score.feasibility} size={140} strokeWidth={12} />
+            </div>
 
-          <div className="bg-white rounded-xl p-4 mb-6 border border-gray-100">
-            <p className="text-lg font-medium text-gray-800">{report.one_liner_conclusion}</p>
-          </div>
+            {/* Score Details */}
+            <div className="flex-1 text-center md:text-left">
+              <div className="text-sm text-gray-500 mb-1">可行性评分</div>
+              <div className="bg-white/80 rounded-xl p-4 border border-gray-100 mb-4">
+                <p className="text-lg font-medium text-gray-800">{report.one_liner_conclusion}</p>
+              </div>
 
-          <div className="grid grid-cols-4 gap-3 text-sm">
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="font-bold text-gray-900 text-lg">{report.score.breakdown.tech}</div>
-              <div className="text-gray-500">技术可行</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="font-bold text-gray-900 text-lg">{report.score.breakdown.market}</div>
-              <div className="text-gray-500">市场机会</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="font-bold text-gray-900 text-lg">{report.score.breakdown.onboarding}</div>
-              <div className="text-gray-500">上手难度</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="font-bold text-gray-900 text-lg">{report.score.breakdown.user_match}</div>
-              <div className="text-gray-500">用户匹配</div>
+              {/* Score Breakdown - Horizontal bars */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {[
+                  { label: '技术可行', value: report.score.breakdown.tech, color: 'bg-indigo-500' },
+                  { label: '市场机会', value: report.score.breakdown.market, color: 'bg-purple-500' },
+                  { label: '上手难度', value: report.score.breakdown.onboarding, color: 'bg-pink-500' },
+                  { label: '用户匹配', value: report.score.breakdown.user_match, color: 'bg-cyan-500' },
+                ].map((item) => (
+                  <div key={item.label} className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-gray-500 text-xs">{item.label}</span>
+                      <span className="font-bold text-gray-900">{item.value}</span>
+                    </div>
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={cn('h-full rounded-full transition-all duration-1000', item.color)}
+                        style={{ width: `${item.value}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Strengths & Risks */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+        <div id="analysis" className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 scroll-mt-28">
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <span>💪</span> 为什么值得做
@@ -498,7 +566,7 @@ ${report.pitfalls.map(pit => `- ${pit}`).join('\n')}
         </div>
 
         {/* Market Analysis */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
+        <div id="market" className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200 scroll-mt-28">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <span>📈</span> 市场分析
           </h3>
@@ -545,7 +613,7 @@ ${report.pitfalls.map(pit => `- ${pit}`).join('\n')}
 
         {/* Product Approach Selection */}
         {report.product_approaches && report.product_approaches.approaches.length > 0 && (
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+          <div id="approach" className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 scroll-mt-28">
             <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
               <span>🎯</span> 产品实现方案
             </h3>
@@ -653,7 +721,7 @@ ${report.pitfalls.map(pit => `- ${pit}`).join('\n')}
         )}
 
         {/* Tech Stack */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400">
+        <div id="tech" className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400 scroll-mt-28">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <span>⚙️</span> 技术方案选择
           </h3>
@@ -719,7 +787,7 @@ ${report.pitfalls.map(pit => `- ${pit}`).join('\n')}
         </div>
 
         {/* Fastest Path */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500">
+        <div id="path" className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500 scroll-mt-28">
           <h3 className="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
             <span>🚀</span> 最快上手路径
           </h3>
@@ -761,7 +829,7 @@ ${report.pitfalls.map(pit => `- ${pit}`).join('\n')}
         </div>
 
         {/* Cost & Pitfalls */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-600">
+        <div id="cost" className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-600 scroll-mt-28">
           {/* 成本预估 */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
