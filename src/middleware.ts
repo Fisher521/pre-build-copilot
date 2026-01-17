@@ -13,10 +13,10 @@ export function middleware(request: NextRequest) {
     return response
   }
 
-  // 从 Vercel/Cloudflare 等 CDN 获取地理位置信息
-  const country = request.geo?.country ||
-    request.headers.get('cf-ipcountry') ||  // Cloudflare
+  // 从 Vercel/Cloudflare 等 CDN 获取地理位置信息（通过请求头）
+  const country =
     request.headers.get('x-vercel-ip-country') ||  // Vercel
+    request.headers.get('cf-ipcountry') ||  // Cloudflare
     ''
 
   // 检查 Accept-Language 请求头作为备选

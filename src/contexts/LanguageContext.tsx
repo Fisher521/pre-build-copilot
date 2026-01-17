@@ -34,8 +34,8 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguageState] = useState<Language>('zh')
   const [mounted, setMounted] = useState(false)
 
-  // 英文功能暂未启用
-  const isEnglishEnabled = false
+  // 英文功能已启用
+  const isEnglishEnabled = true
 
   useEffect(() => {
     // 客户端挂载后从 cookie 读取语言

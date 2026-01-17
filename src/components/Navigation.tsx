@@ -5,16 +5,18 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
-
-const navItems = [
-  { href: '/', label: 'Vibe Checker', icon: '🎯' },
-  { href: '/ai-pulse', label: 'AI Pulse', icon: '📡' },
-]
+import { useTranslation } from '@/lib/i18n'
 
 export function Navigation() {
   const pathname = usePathname()
   const [showLangTooltip, setShowLangTooltip] = useState(false)
   const { language, setLanguage, isEnglishEnabled } = useLanguage()
+  const { t } = useTranslation()
+
+  const navItems = [
+    { href: '/', label: t('nav.vibeChecker'), icon: '🎯' },
+    { href: '/ai-pulse', label: t('nav.aiPulse'), icon: '📡' },
+  ]
 
   // 判断是否在首页相关路径
   const isHome = pathname === '/' || pathname.startsWith('/review') || pathname.startsWith('/report')
