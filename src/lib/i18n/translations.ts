@@ -665,11 +665,10 @@ export const translations = {
         en: 'What form do you want it to take?',
       },
       options: {
-        web: { zh: '网页（电脑或手机都能打开）', en: 'Web app (works on desktop & mobile)' },
+        web: { zh: '网页（电脑或手机都能打开）', en: 'Web app, open and use' },
+        pwa: { zh: '微信小程序', en: 'PWA (installable web app)' },
+        plugin: { zh: '浏览器插件', en: 'Browser extension' },
         mobile: { zh: '手机 App', en: 'Mobile App' },
-        plugin: { zh: '浏览器插件', en: 'Browser Extension' },
-        wechat: { zh: '微信小程序', en: 'Mini Program / PWA' },
-        skip: { zh: '还没想好', en: 'Not sure yet' },
       },
     },
     // Q4: Timeline preference

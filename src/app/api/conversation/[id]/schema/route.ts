@@ -65,9 +65,9 @@ export async function PATCH(
           type: 'choice',
           options: [
             { id: 'web', label: 'Web app, open and use', value: 'web', feedback: { type: 'positive', message: 'Simplest form, can go live in hours' } },
-            { id: 'miniprogram', label: 'Mini Program / PWA', value: 'miniprogram', feedback: { type: 'warning', message: 'Needs registration and review, adds about a week' } },
+            { id: 'pwa', label: 'PWA (installable web app)', value: 'pwa', feedback: { type: 'positive', message: 'Works offline, can be installed on devices' } },
             { id: 'plugin', label: 'Browser extension', value: 'plugin', feedback: { type: 'neutral', message: 'Medium difficulty, need to learn some extension development rules' } },
-            { id: 'app', label: 'Mobile App', value: 'ios', feedback: { type: 'warning', message: 'Most complex, recommend validating the idea with web first' } }
+            { id: 'app', label: 'Mobile App', value: 'mobile_app', feedback: { type: 'warning', message: 'Most complex, recommend validating the idea with web first' } }
           ]
         },
         {
