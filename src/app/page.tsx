@@ -105,7 +105,7 @@ export default function HomePage() {
     const currentMessage = loadingMessages[loadingStep]
     const progress = ((loadingStep + 1) / loadingMessages.length) * 100
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 bg-gray-50 pt-16">
+      <div className="min-h-screen flex flex-col items-center sm:justify-center p-4 sm:p-6 bg-gray-50 pt-20 sm:pt-16">
         <div className="text-center w-full max-w-sm mx-auto">
           {/* 进度条 */}
           <div className="w-full h-1 bg-gray-200 rounded-full mb-6 overflow-hidden">
@@ -137,15 +137,15 @@ export default function HomePage() {
   const steps = translations.home.steps
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-6 sm:p-6 bg-gray-50 pt-16 sm:pt-20">
-      {/* Hero Section */}
-      <div className="text-center mb-6 sm:mb-8">
-        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-1 sm:mb-2">justart.today</h1>
-        <p className="text-sm sm:text-base text-gray-500">{t('home.tagline')}</p>
+    <div className="min-h-screen flex flex-col items-center sm:justify-center px-4 py-4 sm:p-6 bg-gray-50 pt-16 sm:pt-20">
+      {/* Hero Section - more compact on mobile */}
+      <div className="text-center mb-4 sm:mb-8">
+        <h1 className="text-lg sm:text-2xl font-semibold text-gray-900 mb-0.5 sm:mb-2">justart.today</h1>
+        <p className="text-xs sm:text-base text-gray-500">{t('home.tagline')}</p>
 
         {/* Social Proof */}
         <p
-          className="mt-2 sm:mt-3 text-xs sm:text-sm text-gray-400"
+          className="mt-1 sm:mt-3 text-xs sm:text-sm text-gray-400"
           dangerouslySetInnerHTML={{ __html: t('home.socialProof') }}
         />
       </div>

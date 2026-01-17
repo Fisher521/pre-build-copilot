@@ -489,8 +489,62 @@ export async function* processUserInputStreaming(params: {
 /**
  * Generate dynamic questions based on project context (Vibe Checker 2.0)
  */
-export async function generateProjectQuestions(schema: EvaluationSchema): Promise<any[]> {
-  const prompt = `你是一个 Vibe Coding 顾问。
+export async function generateProjectQuestions(schema: EvaluationSchema, lang: 'zh' | 'en' = 'zh'): Promise<any[]> {
+  const isEnglish = lang === 'en'
+
+  const prompt = isEnglish ? `You are a Vibe Coding consultant.
+
+【Project Info】
+- Idea: ${schema.idea.one_liner}
+- Core feature: ${schema.mvp.first_job}
+- Target user: ${schema.user.primary_user}
+
+You are a professional product consultant (Vibe Coder style).
+Your goal is to generate 3-4 "key questions" to help the user clarify their thinking and identify risks.
+
+【Project Analysis】
+1. **Identify project type**:
+   - **Tool**: Efficiency improvement, solving personal pain points. (Key question: How do you solve this problem now?)
+   - **Content**: Information, media. (Key question: Where does the content come from? Can you keep updating?)
+   - **Transaction/Platform**: Connecting two sides. (Key question: Can you find the first batch of users? Does it need offline operations?)
+   - **AI wrapper**: Based on API. (Key question: What if AI makes mistakes? How to differentiate?)
+
+2. **Warning signs** (if you find these, you must immediately warn the user):
+   - **Offline operations**: Delivery, meetings, hardware
+   - **Heavy regulation**: Finance, healthcare, payments
+   - **Technical complexity**: Training models, high concurrency
+   - **Cold start difficulty**: Needs two-sided network effects
+
+【Generation Rules】
+1. **First question** must be about "experience level" (e.g., Have you done similar projects before?)
+2. **Following questions**: Choose the most critical risk points based on project type
+3. **Options**: Provide 3-4 different choices
+4. **Feedback**: Each option should have instant feedback
+   - If user chooses "hard mode" (e.g., offline, native App), feedback type must be 'warning'
+   - If user chooses "easy mode" (e.g., web, tool), feedback type should be 'positive'
+
+【IMPORTANT】All content must be output in English!
+
+【Output Format】
+Return a JSON object containing a "questions" array.
+Each question object:
+- \`id\`: string
+- \`field\`: string (maps to: 'user.experience_level', 'mvp.type', 'platform.form', 'constraints.api_or_data_dependency', 'preference.priority', 'problem.scenario')
+- \`question\`: string (question text, in English)
+- \`insight\`: string (why asking this, in English)
+- \`options\`: array, each option contains:
+  - \`id\`: string
+  - \`label\`: string (option text, in English)
+  - \`value\`: string (enum value)
+  - \`feedback\`: { \`type\`: 'positive'|'warning'|'neutral', \`message\`: string (English feedback) }
+  - \`tags\`: string[]
+
+### Enum values reference
+- experience_level: 'never', 'tutorial', 'small_project', 'veteran'
+- mvp.type: 'content_tool', 'functional_tool', 'ai_tool', 'transaction_tool'
+- platform.form: 'web', 'ios', 'miniprogram', 'plugin'
+- priority: 'ship_fast', 'cost_first'
+` : `你是一个 Vibe Coding 顾问。
 
 【用户项目信息】
 - 想法：${schema.idea.one_liner}
@@ -544,33 +598,57 @@ export async function generateProjectQuestions(schema: EvaluationSchema): Promis
 - priority: 'ship_fast', 'cost_first'
 `
 
+  // Fallback questions for both languages
+  const fallbackQuestions = isEnglish ? [
+    {
+      id: 'experience',
+      field: 'user.experience_level',
+      question: 'Have you done similar projects before?',
+      insight: 'Understanding your experience helps me adjust the advice.',
+      type: 'choice',
+      options: [
+        {
+          id: 'never',
+          label: 'First time trying',
+          value: 'never',
+          feedback: { type: 'neutral', message: "No worries, I'll give you the most detailed guidance." }
+        },
+        {
+          id: 'veteran',
+          label: 'Experienced',
+          value: 'veteran',
+          feedback: { type: 'positive', message: "Great, let's focus on the key challenges." }
+        }
+      ]
+    }
+  ] : [
+    {
+      id: 'experience',
+      field: 'user.experience_level',
+      question: '你之前做过类似的产品吗？',
+      insight: '了解你的经验能帮我调整建议的难度。',
+      type: 'choice',
+      options: [
+        {
+          id: 'never',
+          label: '第一次尝试',
+          value: 'never',
+          feedback: { type: 'neutral', message: '没关系，我会给你最详细的指引。' }
+        },
+        {
+          id: 'veteran',
+          label: '老手了',
+          value: 'veteran',
+          feedback: { type: 'positive', message: '太好了，我们可以直接聊核心难点。' }
+        }
+      ]
+    }
+  ]
+
   // Fail fast if no API key
   if (!process.env.QWEN_API_KEY) {
     console.warn('Skipping AI generation: No QWEN_API_KEY found')
-    // Fallback immediately
-    return [
-      {
-        id: 'experience',
-        field: 'user.experience_level',
-        question: '你之前做过类似的产品吗？',
-        insight: '了解你的经验能帮我调整建议的难度。',
-        type: 'choice',
-        options: [
-          { 
-            id: 'never', 
-            label: '第一次尝试', 
-            value: 'never',
-            feedback: { type: 'neutral', message: '没关系，我会给你最详细的指引。' }
-          },
-          { 
-            id: 'veteran', 
-            label: '老手了', 
-            value: 'veteran',
-            feedback: { type: 'positive', message: '太好了，我们可以直接聊核心难点。' }
-          }
-        ]
-      }
-    ]
+    return fallbackQuestions
   }
 
   try {
@@ -579,7 +657,9 @@ export async function generateProjectQuestions(schema: EvaluationSchema): Promis
       messages: [
         {
           role: 'system',
-          content: '只输出有效的JSON，所有内容用中文。',
+          content: isEnglish
+            ? 'Output valid JSON only. All content must be in English.'
+            : '只输出有效的JSON，所有内容用中文。',
         },
         {
           role: 'user',
@@ -596,28 +676,6 @@ export async function generateProjectQuestions(schema: EvaluationSchema): Promis
   } catch (error) {
     console.error('Generate questions error:', error)
     // Fallback if AI fails
-    return [
-      {
-        id: 'experience',
-        field: 'user.experience_level',
-        question: '你之前做过类似的产品吗？',
-        insight: '了解你的经验能帮我调整建议的难度。',
-        type: 'choice',
-        options: [
-          { 
-            id: 'never', 
-            label: '第一次尝试', 
-            value: 'never',
-            feedback: { type: 'neutral', message: '没关系，我会给你最详细的指引。' }
-          },
-          { 
-            id: 'veteran', 
-            label: '老手了', 
-            value: 'veteran',
-            feedback: { type: 'positive', message: '太好了，我们可以直接聊核心难点。' }
-          }
-        ]
-      }
-    ]
+    return fallbackQuestions
   }
 }

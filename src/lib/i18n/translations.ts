@@ -312,6 +312,10 @@ export const translations = {
       zh: '重新开始',
       en: 'Start Over',
     },
+    retry: {
+      zh: '重试',
+      en: 'Retry',
+    },
     share: {
       zh: '分享',
       en: 'Share',
@@ -372,12 +376,12 @@ export const translations = {
       en: 'View',
     },
     productApproach: {
-      zh: '产品实现方案',
-      en: 'Product Approach',
+      zh: '产品逻辑方案',
+      en: 'Product Logic',
     },
     approachDesc: {
-      zh: '选择一个产品逻辑方案，后续的技术选型和实施路径会基于此调整',
-      en: 'Choose a product approach. Tech stack and implementation path will adjust accordingly',
+      zh: '选择产品实现的核心逻辑，决定用户如何与产品交互',
+      en: 'Choose the core logic of how users interact with your product',
     },
     recommended: {
       zh: '推荐',

@@ -158,6 +158,7 @@ export default function ReportPage() {
   const [report, setReport] = useState<VibeReport | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [selectedApproach, setSelectedApproach] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   // 反馈状态
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false)
@@ -200,12 +201,17 @@ export default function ReportPage() {
 
   useEffect(() => {
     async function generateReport() {
+      let receivedComplete = false
+
       try {
         const response = await fetch(`/api/conversation/${conversationId}/report`, {
           method: 'POST',
         })
 
-        if (!response.ok) throw new Error('生成报告失败')
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => '')
+          throw new Error(errorText || `Server error: ${response.status}`)
+        }
 
         // 处理流式响应
         const reader = response.body?.getReader()
@@ -228,6 +234,7 @@ export default function ReportPage() {
                 const stepIndex = Math.floor((estimatedProgress / 100) * LOADING_STEPS_DURATION.length)
                 setCurrentStep(prev => Math.max(prev, Math.min(stepIndex, LOADING_STEPS_DURATION.length - 1)))
               } else if (data.type === 'complete') {
+                receivedComplete = true
                 setProgress(100)
                 setCurrentStep(LOADING_STEPS_DURATION.length)
                 setTimeout(() => {
@@ -263,17 +270,37 @@ export default function ReportPage() {
         if (buffer.trim()) {
           processLine(buffer.trim())
         }
+
+        // 如果流结束但没收到complete事件
+        if (!receivedComplete) {
+          throw new Error('报告生成中断，请重试')
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : '生成失败')
+        console.error('Report generation error:', err)
+        const errorMessage = err instanceof Error ? err.message : '生成失败'
+        // 对常见错误提供更友好的提示
+        if (errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('Load failed')) {
+          setError('网络连接失败，请检查网络后重试')
+        } else {
+          setError(errorMessage)
+        }
         setIsLoading(false)
       }
     }
 
     generateReport()
-  }, [conversationId])
+  }, [conversationId, retryCount])
 
   const handleRestart = () => {
     router.push('/')
+  }
+
+  const handleRetry = () => {
+    setError(null)
+    setIsLoading(true)
+    setProgress(0)
+    setCurrentStep(0)
+    setRetryCount(prev => prev + 1)
   }
 
   const handleDownload = async () => {
@@ -443,12 +470,20 @@ export default function ReportPage() {
           <div className="bg-white rounded-lg border border-gray-200 p-6 sm:p-8 text-center">
             <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('report.generateFailed')}</h2>
             <p className="text-sm text-gray-500 mb-6">{error || t('report.retryLater')}</p>
-            <button
-              onClick={handleRestart}
-              className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
-            >
-              {t('report.restart')}
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={handleRetry}
+                className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                {t('report.retry')}
+              </button>
+              <button
+                onClick={handleRestart}
+                className="px-5 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                {t('report.restart')}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -763,37 +798,37 @@ export default function ReportPage() {
 
             {selectedApproachData && (
               <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-gray-50 rounded-md border border-gray-100">
-                <h4 className="font-medium text-sm text-gray-900 mb-2 sm:mb-3">{t('report.detailFlow')}</h4>
-                <div className="space-y-2">
+                <h4 className="font-medium text-sm text-gray-900 mb-3 sm:mb-4">{t('report.detailFlow')}</h4>
+                <div className="space-y-4">
                   {selectedApproachData.workflow.map((step) => (
-                    <div key={step.step} className="flex items-start gap-2">
-                      <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-medium flex-shrink-0">
+                    <div key={step.step} className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-medium flex-shrink-0">
                         {step.step}
                       </div>
                       <div>
                         <div className="font-medium text-sm text-gray-900">{step.action}</div>
-                        <div className="text-xs text-gray-600">{step.detail}</div>
+                        <div className="text-xs text-gray-600 mt-0.5">{step.detail}</div>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="mt-4 grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-xs font-medium text-green-700 mb-1">{t('report.pros')}</div>
-                    <ul className="space-y-1">
+                    <div className="text-xs font-medium text-green-700 mb-2">{t('report.pros')}</div>
+                    <ul className="space-y-2">
                       {selectedApproachData.pros.map((pro, i) => (
-                        <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
+                        <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5 leading-relaxed">
                           <span className="text-green-500 flex-shrink-0">✓</span> {pro}
                         </li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <div className="text-xs font-medium text-amber-700 mb-1">{t('report.cons')}</div>
-                    <ul className="space-y-1">
+                    <div className="text-xs font-medium text-amber-700 mb-2">{t('report.cons')}</div>
+                    <ul className="space-y-2">
                       {selectedApproachData.cons.map((con, i) => (
-                        <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
+                        <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5 leading-relaxed">
                           <span className="text-amber-500 flex-shrink-0">⚠</span> {con}
                         </li>
                       ))}
@@ -801,7 +836,7 @@ export default function ReportPage() {
                   </div>
                 </div>
 
-                <div className="mt-2 text-xs text-gray-500">
+                <div className="mt-4 text-xs text-gray-500">
                   <span className="font-medium">{t('report.bestFor')}</span>{selectedApproachData.best_for}
                 </div>
               </div>
@@ -811,32 +846,32 @@ export default function ReportPage() {
 
         {/* Tech Stack */}
         <div id="tech" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5 mb-4 sm:mb-6 scroll-mt-32">
-          <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">
+          <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4 sm:mb-5">
             {t('report.techOptions')}
           </h3>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {/* Option A - China Stack */}
-            <div className="border border-gray-200 rounded-md p-3 sm:p-4 bg-gray-50">
-              <div className="flex items-start justify-between mb-3">
+            <div className="border border-gray-200 rounded-md p-4 sm:p-5 bg-gray-50">
+              <div className="flex items-start justify-between mb-4">
                 <div>
                   <div className="font-medium text-sm text-gray-900">
                     {report.tech_options.option_a.name}
                   </div>
-                  <div className="text-xs text-gray-500 mt-0.5">{report.tech_options.option_a.fit_for}</div>
+                  <div className="text-xs text-gray-500 mt-1">{report.tech_options.option_a.fit_for}</div>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <div className="text-green-600 font-medium text-sm">{report.tech_options.option_a.cost}</div>
-                  <div className="text-xs text-gray-500">{report.tech_options.option_a.dev_time}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{report.tech_options.option_a.dev_time}</div>
                 </div>
               </div>
 
               {/* Tools with purposes */}
-              <div className="mb-3">
-                <div className="text-xs font-medium text-gray-500 mb-1.5">{t('report.techStack')}</div>
-                <div className="flex flex-wrap gap-1.5">
+              <div className="mb-4">
+                <div className="text-xs font-medium text-gray-500 mb-2">{t('report.techStack')}</div>
+                <div className="flex flex-wrap gap-2">
                   {(Array.isArray(report.tech_options.option_a.tools) ? report.tech_options.option_a.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                    <div key={i} className="bg-white border border-gray-200 rounded px-2 py-1 text-xs">
+                    <div key={i} className="bg-white border border-gray-200 rounded px-2.5 py-1.5 text-xs">
                       {typeof tool === 'string' ? (
                         <span className="font-medium text-gray-700">{tool}</span>
                       ) : (
@@ -851,32 +886,32 @@ export default function ReportPage() {
                 </div>
               </div>
 
-              <div className="text-xs text-gray-600 bg-white rounded p-2 border border-gray-100">
+              <div className="text-xs text-gray-600 bg-white rounded p-2.5 border border-gray-100">
                 <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_a.capability}
               </div>
             </div>
 
             {/* Option B - Global Stack */}
-            <div className="border border-blue-200 rounded-md p-3 sm:p-4 bg-blue-50">
-              <div className="flex items-start justify-between mb-3">
+            <div className="border border-blue-200 rounded-md p-4 sm:p-5 bg-blue-50">
+              <div className="flex items-start justify-between mb-4">
                 <div>
                   <div className="font-medium text-sm text-gray-900">
                     {report.tech_options.option_b.name}
                   </div>
-                  <div className="text-xs text-blue-600 mt-0.5">{report.tech_options.option_b.fit_for}</div>
+                  <div className="text-xs text-blue-600 mt-1">{report.tech_options.option_b.fit_for}</div>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <div className="text-green-600 font-medium text-sm">{report.tech_options.option_b.cost}</div>
-                  <div className="text-xs text-gray-500">{report.tech_options.option_b.dev_time}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{report.tech_options.option_b.dev_time}</div>
                 </div>
               </div>
 
               {/* Tools with purposes */}
-              <div className="mb-3">
-                <div className="text-xs font-medium text-gray-500 mb-1.5">{t('report.techStack')}</div>
-                <div className="flex flex-wrap gap-1.5">
+              <div className="mb-4">
+                <div className="text-xs font-medium text-gray-500 mb-2">{t('report.techStack')}</div>
+                <div className="flex flex-wrap gap-2">
                   {(Array.isArray(report.tech_options.option_b.tools) ? report.tech_options.option_b.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                    <div key={i} className="bg-white border border-blue-200 rounded px-2 py-1 text-xs">
+                    <div key={i} className="bg-white border border-blue-200 rounded px-2.5 py-1.5 text-xs">
                       {typeof tool === 'string' ? (
                         <span className="font-medium text-gray-700">{tool}</span>
                       ) : (
@@ -891,42 +926,42 @@ export default function ReportPage() {
                 </div>
               </div>
 
-              <div className="text-xs text-gray-600 bg-white rounded p-2 border border-blue-100">
+              <div className="text-xs text-gray-600 bg-white rounded p-2.5 border border-blue-100">
                 <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_b.capability}
               </div>
             </div>
 
             {/* Option C - Vibe Coder Stack */}
             {report.tech_options.option_c && (
-              <div className="border-2 border-indigo-300 rounded-md p-3 sm:p-4 bg-indigo-50 relative">
+              <div className="border-2 border-indigo-300 rounded-md p-4 sm:p-5 bg-indigo-50 relative">
                 <div className="absolute top-2 right-2 bg-indigo-500 text-white text-xs px-2 py-0.5 rounded">
                   {t('report.recommended')}
                 </div>
-                <div className="flex items-start justify-between mb-3 pr-20 sm:pr-24">
+                <div className="flex items-start justify-between mb-4 pr-20 sm:pr-24">
                   <div>
                     <div className="font-medium text-sm text-gray-900">
                       {report.tech_options.option_c.name}
                     </div>
-                    <div className="text-xs text-indigo-600 mt-0.5">{report.tech_options.option_c.fit_for}</div>
+                    <div className="text-xs text-indigo-600 mt-1">{report.tech_options.option_c.fit_for}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div className="text-green-600 font-medium text-sm">{report.tech_options.option_c.cost}</div>
-                    <div className="text-xs text-gray-500">{report.tech_options.option_c.dev_time}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">{report.tech_options.option_c.dev_time}</div>
                   </div>
                 </div>
 
                 {/* Tools with purposes - highlighted */}
-                <div className="mb-3">
-                  <div className="text-xs font-medium text-indigo-600 mb-1.5">{t('report.vibeToolchain')}</div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                <div className="mb-4">
+                  <div className="text-xs font-medium text-indigo-600 mb-2">{t('report.vibeToolchain')}</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {(Array.isArray(report.tech_options.option_c.tools) ? report.tech_options.option_c.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                      <div key={i} className="bg-white border border-indigo-200 rounded p-2 text-center">
+                      <div key={i} className="bg-white border border-indigo-200 rounded p-2.5 text-center">
                         {typeof tool === 'string' ? (
                           <span className="font-medium text-gray-700 text-xs">{tool}</span>
                         ) : (
                           <>
                             <div className="font-medium text-indigo-700 text-xs">{tool.name}</div>
-                            <div className="text-xs text-gray-500 mt-0.5">{tool.purpose}</div>
+                            <div className="text-xs text-gray-500 mt-1">{tool.purpose}</div>
                           </>
                         )}
                       </div>
@@ -934,14 +969,14 @@ export default function ReportPage() {
                   </div>
                 </div>
 
-                <div className="text-xs text-gray-600 bg-white/80 rounded p-2 border border-indigo-100">
+                <div className="text-xs text-gray-600 bg-white/80 rounded p-2.5 border border-indigo-100">
                   <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_c.capability}
                 </div>
               </div>
             )}
           </div>
 
-          <div className="mt-3 p-2.5 sm:p-3 bg-blue-50 border border-blue-100 rounded-md text-xs sm:text-sm text-blue-800 leading-relaxed">
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md text-xs sm:text-sm text-blue-800 leading-relaxed">
             <span className="font-medium">{t('report.suggestion')}</span>
             {report.tech_options.advice}
           </div>
