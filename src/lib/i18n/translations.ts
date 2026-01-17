@@ -312,6 +312,10 @@ export const translations = {
       zh: '重新开始',
       en: 'Start Over',
     },
+    backToHome: {
+      zh: '返回首页',
+      en: 'Back to Home',
+    },
     retry: {
       zh: '重试',
       en: 'Retry',

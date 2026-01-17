@@ -549,11 +549,17 @@ Each question object:
   - \`feedback\`: { \`type\`: 'positive'|'warning'|'neutral', \`message\`: string (English feedback) }
   - \`tags\`: string[]
 
-### Enum values reference
+### Enum values reference (IMPORTANT: Use these exact values for international/global audience)
 - experience_level: 'never', 'tutorial', 'small_project', 'veteran'
 - mvp.type: 'content_tool', 'functional_tool', 'ai_tool', 'transaction_tool'
-- platform.form: 'web', 'ios', 'miniprogram', 'plugin'
+- platform.form: 'web', 'pwa', 'browser_extension', 'mobile_app' (NO 'miniprogram' - that's China-only!)
 - priority: 'ship_fast', 'cost_first'
+
+【Platform Form Labels for English】
+- 'web': "Web app, open and use" (easiest, positive feedback)
+- 'pwa': "PWA / Installable web app" (moderate, neutral/positive feedback)
+- 'browser_extension': "Browser extension" (moderate, neutral feedback)
+- 'mobile_app': "Mobile App (iOS/Android)" (hardest, warning feedback - requires app store, native development)
 ` : `你是一个 Vibe Coding 顾问。
 
 【用户项目信息】
@@ -601,11 +607,17 @@ Each question object:
   - \`feedback\`: { \`type\`: 'positive'|'warning'|'neutral', \`message\`: string (中文反馈) }
   - \`tags\`: string[]
 
-### 枚举值参考
+### 枚举值参考（中国版专用）
 - experience_level: 'never', 'tutorial', 'small_project', 'veteran'
 - mvp.type: 'content_tool', 'functional_tool', 'ai_tool', 'transaction_tool'
-- platform.form: 'web', 'ios', 'miniprogram', 'plugin'
+- platform.form: 'web', 'miniprogram', 'browser_extension', 'mobile_app'
 - priority: 'ship_fast', 'cost_first'
+
+【平台形态选项说明】
+- 'web': "网页应用，打开即用" (最简单，正面反馈)
+- 'miniprogram': "小程序 / PWA" (中等难度，中性反馈)
+- 'browser_extension': "浏览器插件" (中等难度，中性反馈)
+- 'mobile_app': "原生 App (iOS/Android)" (最难，警告反馈 - 需要上架审核、原生开发)
 `
 
   // Fallback questions for both languages

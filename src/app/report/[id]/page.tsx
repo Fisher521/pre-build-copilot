@@ -305,64 +305,6 @@ export default function ReportPage() {
     setRetryCount(prev => prev + 1)
   }
 
-  const handleDownload = async () => {
-    if (!report) return
-
-    // Dynamic import for client-side only
-    const html2canvas = (await import('html2canvas')).default
-    const { jsPDF } = await import('jspdf')
-
-    // Find the report content element
-    const reportElement = document.getElementById('report-content')
-    if (!reportElement) {
-      // Fallback to print
-      window.print()
-      return
-    }
-
-    try {
-      // Capture the report as canvas
-      const canvas = await html2canvas(reportElement, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-      })
-
-      // Calculate dimensions
-      const imgWidth = 210 // A4 width in mm
-      const pageHeight = 297 // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-      let heightLeft = imgHeight
-      let position = 0
-
-      // Create PDF
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const imgData = canvas.toDataURL('image/png')
-
-      // Add first page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-      heightLeft -= pageHeight
-
-      // Add additional pages if needed
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight
-        pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-        heightLeft -= pageHeight
-      }
-
-      // Download PDF
-      const reportName = lang === 'zh' ? '项目评估报告' : 'Project_Report'
-      pdf.save(`${reportName}_${new Date().toISOString().split('T')[0]}.pdf`)
-    } catch (error) {
-      console.error('PDF generation failed:', error)
-      // Fallback to browser print
-      window.print()
-    }
-  }
-
   // Share functionality
   const [showShareMenu, setShowShareMenu] = useState(false)
   const [copySuccess, setCopySuccess] = useState(false)
@@ -511,115 +453,44 @@ export default function ReportPage() {
   }
 
   return (
-    <div className="min-h-screen pt-0 sm:pt-14 bg-gray-50">
-      {/* Sticky Header - 移动端从顶部开始，桌面端从导航下方开始 */}
-      <div className="sticky top-0 sm:top-14 z-30 bg-white border-b border-gray-200">
-        <div className="max-w-3xl mx-auto px-3 sm:px-6 py-2 sm:py-3">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={handleRestart}
-              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors p-1 -ml-1"
-            >
-              <span>←</span>
-              <span className="hidden sm:inline">{t('common.back')}</span>
-            </button>
+    <div className="min-h-screen pt-14 sm:pt-14 bg-gray-50">
+      <div className="max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
+        {/* 返回按钮 - 卡片外部 */}
+        <button
+          onClick={handleRestart}
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-4 sm:mb-5"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          <span>{t('report.backToHome')}</span>
+        </button>
 
-            {/* 桌面端标题 */}
-            <h1 className="text-sm sm:text-base font-medium text-gray-900 hidden sm:block">{t('report.title')}</h1>
+        {/* 报告卡片容器 */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          {/* 报告标题 */}
+          <div className="px-4 sm:px-8 py-5 sm:py-6 border-b border-gray-100 text-center">
+            <h1 className="text-lg sm:text-xl font-semibold text-gray-900">{t('report.title')}</h1>
+            <p className="text-xs sm:text-sm text-gray-400 mt-1">justart.today</p>
+          </div>
 
-            {/* 操作按钮 */}
-            <div className="flex items-center">
-              {/* 桌面端：简洁按钮 */}
-              <div className="hidden sm:flex items-center gap-2">
-                <div className="relative">
-                  <button
-                    onClick={() => setShowShareMenu(!showShareMenu)}
-                    className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors border border-gray-200"
-                  >
-                    {copySuccess ? t('report.copied') : t('report.share')}
-                  </button>
-
-                  {showShareMenu && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setShowShareMenu(false)} />
-                      <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                        <button onClick={() => handleShare('copy')} className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50">
-                          {t('report.shareMenu.copyLink')}
-                        </button>
-                        {typeof window !== 'undefined' && 'share' in navigator && (
-                          <button onClick={() => handleShare('native')} className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50">
-                            {t('report.shareMenu.systemShare')}
-                          </button>
-                        )}
-                        <div className="border-t border-gray-100 my-1" />
-                        <button onClick={() => handleShare('weibo')} className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50">
-                          {t('report.shareMenu.weibo')}
-                        </button>
-                        <button onClick={() => handleShare('twitter')} className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50">
-                          Twitter
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <button onClick={handleDownload} className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors">
-                  {t('report.download')}
-                </button>
-              </div>
-
-              {/* 移动端：更多菜单 */}
-              <div className="sm:hidden relative">
+          {/* Tab导航 - 吸顶 */}
+          <div className="sticky top-14 z-20 bg-white border-b border-gray-100 overflow-x-auto scrollbar-hide">
+            <div className="px-4 sm:px-8 py-2 sm:py-3 flex gap-1 sm:gap-2 sm:justify-center">
+              {navSections.map((section) => (
                 <button
-                  onClick={() => setShowShareMenu(!showShareMenu)}
-                  className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                  key={section.id}
+                  onClick={() => scrollToSection(section.id)}
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg whitespace-nowrap transition-colors flex-shrink-0"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                  </svg>
+                  {section.label}
                 </button>
-
-                {showShareMenu && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowShareMenu(false)} />
-                    <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                      <button onClick={() => handleShare('copy')} className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
-                        {t('report.shareMenu.copyLink')}
-                      </button>
-                      <button onClick={handleDownload} className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
-                        {t('report.download')}
-                      </button>
-                      {typeof window !== 'undefined' && 'share' in navigator && (
-                        <button onClick={() => handleShare('native')} className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
-                          {t('report.shareMenu.systemShare')}
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
+              ))}
             </div>
           </div>
-        </div>
-        {/* Quick Nav - 章节导航（简化版，无emoji） */}
-        <div className="border-t border-gray-100 overflow-x-auto scrollbar-hide">
-          <div className="max-w-3xl mx-auto px-3 sm:px-6 py-1.5 sm:py-2 flex gap-1 sm:justify-center">
-            {navSections.map((section, index) => (
-              <button
-                key={section.id}
-                onClick={() => scrollToSection(section.id)}
-                className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs sm:text-sm text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md whitespace-nowrap transition-colors flex-shrink-0 relative"
-              >
-                {section.label}
-                {index < navSections.length - 1 && (
-                  <span className="hidden sm:inline absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 text-gray-300 pointer-events-none">·</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      <div className="max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
+          {/* 报告内容区域 */}
+          <div className="px-3 sm:px-6 py-4 sm:py-6">
         {/* Score Card */}
         <div
           id="score"
@@ -1120,19 +991,92 @@ export default function ReportPage() {
         />
 
         {/* Actions */}
-        <div className="flex items-center justify-center gap-3 sm:gap-4 pb-4 sm:pb-6">
+        <div className="flex items-center justify-center pt-4 sm:pt-6 pb-2">
           <button
             onClick={handleRestart}
             className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-md text-sm sm:text-base text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
           >
             {t('report.evalNewProject')}
           </button>
+        </div>
+          </div>
+          {/* 报告内容区域结束 */}
+        </div>
+        {/* 报告卡片容器结束 */}
+      </div>
+
+      {/* 浮动分享按钮 */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <div className="relative">
           <button
-            onClick={handleDownload}
-            className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-md text-sm sm:text-base font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+            onClick={() => setShowShareMenu(!showShareMenu)}
+            className={cn(
+              'flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-all',
+              copySuccess
+                ? 'bg-green-500 text-white'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-xl'
+            )}
           >
-            {t('report.saveReport')}
+            {copySuccess ? (
+              <>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm font-medium">{t('report.copied')}</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                <span className="text-sm font-medium">{t('report.share')}</span>
+              </>
+            )}
           </button>
+
+          {/* 分享菜单 */}
+          {showShareMenu && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setShowShareMenu(false)} />
+              <div className="absolute bottom-full right-0 mb-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+                <button
+                  onClick={() => handleShare('copy')}
+                  className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                >
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  </svg>
+                  {t('report.shareMenu.copyLink')}
+                </button>
+                {typeof window !== 'undefined' && 'share' in navigator && (
+                  <button
+                    onClick={() => handleShare('native')}
+                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                  >
+                    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    {t('report.shareMenu.systemShare')}
+                  </button>
+                )}
+                <div className="border-t border-gray-100 my-1" />
+                <button
+                  onClick={() => handleShare('weibo')}
+                  className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                >
+                  <span className="w-4 h-4 flex items-center justify-center text-red-500 text-xs">微</span>
+                  {t('report.shareMenu.weibo')}
+                </button>
+                <button
+                  onClick={() => handleShare('twitter')}
+                  className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                >
+                  <span className="w-4 h-4 flex items-center justify-center text-blue-400 text-xs">𝕏</span>
+                  Twitter
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
