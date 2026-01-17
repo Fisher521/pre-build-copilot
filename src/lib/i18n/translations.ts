@@ -101,40 +101,76 @@ export const translations = {
       zh: '试试这些热门想法：',
       en: 'Try these popular ideas:',
     },
-    // 中文版案例 - 适合中国市场
+    // 中文版案例 - 预置好4个字段，不依赖AI解析
     examplesZh: [
       {
         icon: '📰',
         title: 'AI 新闻站',
         desc: '做一个AI科技新闻聚合网站，自动抓取36氪、虎嗅等来源的文章，用AI生成每日摘要，目标用户是科技从业者，解决他们每天花大量时间刷新闻的痛点',
+        parsed: {
+          projectName: 'AI 科技新闻聚合站',
+          coreFeature: '自动抓取多个科技媒体的文章，用AI生成每日新闻摘要',
+          targetUser: '科技行业从业者、创业者、投资人',
+          problemSolved: '每天需要花大量时间在多个平台刷新闻，信息过载且效率低',
+        },
       },
       {
         icon: '🧠',
         title: '阅读笔记助手',
         desc: '一个帮用户把文章或书籍自动转成结构化笔记的工具，核心功能是粘贴内容后一键生成思维导图，面向学生和知识工作者，解决他们整理笔记费时费力的问题',
+        parsed: {
+          projectName: '阅读笔记助手',
+          coreFeature: '粘贴文章或书籍内容，一键生成结构化思维导图笔记',
+          targetUser: '学生、知识工作者、终身学习者',
+          problemSolved: '手动整理阅读笔记费时费力，难以形成系统化的知识结构',
+        },
       },
       {
         icon: '🎯',
         title: '落地页生成器',
         desc: '输入一句产品描述就能生成完整落地页的SaaS工具，包含标题、卖点、CTA按钮，目标用户是独立开发者和小团队，解决他们不会设计、没时间做营销页的痛点',
+        parsed: {
+          projectName: '一句话落地页生成器',
+          coreFeature: '输入产品描述，自动生成包含标题、卖点、CTA的完整落地页',
+          targetUser: '独立开发者、小型创业团队、个人产品maker',
+          problemSolved: '不会设计、没时间做营销页，导致好产品无法有效展示和推广',
+        },
       },
     ],
-    // 英文版案例 - 适合国际市场（完全不同的案例）
+    // 英文版案例 - 预置好4个字段，不依赖AI解析
     examplesEn: [
       {
         icon: '📬',
         title: 'Newsletter Curator',
         desc: 'An AI-powered tool that curates industry newsletters, summarizes key insights, and delivers a personalized daily digest. Target users are busy professionals who subscribe to too many newsletters. Solves the problem of email overload and FOMO.',
+        parsed: {
+          projectName: 'Newsletter Curator',
+          coreFeature: 'Curate newsletters, summarize key insights, deliver personalized daily digest',
+          targetUser: 'Busy professionals who subscribe to many newsletters',
+          problemSolved: 'Email overload from too many subscriptions, fear of missing important updates',
+        },
       },
       {
         icon: '🔖',
         title: 'Bookmark Brain',
         desc: 'A smart bookmark manager that uses AI to auto-tag, categorize and surface relevant saved links when you need them. Built for knowledge workers and researchers who save hundreds of links but never find them again.',
+        parsed: {
+          projectName: 'Bookmark Brain',
+          coreFeature: 'AI auto-tagging, smart categorization, contextual link recommendations',
+          targetUser: 'Knowledge workers and researchers who save many links',
+          problemSolved: 'Saved bookmarks are never found again, no organization or search capability',
+        },
       },
       {
         icon: '🚀',
         title: 'Ship Page',
         desc: 'Generate a beautiful product landing page from a single sentence description. Includes hero section, features, pricing table and email signup. Perfect for indie hackers and makers who want to validate ideas fast without design skills.',
+        parsed: {
+          projectName: 'Ship Page',
+          coreFeature: 'Generate complete landing page from one sentence: hero, features, pricing, signup',
+          targetUser: 'Indie hackers, solo makers, early-stage founders',
+          problemSolved: 'No design skills to create landing pages, slows down idea validation',
+        },
       },
     ],
     // 保持向后兼容

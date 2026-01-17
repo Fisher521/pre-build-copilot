@@ -6,10 +6,19 @@ import { VoiceButton } from '@/components/chat/VoiceButton'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/lib/i18n'
 
+// Pre-parsed data type for examples
+interface ParsedData {
+  projectName: string
+  coreFeature: string
+  targetUser: string
+  problemSolved: string
+}
+
 export default function HomePage() {
   const router = useRouter()
   const { t, lang, translations } = useTranslation()
   const [input, setInput] = useState('')
+  const [prefilledData, setPrefilledData] = useState<ParsedData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [loadingStep, setLoadingStep] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -56,13 +65,14 @@ export default function HomePage() {
     }, 1500)
 
     try {
-      // Create conversation with initial input
+      // Create conversation with initial input (and pre-filled data if from example)
       const response = await fetch('/api/conversation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           initialInput: trimmed,
           language: lang,
+          prefilledData: prefilledData, // Pass pre-parsed data if from example click
         }),
       })
 
@@ -167,7 +177,10 @@ export default function HomePage() {
             <textarea
               ref={textareaRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value)
+                setPrefilledData(null) // Clear pre-filled data when user manually types
+              }}
               onKeyDown={handleKeyDown}
               placeholder={t('home.inputPlaceholder')}
               disabled={isLoading}
@@ -219,14 +232,20 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Examples - 完全分开的中英文案例 */}
+          {/* Examples - 完全分开的中英文案例，点击直接使用预置字段 */}
           <div className="mt-4 sm:mt-6 pt-4 sm:pt-5 border-t border-gray-100">
             <p className="text-xs text-gray-400 mb-2 sm:mb-3">{t('home.hotIdeas')}</p>
             <div className="flex flex-wrap gap-2">
               {examples.map((example) => (
                 <button
                   key={example.title}
-                  onClick={() => setInput(example.desc)}
+                  onClick={() => {
+                    setInput(example.desc)
+                    // Set pre-parsed data from example
+                    if (example.parsed) {
+                      setPrefilledData(example.parsed as ParsedData)
+                    }
+                  }}
                   disabled={isLoading}
                   className="px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs text-gray-600 bg-gray-50 hover:bg-indigo-50 hover:text-indigo-600 border border-gray-200 hover:border-indigo-200 rounded-md transition-colors disabled:opacity-50"
                 >

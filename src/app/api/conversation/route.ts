@@ -13,6 +13,12 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}))
     const initialInput = body.initialInput as string | undefined
+    const prefilledData = body.prefilledData as {
+      projectName?: string
+      coreFeature?: string
+      targetUser?: string
+      problemSolved?: string
+    } | undefined
 
     // Create new conversation with empty schema
     let conversation
@@ -21,15 +27,66 @@ export async function POST(request: NextRequest) {
     } catch (dbError) {
       console.error('Database error creating conversation:', dbError)
       return NextResponse.json(
-        { 
+        {
           error: '数据库连接失败，请检查网络后重试',
           details: dbError instanceof Error ? dbError.message : 'Unknown database error'
         },
         { status: 503 }
       )
     }
-    
+
     const schema = createEmptySchema()
+
+    // If pre-filled data is provided (from example click), use it directly
+    if (prefilledData) {
+      const updatedSchema = {
+        ...schema,
+        idea: {
+          ...schema.idea,
+          one_liner: prefilledData.projectName || '',
+        },
+        mvp: {
+          ...schema.mvp,
+          first_job: prefilledData.coreFeature || '',
+        },
+        user: {
+          ...schema.user,
+          primary_user: prefilledData.targetUser || '',
+        },
+        problem: {
+          ...schema.problem,
+          scenario: prefilledData.problemSolved || '',
+        },
+        _meta: {
+          ...schema._meta,
+          completion_score: 40, // Pre-filled examples have good completion
+        },
+      }
+
+      // Save the initial input as user message
+      if (initialInput && initialInput.trim()) {
+        try {
+          await addMessage(conversation.id, {
+            role: 'user',
+            content: initialInput.trim(),
+          })
+        } catch (msgError) {
+          console.error('Error saving user message:', msgError)
+        }
+      }
+
+      // Update conversation schema
+      try {
+        await updateConversationSchema(conversation.id, updatedSchema)
+      } catch (schemaError) {
+        console.error('Error updating schema:', schemaError)
+      }
+
+      return NextResponse.json({
+        conversationId: conversation.id,
+        schema: updatedSchema,
+      })
+    }
 
     if (initialInput && initialInput.trim()) {
       // Save user's initial message
