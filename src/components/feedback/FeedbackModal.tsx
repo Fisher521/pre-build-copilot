@@ -76,7 +76,9 @@ export function FeedbackModal({
   const [error, setError] = useState<string | null>(null)
 
   const reasons = rating === 'helpful' ? HELPFUL_REASONS : NOT_HELPFUL_REASONS
-  const txt = (key: keyof typeof modalText) => modalText[key][lang]
+  // 简单的翻译辅助函数，排除嵌套对象
+  type SimpleKeys = 'selectReason' | 'additionalComment' | 'placeholderHelpful' | 'placeholderNotHelpful' | 'privacyNote' | 'errorRequired' | 'errorSubmit' | 'cancel' | 'submitting' | 'submit' | 'successTitle' | 'successDesc'
+  const txt = (key: SimpleKeys) => modalText[key][lang]
 
   const toggleReason = (reasonId: string) => {
     setSelectedReasons(prev =>

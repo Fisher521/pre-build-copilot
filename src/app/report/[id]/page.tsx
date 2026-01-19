@@ -63,6 +63,7 @@ function LoadingProgress({
   waitingTips,
   t,
   lang,
+  apiProgress,
 }: {
   currentStep: number
   progress: number
@@ -71,9 +72,11 @@ function LoadingProgress({
   waitingTips: readonly { zh: string; en: string }[]
   t: (key: string, params?: Record<string, string | number>) => string
   lang: 'zh' | 'en'
+  apiProgress?: number // 真实 API 进度
 }) {
   const [tipIndex, setTipIndex] = useState(0)
   const [elapsedTime, setElapsedTime] = useState(0)
+  const [dotCount, setDotCount] = useState(1)
 
   // 轮换提示语
   useEffect(() => {
@@ -91,7 +94,36 @@ function LoadingProgress({
     return () => clearInterval(interval)
   }, [])
 
+  // 动态省略号动画
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDotCount(prev => (prev % 3) + 1)
+    }, 500)
+    return () => clearInterval(interval)
+  }, [])
+
+  // 计算显示进度：结合模拟进度和真实 API 进度
+  // 当进度 > 80% 时放慢速度，让用户感觉更真实
+  let displayProgress = progress
+  if (apiProgress !== undefined && apiProgress > 0) {
+    // 使用 API 进度，但确保不会倒退
+    displayProgress = Math.max(progress, apiProgress)
+  }
+  // 在最后阶段（>85%）缓慢增长，避免卡在99%
+  if (displayProgress >= 85 && displayProgress < 100) {
+    const slowFactor = 0.3 // 放慢速度
+    displayProgress = 85 + (displayProgress - 85) * slowFactor
+  }
+
   const remainingTime = Math.max(0, estimatedTime - elapsedTime)
+  const isLastStep = currentStep >= loadingSteps.length - 1
+  const dots = '.'.repeat(dotCount)
+
+  // 最后阶段的子状态提示
+  const lastStepSubStatus = lang === 'zh'
+    ? ['正在分析市场数据', '正在生成技术方案', '正在整合建议', '即将完成']
+    : ['Analyzing market data', 'Generating tech options', 'Compiling recommendations', 'Almost there']
+  const subStatusIndex = Math.min(Math.floor(elapsedTime / 5) % lastStepSubStatus.length, lastStepSubStatus.length - 1)
 
   return (
     <div className="min-h-screen pt-14 sm:pt-16 pb-8 px-4 sm:px-6 bg-gray-50">
@@ -99,7 +131,12 @@ function LoadingProgress({
         {/* 标题 */}
         <div className="text-center mb-6 sm:mb-8 mt-4">
           <h1 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">{t('report.generating')}</h1>
-          <p className="text-sm text-gray-500">{remainingTime > 0 ? t('report.estimatedTime', { time: remainingTime }) : t('report.almostDone')}</p>
+          <p className="text-sm text-gray-500">
+            {isLastStep
+              ? (lang === 'zh' ? '报告生成中，请稍候' : 'Generating report, please wait')
+              : (remainingTime > 0 ? t('report.estimatedTime', { time: remainingTime }) : t('report.almostDone'))
+            }
+          </p>
         </div>
 
         {/* 进度条 */}
@@ -107,12 +144,15 @@ function LoadingProgress({
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-2">
               <span className="text-gray-600">{t('report.overallProgress')}</span>
-              <span className="text-indigo-600 font-medium">{Math.round(progress)}%</span>
+              <span className="text-indigo-600 font-medium">{Math.round(displayProgress)}%</span>
             </div>
             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-indigo-500 rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${progress}%` }}
+                className={cn(
+                  "h-full bg-indigo-500 rounded-full transition-all duration-700 ease-out",
+                  isLastStep && "bg-gradient-to-r from-indigo-500 to-purple-500"
+                )}
+                style={{ width: `${displayProgress}%` }}
               />
             </div>
           </div>
@@ -123,6 +163,7 @@ function LoadingProgress({
               const isCompleted = idx < currentStep
               const isCurrent = idx === currentStep
               const isPending = idx > currentStep
+              const isLast = idx === loadingSteps.length - 1
 
               return (
                 <div
@@ -137,20 +178,30 @@ function LoadingProgress({
                   <div className={cn(
                     'w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium transition-all flex-shrink-0',
                     isCompleted && 'bg-green-500 text-white',
-                    isCurrent && 'bg-indigo-500 text-white animate-pulse',
+                    isCurrent && 'bg-indigo-500 text-white',
+                    isCurrent && isLast && 'animate-pulse',
                     isPending && 'bg-gray-200 text-gray-500'
                   )}>
                     {isCompleted ? '✓' : idx + 1}
                   </div>
-                  <span className={cn(
-                    'text-sm',
-                    isCompleted && 'text-green-700',
-                    isCurrent && 'text-indigo-700 font-medium',
-                    isPending && 'text-gray-500'
-                  )}>
-                    {step.label[lang]}
-                    {isCurrent && <span className="ml-2 text-indigo-500 hidden sm:inline">{t('report.processing')}</span>}
-                  </span>
+                  <div className="flex-1 min-w-0">
+                    <span className={cn(
+                      'text-sm',
+                      isCompleted && 'text-green-700',
+                      isCurrent && 'text-indigo-700 font-medium',
+                      isPending && 'text-gray-500'
+                    )}>
+                      {step.label[lang]}
+                      {isCurrent && !isLast && <span className="ml-2 text-indigo-500 hidden sm:inline">{t('report.processing')}</span>}
+                    </span>
+                    {/* 最后一步显示子状态 */}
+                    {isCurrent && isLast && (
+                      <div className="text-xs text-indigo-500 mt-0.5 flex items-center gap-1">
+                        <span className="inline-block w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                        {lastStepSubStatus[subStatusIndex]}{dots}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )
             })}
@@ -163,6 +214,17 @@ function LoadingProgress({
             {waitingTips[tipIndex][lang]}
           </p>
         </div>
+
+        {/* 最后阶段的额外提示 */}
+        {isLastStep && elapsedTime > 10 && (
+          <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-lg text-center">
+            <p className="text-amber-700 text-xs">
+              {lang === 'zh'
+                ? 'AI 正在深度分析您的项目，生成详细报告需要一些时间'
+                : 'AI is doing deep analysis, detailed report generation takes a moment'}
+            </p>
+          </div>
+        )}
 
         {/* 小提示 */}
         <p className="text-center text-xs text-gray-400 mt-4 sm:mt-6">
@@ -211,7 +273,14 @@ export default function ReportPage() {
   // 加载进度状态
   const [currentStep, setCurrentStep] = useState(0)
   const [progress, setProgress] = useState(0)
+  const [apiProgress, setApiProgress] = useState(0) // 真实 API 进度
   const startTimeRef = useRef(Date.now())
+
+  // 渐进式展示状态：控制各模块依次显示
+  // 0: 评分, 1: 优势/风险, 2: 市场, 3: 方案, 4: 技术栈, 5: 路径/成本, 6: 反馈
+  const [revealStep, setRevealStep] = useState(0)
+  const REVEAL_DELAY = 300 // 每批间隔时间(ms)
+  const TOTAL_REVEAL_STEPS = 7
 
   // 模拟进度推进
   useEffect(() => {
@@ -241,6 +310,23 @@ export default function ReportPage() {
 
     return () => clearInterval(interval)
   }, [isLoading])
+
+  // 渐进式展示动画：报告加载完成后，依次显示各模块
+  useEffect(() => {
+    if (isLoading || !report) return
+
+    // 重置并开始渐进展示
+    setRevealStep(0)
+
+    const timers: NodeJS.Timeout[] = []
+    for (let i = 1; i <= TOTAL_REVEAL_STEPS; i++) {
+      timers.push(setTimeout(() => {
+        setRevealStep(i)
+      }, i * REVEAL_DELAY))
+    }
+
+    return () => timers.forEach(t => clearTimeout(t))
+  }, [isLoading, report])
 
   useEffect(() => {
     async function generateReport() {
@@ -274,8 +360,11 @@ export default function ReportPage() {
               if (data.type === 'start') {
                 setCurrentStep(0)
               } else if (data.type === 'progress') {
-                const estimatedProgress = Math.min((data.length / 3000) * 100, 90)
-                setProgress(prev => Math.max(prev, estimatedProgress))
+                // 基于实际内容长度估算进度（完整报告约3000-5000字符）
+                const estimatedProgress = Math.min((data.length / 4000) * 100, 95)
+                setApiProgress(prev => Math.max(prev, estimatedProgress))
+                // 当 API 进度超过模拟进度时，同步更新
+                setProgress(prev => Math.max(prev, estimatedProgress * 0.9))
                 const stepIndex = Math.floor((estimatedProgress / 100) * LOADING_STEPS_DURATION.length)
                 setCurrentStep(prev => Math.max(prev, Math.min(stepIndex, LOADING_STEPS_DURATION.length - 1)))
               } else if (data.type === 'complete') {
@@ -446,6 +535,7 @@ export default function ReportPage() {
         waitingTips={waitingTips}
         t={t}
         lang={lang}
+        apiProgress={apiProgress}
       />
     )
   }
@@ -478,6 +568,14 @@ export default function ReportPage() {
   }
 
   const selectedApproachData = getSelectedApproachData()
+
+  // 渐进式展示动画样式
+  const getRevealClass = (step: number) => cn(
+    'transition-all duration-500 ease-out',
+    revealStep >= step
+      ? 'opacity-100 translate-y-0'
+      : 'opacity-0 translate-y-4 pointer-events-none'
+  )
 
   // Navigation sections - simplified without emojis
   const navSectionsData = translations.report.navSections
@@ -533,12 +631,13 @@ export default function ReportPage() {
 
           {/* 报告内容区域 */}
           <div className="px-3 sm:px-6 py-4 sm:py-6">
-        {/* Score Card */}
+        {/* Score Card - 批次1 */}
         <div
           id="score"
           className={cn(
             'rounded-lg border p-4 sm:p-6 mb-4 sm:mb-6 bg-white scroll-mt-24 sm:scroll-mt-32',
-            getScoreBg(report.score.feasibility)
+            getScoreBg(report.score.feasibility),
+            getRevealClass(1)
           )}
         >
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
@@ -580,8 +679,8 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* Strengths & Risks */}
-        <div id="analysis" className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
+        {/* Strengths & Risks - 批次2 */}
+        <div id="analysis" className={cn("grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32", getRevealClass(2))}>
           <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
               {t('report.whyWorthIt')}
@@ -612,60 +711,63 @@ export default function ReportPage() {
         </div>
 
         {/* Market Analysis */}
-        <div id="market" className="rounded-lg border border-gray-200 bg-white p-3 sm:p-6 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
-          <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-5">
+        {/* Market Analysis - 批次3 */}
+        <div id="market" className={cn("rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32", getRevealClass(3))}>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-5">
             {t('report.marketAnalysis')}
           </h3>
-          <div className="space-y-3 sm:space-y-5">
-            <div className="p-3 sm:p-4 bg-indigo-50 rounded-md border border-indigo-100">
-              <div className="text-xs sm:text-sm font-medium text-indigo-700 mb-1 sm:mb-2">{t('report.opportunity')}</div>
-              <p className="text-xs sm:text-sm text-gray-700 sm:leading-relaxed">{report.market_analysis.opportunity}</p>
+          <div className="space-y-4 sm:space-y-5">
+            <div className="p-4 bg-indigo-50 rounded-md border border-indigo-100">
+              <div className="text-sm font-medium text-indigo-700 mb-2">{t('report.opportunity')}</div>
+              <p className="text-sm text-gray-700 leading-relaxed">{report.market_analysis.opportunity}</p>
             </div>
 
             {report.market_analysis.search_trends && (
               <div>
-                <div className="text-xs sm:text-sm font-medium text-gray-600 mb-2">{t('report.searchTrends')}</div>
-                <div className="text-xs sm:text-sm text-gray-700 bg-gray-50 p-3 sm:p-4 rounded-md border border-gray-100 sm:leading-relaxed">
+                <div className="text-sm font-medium text-gray-600 mb-2">{t('report.searchTrends')}</div>
+                <div className="text-sm text-gray-700 bg-gray-50 p-4 rounded-md border border-gray-100 leading-relaxed">
                   {report.market_analysis.search_trends}
                 </div>
               </div>
             )}
 
             {report.market_analysis.competitors.length > 0 && (
-              <div>
-                <div className="text-xs sm:text-sm font-medium text-gray-600 mb-2 sm:mb-3">{t('report.competitors')}</div>
-                <div className="grid gap-2 sm:gap-4">
+              <CollapsibleSection
+                title={<span className="text-sm font-medium text-gray-600">{t('report.competitors')} ({report.market_analysis.competitors.length})</span>}
+                defaultOpen={false}
+              >
+                <div className="grid gap-3 sm:gap-4">
                   {report.market_analysis.competitors.map((comp, i) => (
-                    <div key={i} className="p-3 sm:p-4 bg-gray-50 border border-gray-100 rounded-md">
-                      <div className="flex items-center justify-between mb-2 sm:mb-3">
-                        <div className="font-medium text-sm sm:text-base text-gray-900">{comp.name}</div>
+                    <div key={i} className="p-4 bg-gray-50 border border-gray-100 rounded-md">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="font-medium text-base text-gray-900">{comp.name}</div>
                         {comp.url && (
-                          <a href={comp.url} target="_blank" className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 hover:underline">
+                          <a href={comp.url} target="_blank" className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline">
                             {t('report.view')} →
                           </a>
                         )}
                       </div>
-                      <div className="grid grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
+                      <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
                         <div className="text-green-600">✓ {comp.pros}</div>
                         <div className="text-red-500">✗ {comp.cons}</div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              </CollapsibleSection>
             )}
           </div>
         </div>
 
         {/* Product Approach Selection */}
         {report.product_approaches && report.product_approaches.approaches.length > 0 && (
-          <div id="approach" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
-            <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-1">
+          <div id="approach" className={cn("rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32", getRevealClass(4))}>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
               {t('report.productApproach')}
             </h3>
-            <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-5">{t('report.approachDesc')}</p>
+            <p className="text-sm text-gray-500 mb-4 sm:mb-5">{t('report.approachDesc')}</p>
 
-            <div className="grid gap-3 sm:gap-4 mb-3 sm:mb-5">
+            <div className="grid gap-4 mb-4 sm:mb-5">
               {report.product_approaches.approaches.map((approach) => {
                 const isSelected = selectedApproach === approach.id
                 const isRecommended = approach.id === report.product_approaches.recommended_id
@@ -676,15 +778,15 @@ export default function ReportPage() {
                     key={approach.id}
                     onClick={() => setSelectedApproach(approach.id)}
                     className={cn(
-                      'text-left p-3 sm:p-5 rounded-md border-2 transition-all',
+                      'text-left p-4 sm:p-5 rounded-md border-2 transition-all',
                       isSelected
                         ? 'border-indigo-500 bg-indigo-50'
                         : 'border-gray-100 bg-white hover:border-indigo-200'
                     )}
                   >
-                    <div className="flex items-start justify-between mb-2 sm:mb-3">
+                    <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-sm sm:text-base text-gray-900">{approach.name}</span>
+                        <span className="font-medium text-base text-gray-900">{approach.name}</span>
                         {isRecommended && (
                           <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{t('report.recommended')}</span>
                         )}
@@ -693,19 +795,19 @@ export default function ReportPage() {
                         {complexity.text}
                       </span>
                     </div>
-                    <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 sm:leading-relaxed">{approach.description}</p>
+                    <p className="text-sm text-gray-600 mb-3 leading-relaxed">{approach.description}</p>
 
-                    <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3 flex-wrap">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-3 flex-wrap">
                       {approach.workflow.slice(0, 3).map((step, idx) => (
                         <span key={idx} className="flex items-center gap-1">
-                          <span className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs sm:text-sm">{step.action}</span>
+                          <span className="bg-gray-100 px-2 py-1 rounded text-sm">{step.action}</span>
                           {idx < Math.min(approach.workflow.length, 3) - 1 && <span>→</span>}
                         </span>
                       ))}
                       {approach.workflow.length > 3 && <span className="text-gray-400">...</span>}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
                       <div className="text-green-600">✓ {approach.pros[0]}</div>
                       <div className="text-amber-600">⚠ {approach.cons[0]}</div>
                     </div>
@@ -714,44 +816,47 @@ export default function ReportPage() {
               })}
             </div>
 
-            <div className="p-2.5 sm:p-4 bg-blue-50 border border-blue-100 rounded-md text-xs sm:text-sm text-blue-800 sm:leading-relaxed">
+            <div className="p-4 bg-blue-50 border border-blue-100 rounded-md text-sm text-blue-800 leading-relaxed">
               <span className="font-medium">{t('report.suggestion')}</span>
               {report.product_approaches.recommendation_reason}
             </div>
 
             {selectedApproachData && (
-              <div className="mt-3 sm:mt-5 p-3 sm:p-5 bg-gray-50 rounded-md border border-gray-100">
-                <h4 className="font-medium text-sm sm:text-base text-gray-900 mb-3 sm:mb-5">{t('report.detailFlow')}</h4>
+              <CollapsibleSection
+                title={<h4 className="font-medium text-base text-gray-900">{t('report.detailFlow')}</h4>}
+                defaultOpen={false}
+                className="mt-4 sm:mt-5 p-4 sm:p-5 bg-gray-50 rounded-md border border-gray-100"
+              >
                 <div className="space-y-4 sm:space-y-5">
                   {selectedApproachData.workflow.map((step) => (
-                    <div key={step.step} className="flex items-start gap-3 sm:gap-4">
-                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs sm:text-sm font-medium flex-shrink-0">
+                    <div key={step.step} className="flex items-start gap-4">
+                      <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-medium flex-shrink-0">
                         {step.step}
                       </div>
                       <div>
-                        <div className="font-medium text-sm sm:text-base text-gray-900">{step.action}</div>
-                        <div className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1 sm:leading-relaxed">{step.detail}</div>
+                        <div className="font-medium text-base text-gray-900">{step.action}</div>
+                        <div className="text-sm text-gray-600 mt-1 leading-relaxed">{step.detail}</div>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-4 sm:mt-6 grid grid-cols-2 gap-4 sm:gap-6">
+                <div className="mt-5 sm:mt-6 grid grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <div className="text-xs sm:text-sm font-medium text-green-700 mb-2 sm:mb-3">{t('report.pros')}</div>
-                    <ul className="space-y-2 sm:space-y-3">
+                    <div className="text-sm font-medium text-green-700 mb-3">{t('report.pros')}</div>
+                    <ul className="space-y-3">
                       {selectedApproachData.pros.map((pro, i) => (
-                        <li key={i} className="text-xs sm:text-sm text-gray-600 flex items-start gap-1.5 sm:gap-2 leading-relaxed">
+                        <li key={i} className="text-sm text-gray-600 flex items-start gap-2 leading-relaxed">
                           <span className="text-green-500 flex-shrink-0">✓</span> {pro}
                         </li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <div className="text-xs sm:text-sm font-medium text-amber-700 mb-2 sm:mb-3">{t('report.cons')}</div>
-                    <ul className="space-y-2 sm:space-y-3">
+                    <div className="text-sm font-medium text-amber-700 mb-3">{t('report.cons')}</div>
+                    <ul className="space-y-3">
                       {selectedApproachData.cons.map((con, i) => (
-                        <li key={i} className="text-xs sm:text-sm text-gray-600 flex items-start gap-1.5 sm:gap-2 leading-relaxed">
+                        <li key={i} className="text-sm text-gray-600 flex items-start gap-2 leading-relaxed">
                           <span className="text-amber-500 flex-shrink-0">⚠</span> {con}
                         </li>
                       ))}
@@ -759,42 +864,45 @@ export default function ReportPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 sm:mt-5 text-xs sm:text-sm text-gray-500">
+                <div className="mt-5 text-sm text-gray-500">
                   <span className="font-medium">{t('report.bestFor')}</span>{selectedApproachData.best_for}
                 </div>
-              </div>
+              </CollapsibleSection>
             )}
           </div>
         )}
 
         {/* Tech Stack */}
-        <div id="tech" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
-          <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-5">
+        {/* Tech Stack - 批次5 */}
+        <div id="tech" className={cn("rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32", getRevealClass(5))}>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-5">
             {t('report.techOptions')}
           </h3>
 
           <div className="space-y-4 sm:space-y-5">
             {/* Option A - China Stack */}
-            <div className="border border-gray-200 rounded-md p-4 sm:p-5 bg-gray-50">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <div className="font-medium text-sm sm:text-base text-gray-900">
-                    {report.tech_options.option_a.name}
+            <CollapsibleSection
+              title={
+                <div className="flex items-start justify-between w-full pr-6">
+                  <div>
+                    <div className="font-medium text-base text-gray-900">{report.tech_options.option_a.name}</div>
+                    <div className="text-sm text-gray-500 mt-1">{report.tech_options.option_a.fit_for}</div>
                   </div>
-                  <div className="text-xs sm:text-sm text-gray-500 mt-1">{report.tech_options.option_a.fit_for}</div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-green-600 font-medium text-base">{report.tech_options.option_a.cost}</div>
+                    <div className="text-sm text-gray-500 mt-0.5">{report.tech_options.option_a.dev_time}</div>
+                  </div>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <div className="text-green-600 font-medium text-sm sm:text-base">{report.tech_options.option_a.cost}</div>
-                  <div className="text-xs sm:text-sm text-gray-500 mt-0.5">{report.tech_options.option_a.dev_time}</div>
-                </div>
-              </div>
-
+              }
+              defaultOpen={false}
+              className="border border-gray-200 rounded-md p-4 sm:p-5 bg-gray-50"
+            >
               {/* Tools with purposes */}
               <div className="mb-4">
-                <div className="text-xs sm:text-sm font-medium text-gray-500 mb-2 sm:mb-3">{t('report.techStack')}</div>
+                <div className="text-sm font-medium text-gray-500 mb-3">{t('report.techStack')}</div>
                 <div className="flex flex-wrap gap-2">
                   {(Array.isArray(report.tech_options.option_a.tools) ? report.tech_options.option_a.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                    <div key={i} className="bg-white border border-gray-200 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm">
+                    <div key={i} className="bg-white border border-gray-200 rounded px-3 py-2 text-sm">
                       {typeof tool === 'string' ? (
                         <span className="font-medium text-gray-700">{tool}</span>
                       ) : (
@@ -809,32 +917,34 @@ export default function ReportPage() {
                 </div>
               </div>
 
-              <div className="text-xs sm:text-sm text-gray-600 bg-white rounded p-2.5 sm:p-3 border border-gray-100 sm:leading-relaxed">
+              <div className="text-sm text-gray-600 bg-white rounded p-3 border border-gray-100 leading-relaxed">
                 <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_a.capability}
               </div>
-            </div>
+            </CollapsibleSection>
 
             {/* Option B - Global Stack */}
-            <div className="border border-blue-200 rounded-md p-4 sm:p-5 bg-blue-50">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <div className="font-medium text-sm sm:text-base text-gray-900">
-                    {report.tech_options.option_b.name}
+            <CollapsibleSection
+              title={
+                <div className="flex items-start justify-between w-full pr-6">
+                  <div>
+                    <div className="font-medium text-base text-gray-900">{report.tech_options.option_b.name}</div>
+                    <div className="text-sm text-blue-600 mt-1">{report.tech_options.option_b.fit_for}</div>
                   </div>
-                  <div className="text-xs sm:text-sm text-blue-600 mt-1">{report.tech_options.option_b.fit_for}</div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-green-600 font-medium text-base">{report.tech_options.option_b.cost}</div>
+                    <div className="text-sm text-gray-500 mt-0.5">{report.tech_options.option_b.dev_time}</div>
+                  </div>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <div className="text-green-600 font-medium text-sm sm:text-base">{report.tech_options.option_b.cost}</div>
-                  <div className="text-xs sm:text-sm text-gray-500 mt-0.5">{report.tech_options.option_b.dev_time}</div>
-                </div>
-              </div>
-
+              }
+              defaultOpen={false}
+              className="border border-blue-200 rounded-md p-4 sm:p-5 bg-blue-50"
+            >
               {/* Tools with purposes */}
               <div className="mb-4">
-                <div className="text-xs sm:text-sm font-medium text-gray-500 mb-2 sm:mb-3">{t('report.techStack')}</div>
+                <div className="text-sm font-medium text-gray-500 mb-3">{t('report.techStack')}</div>
                 <div className="flex flex-wrap gap-2">
                   {(Array.isArray(report.tech_options.option_b.tools) ? report.tech_options.option_b.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                    <div key={i} className="bg-white border border-blue-200 rounded px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm">
+                    <div key={i} className="bg-white border border-blue-200 rounded px-3 py-2 text-sm">
                       {typeof tool === 'string' ? (
                         <span className="font-medium text-gray-700">{tool}</span>
                       ) : (
@@ -849,10 +959,10 @@ export default function ReportPage() {
                 </div>
               </div>
 
-              <div className="text-xs sm:text-sm text-gray-600 bg-white rounded p-2.5 sm:p-3 border border-blue-100 sm:leading-relaxed">
+              <div className="text-sm text-gray-600 bg-white rounded p-3 border border-blue-100 leading-relaxed">
                 <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_b.capability}
               </div>
-            </div>
+            </CollapsibleSection>
 
             {/* Option C - Vibe Coder Stack */}
             {report.tech_options.option_c && (
@@ -862,29 +972,29 @@ export default function ReportPage() {
                 </div>
                 <div className="flex items-start justify-between mb-4 pr-20 sm:pr-24">
                   <div>
-                    <div className="font-medium text-sm sm:text-base text-gray-900">
+                    <div className="font-medium text-base text-gray-900">
                       {report.tech_options.option_c.name}
                     </div>
-                    <div className="text-xs sm:text-sm text-indigo-600 mt-1">{report.tech_options.option_c.fit_for}</div>
+                    <div className="text-sm text-indigo-600 mt-1">{report.tech_options.option_c.fit_for}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="text-green-600 font-medium text-sm sm:text-base">{report.tech_options.option_c.cost}</div>
-                    <div className="text-xs sm:text-sm text-gray-500 mt-0.5">{report.tech_options.option_c.dev_time}</div>
+                    <div className="text-green-600 font-medium text-base">{report.tech_options.option_c.cost}</div>
+                    <div className="text-sm text-gray-500 mt-0.5">{report.tech_options.option_c.dev_time}</div>
                   </div>
                 </div>
 
                 {/* Tools with purposes - highlighted */}
                 <div className="mb-4">
-                  <div className="text-xs sm:text-sm font-medium text-indigo-600 mb-2 sm:mb-3">{t('report.vibeToolchain')}</div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                  <div className="text-sm font-medium text-indigo-600 mb-3">{t('report.vibeToolchain')}</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {(Array.isArray(report.tech_options.option_c.tools) ? report.tech_options.option_c.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                      <div key={i} className="bg-white border border-indigo-200 rounded p-2.5 sm:p-3 text-center">
+                      <div key={i} className="bg-white border border-indigo-200 rounded p-3 text-center">
                         {typeof tool === 'string' ? (
-                          <span className="font-medium text-gray-700 text-xs sm:text-sm">{tool}</span>
+                          <span className="font-medium text-gray-700 text-sm">{tool}</span>
                         ) : (
                           <>
-                            <div className="font-medium text-indigo-700 text-xs sm:text-sm">{tool.name}</div>
-                            <div className="text-xs sm:text-sm text-gray-500 mt-1">{tool.purpose}</div>
+                            <div className="font-medium text-indigo-700 text-sm">{tool.name}</div>
+                            <div className="text-sm text-gray-500 mt-1">{tool.purpose}</div>
                           </>
                         )}
                       </div>
@@ -892,42 +1002,43 @@ export default function ReportPage() {
                   </div>
                 </div>
 
-                <div className="text-xs sm:text-sm text-gray-600 bg-white/80 rounded p-2.5 sm:p-3 border border-indigo-100 sm:leading-relaxed">
+                <div className="text-sm text-gray-600 bg-white/80 rounded p-3 border border-indigo-100 leading-relaxed">
                   <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_c.capability}
                 </div>
               </div>
             )}
           </div>
 
-          <div className="mt-4 sm:mt-5 p-3 sm:p-4 bg-blue-50 border border-blue-100 rounded-md text-xs sm:text-sm text-blue-800 sm:leading-relaxed">
+          <div className="mt-5 p-4 bg-blue-50 border border-blue-100 rounded-md text-sm text-blue-800 leading-relaxed">
             <span className="font-medium">{t('report.suggestion')}</span>
             {report.tech_options.advice}
           </div>
         </div>
 
         {/* Fastest Path */}
-        <div id="path" className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
-          <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-5">
+        {/* Fastest Path - 批次6 */}
+        <div id="path" className={cn("rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32", getRevealClass(6))}>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-5">
             {t('report.fastestPath')}
           </h3>
-          <div className="space-y-3 sm:space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             {report.fastest_path.map((step, i) => (
-              <div key={i} className="relative pl-8 sm:pl-12">
-                <div className="absolute left-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-medium text-xs sm:text-sm">
+              <div key={i} className="relative pl-10 sm:pl-12">
+                <div className="absolute left-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-medium text-sm">
                   {i + 1}
                 </div>
-                <div className="bg-gray-50 border border-gray-100 rounded-md p-3 sm:p-5">
-                  <div className="font-medium text-sm sm:text-base text-gray-900 mb-1.5 sm:mb-2">{step.title}</div>
-                  <p className="text-xs sm:text-sm text-gray-600 sm:leading-relaxed whitespace-pre-line mb-3 sm:mb-4">{step.description}</p>
+                <div className="bg-gray-50 border border-gray-100 rounded-md p-4 sm:p-5">
+                  <div className="font-medium text-base text-gray-900 mb-2">{step.title}</div>
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line mb-4">{step.description}</p>
                   {step.copy_text && (
                     <div
-                      className="bg-white border border-gray-200 p-2.5 sm:p-4 rounded text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4 cursor-pointer hover:bg-gray-50 transition-colors group sm:leading-relaxed whitespace-pre-line"
+                      className="bg-white border border-gray-200 p-4 rounded text-sm text-gray-700 mb-4 cursor-pointer hover:bg-gray-50 transition-colors group leading-relaxed whitespace-pre-line"
                       onClick={() => navigator.clipboard.writeText(step.copy_text!)}
                       title={t('report.clickToCopy')}
                     >
-                      <div className="flex justify-between items-center mb-1.5 sm:mb-2">
-                        <span className="text-xs sm:text-sm font-medium text-gray-500">{t('report.copyablePrompt')}</span>
-                        <span className="text-xs sm:text-sm text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">{t('report.clickToCopy')}</span>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium text-gray-500">{t('report.copyablePrompt')}</span>
+                        <span className="text-sm text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">{t('report.clickToCopy')}</span>
                       </div>
                       {step.copy_text}
                     </div>
@@ -936,7 +1047,7 @@ export default function ReportPage() {
                     <a
                       href={step.action_url}
                       target="_blank"
-                      className="inline-block px-4 sm:px-5 py-2 sm:py-2.5 bg-indigo-600 text-white text-xs sm:text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
+                      className="inline-block px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
                     >
                       {step.action_label || t('report.goExecute')}
                     </a>
@@ -948,36 +1059,37 @@ export default function ReportPage() {
         </div>
 
         {/* Cost & Pitfalls */}
-        <div id="cost" className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
+        {/* Cost & Pitfalls - 批次6 */}
+        <div id="cost" className={cn("grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32", getRevealClass(6))}>
           {/* Cost Estimate */}
           <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
-            <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-5">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-5">
               {t('report.costEstimate')}
             </h3>
-            <div className="space-y-3 sm:space-y-4">
-              <div className="p-3 sm:p-4 bg-blue-50 rounded-md border border-blue-100">
-                <div className="text-xs sm:text-sm font-medium text-blue-600 mb-1 sm:mb-2">{t('report.timeInvestment')}</div>
-                <div className="text-xs sm:text-sm text-gray-800 sm:leading-relaxed">{report.cost_estimate.time_breakdown}</div>
+            <div className="space-y-4">
+              <div className="p-4 bg-blue-50 rounded-md border border-blue-100">
+                <div className="text-sm font-medium text-blue-600 mb-2">{t('report.timeInvestment')}</div>
+                <div className="text-sm text-gray-800 leading-relaxed">{report.cost_estimate.time_breakdown}</div>
               </div>
-              <div className="p-3 sm:p-4 bg-green-50 rounded-md border border-green-100">
-                <div className="text-xs sm:text-sm font-medium text-green-600 mb-1 sm:mb-2">{t('report.moneyInvestment')}</div>
-                <div className="text-xs sm:text-sm text-gray-800 sm:leading-relaxed">{report.cost_estimate.money_breakdown}</div>
+              <div className="p-4 bg-green-50 rounded-md border border-green-100">
+                <div className="text-sm font-medium text-green-600 mb-2">{t('report.moneyInvestment')}</div>
+                <div className="text-sm text-gray-800 leading-relaxed">{report.cost_estimate.money_breakdown}</div>
               </div>
             </div>
           </div>
 
           {/* Pitfall Guide */}
           <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
-            <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-5">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-5">
               {t('report.pitfallGuide')}
             </h3>
-            <ul className="space-y-2 sm:space-y-3">
+            <ul className="space-y-3">
               {report.pitfalls.map((pit, i) => (
-                <li key={i} className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-orange-50 rounded-md border border-orange-100">
-                  <span className="flex-shrink-0 w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-orange-200 text-orange-700 flex items-center justify-center text-xs sm:text-sm font-medium mt-0.5">
+                <li key={i} className="flex items-start gap-3 p-3 bg-orange-50 rounded-md border border-orange-100">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-200 text-orange-700 flex items-center justify-center text-sm font-medium mt-0.5">
                     {i + 1}
                   </span>
-                  <span className="text-xs sm:text-sm text-gray-800 sm:leading-relaxed">{pit}</span>
+                  <span className="text-sm text-gray-800 leading-relaxed">{pit}</span>
                 </li>
               ))}
             </ul>
@@ -985,23 +1097,23 @@ export default function ReportPage() {
         </div>
 
 
-        {/* Feedback */}
-        <div className="mb-6 sm:mb-8 text-center p-4 sm:p-6 bg-white rounded-lg border border-gray-200">
+        {/* Feedback - 批次7 */}
+        <div className={cn("mb-6 sm:mb-8 text-center p-4 sm:p-6 bg-white rounded-lg border border-gray-200", getRevealClass(7))}>
           {feedbackSubmitted ? (
             <div className="py-2">
-              <h3 className="text-sm sm:text-base text-gray-700 font-medium">{t('report.feedback.thanks')}</h3>
-              <p className="text-xs sm:text-sm text-gray-400 mt-1">{t('report.feedback.thanksDesc')}</p>
+              <h3 className="text-base text-gray-700 font-medium">{t('report.feedback.thanks')}</h3>
+              <p className="text-sm text-gray-400 mt-1">{t('report.feedback.thanksDesc')}</p>
             </div>
           ) : (
             <>
-              <h3 className="text-sm sm:text-base text-gray-700 font-medium mb-3 sm:mb-4">{t('report.feedback.title')}</h3>
-              <div className="flex items-center justify-center gap-3 sm:gap-4">
+              <h3 className="text-base text-gray-700 font-medium mb-4">{t('report.feedback.title')}</h3>
+              <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={() => {
                     setFeedbackRating('helpful')
                     setFeedbackModalOpen(true)
                   }}
-                  className="px-4 sm:px-5 py-2 sm:py-2.5 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 transition-all text-green-700 text-sm sm:text-base"
+                  className="px-5 py-2.5 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 transition-all text-green-700 text-base"
                 >
                   {t('report.feedback.helpful')}
                 </button>
@@ -1010,12 +1122,12 @@ export default function ReportPage() {
                     setFeedbackRating('not_helpful')
                     setFeedbackModalOpen(true)
                   }}
-                  className="px-4 sm:px-5 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-all text-gray-600 text-sm sm:text-base"
+                  className="px-5 py-2.5 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-all text-gray-600 text-base"
                 >
                   {t('report.feedback.notHelpful')}
                 </button>
               </div>
-              <p className="text-xs sm:text-sm text-gray-400 mt-3 sm:mt-4">
+              <p className="text-sm text-gray-400 mt-4">
                 {t('report.feedback.privacyNote')}
               </p>
             </>
