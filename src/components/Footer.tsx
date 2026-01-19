@@ -21,9 +21,9 @@ export function Footer() {
   }, [])
 
   return (
-    <footer className="border-t border-gray-100 bg-gray-50 py-10 mt-auto">
+    <footer className="border-t border-gray-100 bg-gray-50 py-14 mt-auto">
       <div className="max-w-2xl mx-auto px-4">
-        <div className="flex flex-col items-center gap-6 text-sm text-gray-500">
+        <div className="flex flex-col items-center gap-8 text-sm text-gray-500">
           {/* Language Switcher - Left side, Dropdown */}
           <div className="relative" ref={langMenuRef}>
             <button
@@ -71,17 +71,14 @@ export function Footer() {
           </div>
 
           {/* Center text */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-2">
-              <span>justart.today</span>
-              <span className="text-gray-300 hidden sm:inline">·</span>
-              <span className="hidden sm:inline">{language === 'zh' ? '开始你的 Vibe Coding 之旅' : 'Start your Vibe Coding journey'}</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-gray-400">
-              <span>by Fisher Shen</span>
-              <span className="text-gray-300">·</span>
-              <a href="mailto:hawking520@gmail.com" className="hover:text-gray-600 transition-colors">hawking520@gmail.com</a>
-            </div>
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+            <span>justart.today</span>
+            <span className="text-gray-300">·</span>
+            <span className="hidden sm:inline">{language === 'zh' ? '开始你的 Vibe Coding 之旅' : 'Start your Vibe Coding journey'}</span>
+            <span className="hidden sm:inline text-gray-300">·</span>
+            <span>by Fisher Shen</span>
+            <span className="text-gray-300">·</span>
+            <a href="mailto:hawking520@gmail.com" className="hover:text-gray-600 transition-colors">hawking520@gmail.com</a>
           </div>
 
           {/* Social Links - Right side */}

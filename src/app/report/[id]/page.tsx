@@ -205,28 +205,12 @@ function LoadingProgress({
           </div>
         </div>
 
-        {/* 提示语卡片 */}
-        <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 sm:p-6 text-center">
-          <p className="text-gray-700 text-sm transition-all duration-500">
-            {waitingTips[tipIndex][lang]}
+        {/* 提示语卡片 - 合并所有提示到一个区域 */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+          <p className="text-gray-600 text-sm">
+            💡 {waitingTips[tipIndex][lang]}
           </p>
         </div>
-
-        {/* 最后阶段的额外提示 */}
-        {isLastStep && elapsedTime > 10 && (
-          <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg text-center">
-            <p className="text-gray-600 text-xs">
-              {lang === 'zh'
-                ? 'AI 正在深度分析您的项目，生成详细报告需要一些时间'
-                : 'AI is doing deep analysis, detailed report generation takes a moment'}
-            </p>
-          </div>
-        )}
-
-        {/* 小提示 */}
-        <p className="text-center text-xs text-gray-400 mt-4 sm:mt-6">
-          {t('report.aiGenerating')}
-        </p>
       </div>
     </div>
   )
@@ -889,32 +873,32 @@ export default function ReportPage() {
             {/* Option A - China Stack */}
             <CollapsibleSection
               title={
-                <div className="flex items-start justify-between w-full pr-6">
+                <div className="flex items-start justify-between w-full pr-6 gap-4">
                   <div>
                     <div className="font-medium text-base text-gray-900">{report.tech_options.option_a.name}</div>
-                    <div className="text-sm text-gray-500 mt-1">{report.tech_options.option_a.fit_for}</div>
+                    <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_a.fit_for}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div className="text-gray-900 font-medium text-base">{report.tech_options.option_a.cost}</div>
-                    <div className="text-sm text-gray-500 mt-0.5">{report.tech_options.option_a.dev_time}</div>
+                    <div className="text-sm text-gray-500 mt-1">{report.tech_options.option_a.dev_time}</div>
                   </div>
                 </div>
               }
               defaultOpen={false}
-              className="border border-gray-200 rounded-md p-4 sm:p-5"
+              className="border border-gray-200 rounded-md p-4 sm:p-6"
             >
               {/* Tools with purposes */}
               <div className="mb-4">
                 <div className="text-sm text-gray-500 mb-3">{t('report.techStack')}</div>
-                <div className="flex flex-wrap gap-2">
+                <div className="space-y-2">
                   {(Array.isArray(report.tech_options.option_a.tools) ? report.tech_options.option_a.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                    <div key={i} className="border border-gray-200 rounded px-3 py-2 text-sm">
+                    <div key={i} className="border border-gray-200 rounded px-3 py-2.5 text-sm">
                       {typeof tool === 'string' ? (
                         <span className="text-gray-700">{tool}</span>
                       ) : (
                         <>
                           <span className="font-medium text-gray-900">{tool.name}</span>
-                          <span className="text-gray-300 mx-1">·</span>
+                          <span className="text-gray-300 mx-2">·</span>
                           <span className="text-gray-500">{tool.purpose}</span>
                         </>
                       )}
@@ -931,32 +915,32 @@ export default function ReportPage() {
             {/* Option B - Global Stack */}
             <CollapsibleSection
               title={
-                <div className="flex items-start justify-between w-full pr-6">
+                <div className="flex items-start justify-between w-full pr-6 gap-4">
                   <div>
                     <div className="font-medium text-base text-gray-900">{report.tech_options.option_b.name}</div>
-                    <div className="text-sm text-gray-500 mt-1">{report.tech_options.option_b.fit_for}</div>
+                    <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_b.fit_for}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div className="text-gray-900 font-medium text-base">{report.tech_options.option_b.cost}</div>
-                    <div className="text-sm text-gray-500 mt-0.5">{report.tech_options.option_b.dev_time}</div>
+                    <div className="text-sm text-gray-500 mt-1">{report.tech_options.option_b.dev_time}</div>
                   </div>
                 </div>
               }
               defaultOpen={false}
-              className="border border-gray-200 rounded-md p-4 sm:p-5"
+              className="border border-gray-200 rounded-md p-4 sm:p-6"
             >
               {/* Tools with purposes */}
-              <div className="mb-4">
+              <div className="mb-5">
                 <div className="text-sm text-gray-500 mb-3">{t('report.techStack')}</div>
-                <div className="flex flex-wrap gap-2">
+                <div className="space-y-2">
                   {(Array.isArray(report.tech_options.option_b.tools) ? report.tech_options.option_b.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                    <div key={i} className="border border-gray-200 rounded px-3 py-2 text-sm">
+                    <div key={i} className="border border-gray-200 rounded px-3 py-2.5 text-sm">
                       {typeof tool === 'string' ? (
                         <span className="text-gray-700">{tool}</span>
                       ) : (
                         <>
                           <span className="font-medium text-gray-900">{tool.name}</span>
-                          <span className="text-gray-300 mx-1">·</span>
+                          <span className="text-gray-300 mx-2">·</span>
                           <span className="text-gray-500">{tool.purpose}</span>
                         </>
                       )}
@@ -972,35 +956,35 @@ export default function ReportPage() {
 
             {/* Option C - Vibe Coder Stack */}
             {report.tech_options.option_c && (
-              <div className="border border-gray-200 rounded-md p-4 sm:p-5 relative">
+              <div className="border border-gray-200 rounded-md p-4 sm:p-6 relative">
                 <div className="absolute top-3 right-3 text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
                   {t('report.recommended')}
                 </div>
-                <div className="flex items-start justify-between mb-4 pr-16 sm:pr-20">
+                <div className="flex items-start justify-between mb-6 pr-16 sm:pr-20 gap-4">
                   <div>
                     <div className="font-medium text-base text-gray-900">
                       {report.tech_options.option_c.name}
                     </div>
-                    <div className="text-sm text-indigo-600 mt-1">{report.tech_options.option_c.fit_for}</div>
+                    <div className="text-sm text-indigo-600 mt-2">{report.tech_options.option_c.fit_for}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div className="text-indigo-600 font-medium text-base">{report.tech_options.option_c.cost}</div>
-                    <div className="text-sm text-gray-500 mt-0.5">{report.tech_options.option_c.dev_time}</div>
+                    <div className="text-sm text-gray-500 mt-1">{report.tech_options.option_c.dev_time}</div>
                   </div>
                 </div>
 
                 {/* Tools with purposes */}
-                <div className="mb-4">
+                <div className="mb-5">
                   <div className="text-sm text-gray-500 mb-3">{t('report.vibeToolchain')}</div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="space-y-2">
                     {(Array.isArray(report.tech_options.option_c.tools) ? report.tech_options.option_c.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                      <div key={i} className="border border-gray-200 rounded px-3 py-2 text-sm">
+                      <div key={i} className="border border-gray-200 rounded px-3 py-2.5 text-sm">
                         {typeof tool === 'string' ? (
                           <span className="text-gray-700">{tool}</span>
                         ) : (
                           <>
                             <span className="font-medium text-gray-900">{tool.name}</span>
-                            <span className="text-gray-300 mx-1">·</span>
+                            <span className="text-gray-300 mx-2">·</span>
                             <span className="text-gray-500">{tool.purpose}</span>
                           </>
                         )}

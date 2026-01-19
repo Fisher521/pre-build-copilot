@@ -385,7 +385,7 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
       {(isRecording || isProcessing) && !interimText && (
         <span className={cn(
           "absolute right-14 text-sm font-medium whitespace-nowrap",
-          isProcessing ? "text-blue-500" : "text-red-500 animate-pulse"
+          isProcessing ? "text-indigo-500" : "text-indigo-500 animate-pulse"
         )}>
           {isProcessing ? '识别中...' : useWebSpeech ? '正在听...' : formatTime(recordingTime)}
         </span>
@@ -406,9 +406,9 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
           'relative w-11 h-11 rounded-full flex items-center justify-center',
           'transition-all duration-200',
           isProcessing
-            ? 'bg-blue-500 text-white cursor-wait'
+            ? 'bg-indigo-500 text-white cursor-wait'
             : isRecording
-              ? 'bg-red-500 text-white'
+              ? 'bg-indigo-500 text-white'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-indigo-600',
           'disabled:opacity-50 disabled:cursor-not-allowed',
           className
@@ -419,8 +419,8 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
         {/* Pulse ring animation when recording */}
         {isRecording && (
           <>
-            <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-75 pointer-events-none" />
-            <span className="absolute inset-0 rounded-full bg-red-500 animate-pulse pointer-events-none" />
+            <span className="absolute inset-0 rounded-full bg-indigo-400 animate-ping opacity-75 pointer-events-none" />
+            <span className="absolute inset-0 rounded-full bg-indigo-500 animate-pulse pointer-events-none" />
           </>
         )}
         

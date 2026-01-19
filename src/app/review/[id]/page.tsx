@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useParams } from 'next/navigation'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { VoiceButton } from '@/components/chat/VoiceButton'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/lib/i18n'
@@ -17,11 +17,10 @@ export default function ReviewPage() {
   const router = useRouter()
   const params = useParams()
   const conversationId = params.id as string
-  const { t, lang, translations } = useTranslation()
+  const { t, lang } = useTranslation()
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [savingStep, setSavingStep] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [parsedInfo, setParsedInfo] = useState<ParsedInfo>({
     projectName: '',
@@ -29,10 +28,6 @@ export default function ReviewPage() {
     targetUser: '',
     problemSolved: '',
   })
-  const savingIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  // 确认后的加载步骤
-  const savingSteps = translations.review.savingSteps
 
   // Load conversation data
   useEffect(() => {
@@ -61,26 +56,11 @@ export default function ReviewPage() {
     loadConversation()
   }, [conversationId, t, lang])
 
-  // 清理动画
-  useEffect(() => {
-    return () => {
-      if (savingIntervalRef.current) {
-        clearInterval(savingIntervalRef.current)
-      }
-    }
-  }, [])
-
   const handleConfirm = async () => {
     setIsSaving(true)
-    setSavingStep(0)
-
-    // 启动加载动画
-    savingIntervalRef.current = setInterval(() => {
-      setSavingStep(prev => Math.min(prev + 1, savingSteps.length - 1))
-    }, 2000)
 
     try {
-      // Save updated info
+      // Save updated info (fast operation, no need for loading animation)
       await fetch(`/api/conversation/${conversationId}/schema`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -100,17 +80,9 @@ export default function ReviewPage() {
         }),
       })
 
-      // 清理动画
-      if (savingIntervalRef.current) {
-        clearInterval(savingIntervalRef.current)
-      }
-
-      // Navigate to questions page (Step 3)
+      // Navigate immediately to questions page (Step 3)
       router.push(`/questions/${conversationId}`)
     } catch (err) {
-      if (savingIntervalRef.current) {
-        clearInterval(savingIntervalRef.current)
-      }
       setError(t('review.saveFailed'))
       setIsSaving(false)
     }
@@ -152,35 +124,13 @@ export default function ReviewPage() {
     )
   }
 
-  // 保存/跳转加载状态
+  // 保存/跳转加载状态 - 简化版，只显示简短的加载提示
   if (isSaving) {
-    const currentStep = savingSteps[savingStep]
-    const progress = ((savingStep + 1) / savingSteps.length) * 100
     return (
       <div className="min-h-screen flex items-center justify-center pt-14 sm:pt-16 bg-gray-50">
-        <div className="text-center w-full max-w-sm mx-auto p-4 sm:p-6">
-          {/* 进度条 */}
-          <div className="w-full h-1 bg-gray-200 rounded-full mb-6 overflow-hidden">
-            <div
-              className="h-full bg-indigo-500 rounded-full transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          {/* 当前步骤 */}
-          <p className="text-sm text-gray-600 mb-1">{currentStep.text[lang]}</p>
-          <p className="text-xs text-gray-400 mb-6">
-            {savingStep + 1} / {savingSteps.length}
-          </p>
-
-          {/* 项目信息回显 */}
-          <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4 text-left">
-            <p className="text-xs text-gray-400 mb-1">{t('review.projectInfo')}</p>
-            <p className="text-gray-700 font-medium text-sm">{parsedInfo.projectName}</p>
-            {parsedInfo.coreFeature && (
-              <p className="text-gray-500 text-xs mt-1 line-clamp-2">{parsedInfo.coreFeature}</p>
-            )}
-          </div>
+        <div className="text-center">
+          <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-gray-600">{lang === 'zh' ? '正在保存...' : 'Saving...'}</p>
         </div>
       </div>
     )
