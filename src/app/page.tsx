@@ -148,10 +148,13 @@ export default function HomePage() {
   const steps = translations.home.steps
 
   return (
-    <div className="min-h-screen flex flex-col items-center sm:justify-center px-4 py-4 sm:p-6 bg-gray-50 pt-16 sm:pt-14">
-      {/* Hero Section - more compact on mobile */}
-      <div className="text-center mb-4 sm:mb-8">
-        <p className="text-sm sm:text-base text-gray-600">{t('home.tagline')}</p>
+    <div className="min-h-screen flex flex-col items-center sm:justify-center px-4 py-4 sm:p-6 bg-gray-50 pt-20 sm:pt-14">
+      {/* Hero Section */}
+      <div className="text-center mb-6 sm:mb-8 mt-2 sm:mt-0">
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-1">Just Start Today</h1>
+        <p className="text-base sm:text-lg text-gray-500">
+          {lang === 'zh' ? '写代码前，先 vibe 一下' : 'Vibe check before you code'}
+        </p>
       </div>
 
       {/* Main Input Card */}

@@ -277,9 +277,10 @@ export default function ReportPage() {
   const startTimeRef = useRef(Date.now())
 
   // 渐进式展示状态：控制各模块依次显示
-  // 0: 评分, 1: 优势/风险, 2: 市场, 3: 方案, 4: 技术栈, 5: 路径/成本, 6: 反馈
+  // 0: 全隐藏, 1: 评分, 2: 优势/风险, 3: 市场, 4: 方案, 5: 技术栈, 6: 路径/成本, 7: 反馈
   const [revealStep, setRevealStep] = useState(0)
-  const REVEAL_DELAY = 300 // 每批间隔时间(ms)
+  const revealStartedRef = useRef(false)
+  const REVEAL_DELAY = 200 // 每批间隔时间(ms)
   const TOTAL_REVEAL_STEPS = 7
 
   // 模拟进度推进
@@ -313,16 +314,27 @@ export default function ReportPage() {
 
   // 渐进式展示动画：报告加载完成后，依次显示各模块
   useEffect(() => {
-    if (isLoading || !report) return
+    if (isLoading || !report) {
+      // 重置状态
+      setRevealStep(0)
+      revealStartedRef.current = false
+      return
+    }
 
-    // 重置并开始渐进展示
-    setRevealStep(0)
+    // 防止重复触发
+    if (revealStartedRef.current) return
+    revealStartedRef.current = true
 
-    const timers: NodeJS.Timeout[] = []
-    for (let i = 1; i <= TOTAL_REVEAL_STEPS; i++) {
+    // 稍微延迟开始，让页面先渲染
+    const startTimer = setTimeout(() => {
+      setRevealStep(1)
+    }, 50)
+
+    const timers: NodeJS.Timeout[] = [startTimer]
+    for (let i = 2; i <= TOTAL_REVEAL_STEPS; i++) {
       timers.push(setTimeout(() => {
         setRevealStep(i)
-      }, i * REVEAL_DELAY))
+      }, 50 + (i - 1) * REVEAL_DELAY))
     }
 
     return () => timers.forEach(t => clearTimeout(t))
@@ -571,10 +583,10 @@ export default function ReportPage() {
 
   // 渐进式展示动画样式
   const getRevealClass = (step: number) => cn(
-    'transition-all duration-500 ease-out',
+    'transition-all duration-300 ease-out',
     revealStep >= step
       ? 'opacity-100 translate-y-0'
-      : 'opacity-0 translate-y-4 pointer-events-none'
+      : 'opacity-0 translate-y-6'
   )
 
   // Navigation sections - simplified without emojis
@@ -615,13 +627,13 @@ export default function ReportPage() {
           </div>
 
           {/* Tab导航 - 吸顶 */}
-          <div className="sticky top-14 z-20 bg-white border-b border-gray-100 overflow-x-auto scrollbar-hide">
-            <div className="px-4 sm:px-8 py-2 sm:py-3 flex gap-1 sm:gap-2 sm:justify-center">
+          <div className="sticky top-14 z-20 bg-white border-b border-gray-200 shadow-sm overflow-x-auto scrollbar-hide">
+            <div className="px-3 sm:px-8 py-2.5 sm:py-3 flex gap-1.5 sm:gap-2 sm:justify-center">
               {navSections.map((section) => (
                 <button
                   key={section.id}
                   onClick={() => scrollToSection(section.id)}
-                  className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg whitespace-nowrap transition-colors flex-shrink-0"
+                  className="px-3 sm:px-4 py-2 sm:py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg whitespace-nowrap transition-colors flex-shrink-0 font-medium"
                 >
                   {section.label}
                 </button>
@@ -647,7 +659,7 @@ export default function ReportPage() {
             </div>
 
             {/* Score Details */}
-            <div className="flex-1 text-center sm:text-left w-full min-w-0">
+            <div className="flex-1 text-left w-full min-w-0">
               <div className="text-sm text-gray-500 mb-1">{t('report.feasibilityScore')}</div>
               <div className="bg-white/80 rounded-md p-3 sm:p-4 border border-gray-100 mb-4">
                 <p className="text-base font-medium text-gray-800 break-words leading-relaxed">{report.one_liner_conclusion}</p>

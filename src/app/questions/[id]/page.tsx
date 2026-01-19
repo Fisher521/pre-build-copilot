@@ -103,18 +103,18 @@ export default function QuestionsPage() {
 
   const handleFinish = async () => {
     setIsSaving(true)
-    try {
-      await fetch(`/api/conversation/${conversationId}/answers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers }),
-      })
 
-      router.push(`/report/${conversationId}`)
-    } catch (err) {
-      console.error('Save failed:', err)
-      setIsSaving(false)
-    }
+    // 先跳转到报告页面，不等待保存完成
+    router.push(`/report/${conversationId}`)
+
+    // 后台保存答案（fire and forget）
+    fetch(`/api/conversation/${conversationId}/answers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answers }),
+    }).catch(err => {
+      console.error('Save answers failed:', err)
+    })
   }
 
   if (isLoading) {
