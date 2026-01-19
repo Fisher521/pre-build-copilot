@@ -66,8 +66,8 @@ export const translations = {
   // ===== Home Page =====
   home: {
     tagline: {
-      zh: 'Just Start Today - 写代码前，先 vibe 一下',
-      en: 'Just Start Today - Vibe check before you code',
+      zh: 'Just Start Today - vibe 代码前，先 check 下',
+      en: 'Just Start Today - Check before you vibe code',
     },
     socialProof: {
       zh: '已有 <strong>2,000+</strong> 个项目完成评估',

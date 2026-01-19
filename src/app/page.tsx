@@ -153,7 +153,7 @@ export default function HomePage() {
       <div className="text-center mb-10 sm:mb-12 mt-2 sm:mt-4">
         <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Just Start Today</h1>
         <p className="text-base sm:text-lg text-gray-500">
-          {lang === 'zh' ? '写代码前，先 vibe 一下' : 'Vibe check before you code'}
+          {lang === 'zh' ? 'vibe 代码前，先 check 下' : 'Check before you vibe code'}
         </p>
       </div>
 
