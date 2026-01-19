@@ -82,12 +82,8 @@ export const translations = {
       en: 'Your idea is only used for this evaluation and will not be stored or shared',
     },
     inputPlaceholder: {
-      zh: '随便说说你的想法，不用想得太清楚...',
-      en: "Just share your idea, doesn't have to be perfect...",
-    },
-    inputHint: {
-      zh: '按 Enter 发送，Shift+Enter 换行',
-      en: 'Press Enter to send, Shift+Enter for new line',
+      zh: '你的想法仅用于本次评估，不会被存储或分享给第三方',
+      en: 'Your idea is only used for this evaluation and will not be stored or shared',
     },
     analyzing: {
       zh: '分析中...',

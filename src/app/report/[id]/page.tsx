@@ -513,20 +513,17 @@ export default function ReportPage() {
     return 'text-red-600'
   }
 
-  const getScoreBg = (score: number) => {
-    if (score >= 80) return 'bg-green-50 border-green-200'
-    if (score >= 60) return 'bg-primary-50 border-primary-200'
-    if (score >= 40) return 'bg-amber-50 border-amber-200'
-    return 'bg-red-50 border-red-200'
+  const getScoreBg = () => {
+    return 'bg-gray-50 border-gray-200'
   }
 
   const getComplexityLabel = (complexity: string) => {
     const labels = translations.report.complexity
     switch (complexity) {
-      case 'low': return { text: labels.low[lang], color: 'bg-green-100 text-green-700' }
-      case 'medium': return { text: labels.medium[lang], color: 'bg-amber-100 text-amber-700' }
-      case 'high': return { text: labels.high[lang], color: 'bg-red-100 text-red-700' }
-      default: return { text: labels.unknown[lang], color: 'bg-gray-100 text-gray-700' }
+      case 'low': return { text: labels.low[lang], color: 'text-gray-500' }
+      case 'medium': return { text: labels.medium[lang], color: 'text-gray-500' }
+      case 'high': return { text: labels.high[lang], color: 'text-gray-500' }
+      default: return { text: labels.unknown[lang], color: 'text-gray-500' }
     }
   }
 
@@ -647,8 +644,8 @@ export default function ReportPage() {
         <div
           id="score"
           className={cn(
-            'rounded-lg border p-4 sm:p-6 mb-4 sm:mb-6 bg-white scroll-mt-24 sm:scroll-mt-32',
-            getScoreBg(report.score.feasibility),
+            'rounded-lg border p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32',
+            getScoreBg(),
             getRevealClass(1)
           )}
         >
@@ -668,19 +665,19 @@ export default function ReportPage() {
               {/* Score Breakdown - 移动端单列，桌面端双列 */}
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {[
-                  { label: translations.report.scoreBreakdown.tech[lang], value: report.score.breakdown.tech, color: 'bg-indigo-500' },
-                  { label: translations.report.scoreBreakdown.market[lang], value: report.score.breakdown.market, color: 'bg-purple-500' },
-                  { label: translations.report.scoreBreakdown.onboarding[lang], value: report.score.breakdown.onboarding, color: 'bg-pink-500' },
-                  { label: translations.report.scoreBreakdown.userMatch[lang], value: report.score.breakdown.user_match, color: 'bg-cyan-500' },
+                  { label: translations.report.scoreBreakdown.tech[lang], value: report.score.breakdown.tech },
+                  { label: translations.report.scoreBreakdown.market[lang], value: report.score.breakdown.market },
+                  { label: translations.report.scoreBreakdown.onboarding[lang], value: report.score.breakdown.onboarding },
+                  { label: translations.report.scoreBreakdown.userMatch[lang], value: report.score.breakdown.user_match },
                 ].map((item) => (
-                  <div key={item.label} className="bg-gray-50 rounded-md p-2.5 sm:p-3 min-w-0">
+                  <div key={item.label} className="bg-white rounded-md p-2.5 sm:p-3 min-w-0 border border-gray-100">
                     <div className="flex justify-between items-center mb-1.5 gap-1">
                       <span className="text-gray-500 text-sm truncate">{item.label}</span>
-                      <span className="font-bold text-gray-900 text-sm flex-shrink-0">{item.value}</span>
+                      <span className="font-medium text-gray-900 text-sm flex-shrink-0">{item.value}</span>
                     </div>
-                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className={cn('h-full rounded-full transition-all duration-1000', item.color)}
+                        className="h-full rounded-full transition-all duration-1000 bg-gray-400"
                         style={{ width: `${item.value}%` }}
                       />
                     </div>
@@ -694,13 +691,13 @@ export default function ReportPage() {
         {/* Strengths & Risks - 批次2 */}
         <div id="analysis" className={cn("grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32", getRevealClass(2))}>
           <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
               {t('report.whyWorthIt')}
             </h3>
             <ul className="space-y-3">
               {report.why_worth_it.map((item, i) => (
                 <li key={i} className="flex items-start gap-3 text-gray-700">
-                  <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
+                  <span className="text-gray-400 mt-0.5 flex-shrink-0">+</span>
                   <span className="text-sm leading-relaxed break-words">{item}</span>
                 </li>
               ))}
@@ -708,13 +705,13 @@ export default function ReportPage() {
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
               {t('report.risks')}
             </h3>
             <ul className="space-y-3">
               {report.risks.map((item, i) => (
                 <li key={i} className="flex items-start gap-3 text-gray-700">
-                  <span className="text-amber-500 mt-0.5 flex-shrink-0">!</span>
+                  <span className="text-gray-400 mt-0.5 flex-shrink-0">-</span>
                   <span className="text-sm leading-relaxed break-words">{item}</span>
                 </li>
               ))}
@@ -729,15 +726,15 @@ export default function ReportPage() {
             {t('report.marketAnalysis')}
           </h3>
           <div className="space-y-4 sm:space-y-5">
-            <div className="p-4 bg-indigo-50 rounded-md border border-indigo-100">
-              <div className="text-sm font-medium text-indigo-700 mb-2">{t('report.opportunity')}</div>
+            <div className="p-4 bg-gray-50 rounded-md">
+              <div className="text-sm text-gray-500 mb-2">{t('report.opportunity')}</div>
               <p className="text-sm text-gray-700 leading-relaxed">{report.market_analysis.opportunity}</p>
             </div>
 
             {report.market_analysis.search_trends && (
-              <div>
-                <div className="text-sm font-medium text-gray-600 mb-2">{t('report.searchTrends')}</div>
-                <div className="text-sm text-gray-700 bg-gray-50 p-4 rounded-md border border-gray-100 leading-relaxed">
+              <div className="p-4 bg-gray-50 rounded-md">
+                <div className="text-sm text-gray-500 mb-2">{t('report.searchTrends')}</div>
+                <div className="text-sm text-gray-700 leading-relaxed">
                   {report.market_analysis.search_trends}
                 </div>
               </div>
@@ -745,23 +742,23 @@ export default function ReportPage() {
 
             {report.market_analysis.competitors.length > 0 && (
               <CollapsibleSection
-                title={<span className="text-sm font-medium text-gray-600">{t('report.competitors')} ({report.market_analysis.competitors.length})</span>}
+                title={<span className="text-sm text-gray-500">{t('report.competitors')} ({report.market_analysis.competitors.length})</span>}
                 defaultOpen={false}
               >
                 <div className="grid gap-3 sm:gap-4">
                   {report.market_analysis.competitors.map((comp, i) => (
-                    <div key={i} className="p-4 bg-gray-50 border border-gray-100 rounded-md">
+                    <div key={i} className="p-4 bg-gray-50 rounded-md">
                       <div className="flex items-center justify-between mb-3">
                         <div className="font-medium text-base text-gray-900">{comp.name}</div>
                         {comp.url && (
-                          <a href={comp.url} target="_blank" className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline">
+                          <a href={comp.url} target="_blank" className="text-sm text-gray-500 hover:text-gray-700 hover:underline">
                             {t('report.view')} →
                           </a>
                         )}
                       </div>
                       <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
-                        <div className="text-green-600">✓ {comp.pros}</div>
-                        <div className="text-red-500">✗ {comp.cons}</div>
+                        <div className="text-gray-600">+ {comp.pros}</div>
+                        <div className="text-gray-500">- {comp.cons}</div>
                       </div>
                     </div>
                   ))}
@@ -790,20 +787,20 @@ export default function ReportPage() {
                     key={approach.id}
                     onClick={() => setSelectedApproach(approach.id)}
                     className={cn(
-                      'text-left p-4 sm:p-5 rounded-md border-2 transition-all',
+                      'text-left p-4 sm:p-5 rounded-md border transition-all',
                       isSelected
-                        ? 'border-indigo-500 bg-indigo-50'
-                        : 'border-gray-100 bg-white hover:border-indigo-200'
+                        ? 'border-indigo-500 bg-gray-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
                     )}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-base text-gray-900">{approach.name}</span>
                         {isRecommended && (
-                          <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{t('report.recommended')}</span>
+                          <span className="text-xs text-indigo-600 font-medium">{t('report.recommended')}</span>
                         )}
                       </div>
-                      <span className={cn('text-xs px-2 py-0.5 rounded-full flex-shrink-0', complexity.color)}>
+                      <span className="text-xs text-gray-500 flex-shrink-0">
                         {complexity.text}
                       </span>
                     </div>
@@ -813,23 +810,23 @@ export default function ReportPage() {
                       {approach.workflow.slice(0, 3).map((step, idx) => (
                         <span key={idx} className="flex items-center gap-1">
                           <span className="bg-gray-100 px-2 py-1 rounded text-sm">{step.action}</span>
-                          {idx < Math.min(approach.workflow.length, 3) - 1 && <span>→</span>}
+                          {idx < Math.min(approach.workflow.length, 3) - 1 && <span className="text-gray-400">→</span>}
                         </span>
                       ))}
                       {approach.workflow.length > 3 && <span className="text-gray-400">...</span>}
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
-                      <div className="text-green-600">✓ {approach.pros[0]}</div>
-                      <div className="text-amber-600">⚠ {approach.cons[0]}</div>
+                      <div className="text-gray-600">+ {approach.pros[0]}</div>
+                      <div className="text-gray-500">- {approach.cons[0]}</div>
                     </div>
                   </button>
                 )
               })}
             </div>
 
-            <div className="p-4 bg-blue-50 border border-blue-100 rounded-md text-sm text-blue-800 leading-relaxed">
-              <span className="font-medium">{t('report.suggestion')}</span>
+            <div className="p-4 bg-gray-50 rounded-md text-sm text-gray-600 leading-relaxed">
+              <span className="text-gray-500">{t('report.suggestion')}</span>
               {report.product_approaches.recommendation_reason}
             </div>
 
@@ -837,12 +834,12 @@ export default function ReportPage() {
               <CollapsibleSection
                 title={<h4 className="font-medium text-base text-gray-900">{t('report.detailFlow')}</h4>}
                 defaultOpen={false}
-                className="mt-4 sm:mt-5 p-4 sm:p-5 bg-gray-50 rounded-md border border-gray-100"
+                className="mt-4 sm:mt-5 p-4 sm:p-5 bg-gray-50 rounded-md"
               >
                 <div className="space-y-4 sm:space-y-5">
                   {selectedApproachData.workflow.map((step) => (
                     <div key={step.step} className="flex items-start gap-4">
-                      <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-medium flex-shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center text-sm font-medium flex-shrink-0">
                         {step.step}
                       </div>
                       <div>
@@ -855,21 +852,21 @@ export default function ReportPage() {
 
                 <div className="mt-5 sm:mt-6 grid grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <div className="text-sm font-medium text-green-700 mb-3">{t('report.pros')}</div>
+                    <div className="text-sm text-gray-500 mb-3">{t('report.pros')}</div>
                     <ul className="space-y-3">
                       {selectedApproachData.pros.map((pro, i) => (
-                        <li key={i} className="text-sm text-gray-600 flex items-start gap-2 leading-relaxed">
-                          <span className="text-green-500 flex-shrink-0">✓</span> {pro}
+                        <li key={i} className="text-sm text-gray-700 flex items-start gap-2 leading-relaxed">
+                          <span className="text-gray-400 flex-shrink-0">+</span> {pro}
                         </li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-amber-700 mb-3">{t('report.cons')}</div>
+                    <div className="text-sm text-gray-500 mb-3">{t('report.cons')}</div>
                     <ul className="space-y-3">
                       {selectedApproachData.cons.map((con, i) => (
-                        <li key={i} className="text-sm text-gray-600 flex items-start gap-2 leading-relaxed">
-                          <span className="text-amber-500 flex-shrink-0">⚠</span> {con}
+                        <li key={i} className="text-sm text-gray-700 flex items-start gap-2 leading-relaxed">
+                          <span className="text-gray-400 flex-shrink-0">-</span> {con}
                         </li>
                       ))}
                     </ul>
@@ -877,7 +874,7 @@ export default function ReportPage() {
                 </div>
 
                 <div className="mt-5 text-sm text-gray-500">
-                  <span className="font-medium">{t('report.bestFor')}</span>{selectedApproachData.best_for}
+                  <span>{t('report.bestFor')}</span>{selectedApproachData.best_for}
                 </div>
               </CollapsibleSection>
             )}
@@ -901,26 +898,26 @@ export default function ReportPage() {
                     <div className="text-sm text-gray-500 mt-1">{report.tech_options.option_a.fit_for}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="text-green-600 font-medium text-base">{report.tech_options.option_a.cost}</div>
+                    <div className="text-gray-900 font-medium text-base">{report.tech_options.option_a.cost}</div>
                     <div className="text-sm text-gray-500 mt-0.5">{report.tech_options.option_a.dev_time}</div>
                   </div>
                 </div>
               }
               defaultOpen={false}
-              className="border border-gray-200 rounded-md p-4 sm:p-5 bg-gray-50"
+              className="border border-gray-200 rounded-md p-4 sm:p-5"
             >
               {/* Tools with purposes */}
               <div className="mb-4">
-                <div className="text-sm font-medium text-gray-500 mb-3">{t('report.techStack')}</div>
+                <div className="text-sm text-gray-500 mb-3">{t('report.techStack')}</div>
                 <div className="flex flex-wrap gap-2">
                   {(Array.isArray(report.tech_options.option_a.tools) ? report.tech_options.option_a.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                    <div key={i} className="bg-white border border-gray-200 rounded px-3 py-2 text-sm">
+                    <div key={i} className="border border-gray-200 rounded px-3 py-2 text-sm">
                       {typeof tool === 'string' ? (
-                        <span className="font-medium text-gray-700">{tool}</span>
+                        <span className="text-gray-700">{tool}</span>
                       ) : (
                         <>
                           <span className="font-medium text-gray-900">{tool.name}</span>
-                          <span className="text-gray-400 mx-1">·</span>
+                          <span className="text-gray-300 mx-1">·</span>
                           <span className="text-gray-500">{tool.purpose}</span>
                         </>
                       )}
@@ -929,8 +926,8 @@ export default function ReportPage() {
                 </div>
               </div>
 
-              <div className="text-sm text-gray-600 bg-white rounded p-3 border border-gray-100 leading-relaxed">
-                <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_a.capability}
+              <div className="text-sm text-gray-600 leading-relaxed">
+                <span className="text-gray-500">{t('report.capability')}</span>{report.tech_options.option_a.capability}
               </div>
             </CollapsibleSection>
 
@@ -940,29 +937,29 @@ export default function ReportPage() {
                 <div className="flex items-start justify-between w-full pr-6">
                   <div>
                     <div className="font-medium text-base text-gray-900">{report.tech_options.option_b.name}</div>
-                    <div className="text-sm text-blue-600 mt-1">{report.tech_options.option_b.fit_for}</div>
+                    <div className="text-sm text-gray-500 mt-1">{report.tech_options.option_b.fit_for}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="text-green-600 font-medium text-base">{report.tech_options.option_b.cost}</div>
+                    <div className="text-gray-900 font-medium text-base">{report.tech_options.option_b.cost}</div>
                     <div className="text-sm text-gray-500 mt-0.5">{report.tech_options.option_b.dev_time}</div>
                   </div>
                 </div>
               }
               defaultOpen={false}
-              className="border border-blue-200 rounded-md p-4 sm:p-5 bg-blue-50"
+              className="border border-gray-200 rounded-md p-4 sm:p-5"
             >
               {/* Tools with purposes */}
               <div className="mb-4">
-                <div className="text-sm font-medium text-gray-500 mb-3">{t('report.techStack')}</div>
+                <div className="text-sm text-gray-500 mb-3">{t('report.techStack')}</div>
                 <div className="flex flex-wrap gap-2">
                   {(Array.isArray(report.tech_options.option_b.tools) ? report.tech_options.option_b.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                    <div key={i} className="bg-white border border-blue-200 rounded px-3 py-2 text-sm">
+                    <div key={i} className="border border-gray-200 rounded px-3 py-2 text-sm">
                       {typeof tool === 'string' ? (
-                        <span className="font-medium text-gray-700">{tool}</span>
+                        <span className="text-gray-700">{tool}</span>
                       ) : (
                         <>
                           <span className="font-medium text-gray-900">{tool.name}</span>
-                          <span className="text-gray-400 mx-1">·</span>
+                          <span className="text-gray-300 mx-1">·</span>
                           <span className="text-gray-500">{tool.purpose}</span>
                         </>
                       )}
@@ -971,42 +968,43 @@ export default function ReportPage() {
                 </div>
               </div>
 
-              <div className="text-sm text-gray-600 bg-white rounded p-3 border border-blue-100 leading-relaxed">
-                <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_b.capability}
+              <div className="text-sm text-gray-600 leading-relaxed">
+                <span className="text-gray-500">{t('report.capability')}</span>{report.tech_options.option_b.capability}
               </div>
             </CollapsibleSection>
 
             {/* Option C - Vibe Coder Stack */}
             {report.tech_options.option_c && (
-              <div className="border-2 border-indigo-300 rounded-md p-4 sm:p-5 bg-indigo-50 relative">
-                <div className="absolute top-2 right-2 bg-indigo-500 text-white text-xs px-2 py-0.5 rounded">
+              <div className="border border-gray-200 rounded-md p-4 sm:p-5 relative">
+                <div className="absolute top-3 right-3 text-xs text-indigo-600 font-medium">
                   {t('report.recommended')}
                 </div>
-                <div className="flex items-start justify-between mb-4 pr-20 sm:pr-24">
+                <div className="flex items-start justify-between mb-4 pr-16 sm:pr-20">
                   <div>
                     <div className="font-medium text-base text-gray-900">
                       {report.tech_options.option_c.name}
                     </div>
-                    <div className="text-sm text-indigo-600 mt-1">{report.tech_options.option_c.fit_for}</div>
+                    <div className="text-sm text-gray-500 mt-1">{report.tech_options.option_c.fit_for}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="text-green-600 font-medium text-base">{report.tech_options.option_c.cost}</div>
+                    <div className="text-gray-900 font-medium text-base">{report.tech_options.option_c.cost}</div>
                     <div className="text-sm text-gray-500 mt-0.5">{report.tech_options.option_c.dev_time}</div>
                   </div>
                 </div>
 
-                {/* Tools with purposes - highlighted */}
+                {/* Tools with purposes */}
                 <div className="mb-4">
-                  <div className="text-sm font-medium text-indigo-600 mb-3">{t('report.vibeToolchain')}</div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="text-sm text-gray-500 mb-3">{t('report.vibeToolchain')}</div>
+                  <div className="flex flex-wrap gap-2">
                     {(Array.isArray(report.tech_options.option_c.tools) ? report.tech_options.option_c.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
-                      <div key={i} className="bg-white border border-indigo-200 rounded p-3 text-center">
+                      <div key={i} className="border border-gray-200 rounded px-3 py-2 text-sm">
                         {typeof tool === 'string' ? (
-                          <span className="font-medium text-gray-700 text-sm">{tool}</span>
+                          <span className="text-gray-700">{tool}</span>
                         ) : (
                           <>
-                            <div className="font-medium text-indigo-700 text-sm">{tool.name}</div>
-                            <div className="text-sm text-gray-500 mt-1">{tool.purpose}</div>
+                            <span className="font-medium text-gray-900">{tool.name}</span>
+                            <span className="text-gray-300 mx-1">·</span>
+                            <span className="text-gray-500">{tool.purpose}</span>
                           </>
                         )}
                       </div>
@@ -1014,15 +1012,15 @@ export default function ReportPage() {
                   </div>
                 </div>
 
-                <div className="text-sm text-gray-600 bg-white/80 rounded p-3 border border-indigo-100 leading-relaxed">
-                  <span className="font-medium text-gray-700">{t('report.capability')}</span>{report.tech_options.option_c.capability}
+                <div className="text-sm text-gray-600 leading-relaxed">
+                  <span className="text-gray-500">{t('report.capability')}</span>{report.tech_options.option_c.capability}
                 </div>
               </div>
             )}
           </div>
 
-          <div className="mt-5 p-4 bg-blue-50 border border-blue-100 rounded-md text-sm text-blue-800 leading-relaxed">
-            <span className="font-medium">{t('report.suggestion')}</span>
+          <div className="mt-5 p-4 bg-gray-50 rounded-md text-sm text-gray-600 leading-relaxed">
+            <span className="text-gray-500">{t('report.suggestion')}</span>
             {report.tech_options.advice}
           </div>
         </div>
@@ -1036,21 +1034,21 @@ export default function ReportPage() {
           <div className="space-y-4 sm:space-y-5">
             {report.fastest_path.map((step, i) => (
               <div key={i} className="relative pl-10 sm:pl-12">
-                <div className="absolute left-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-medium text-sm">
+                <div className="absolute left-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-medium text-sm">
                   {i + 1}
                 </div>
-                <div className="bg-gray-50 border border-gray-100 rounded-md p-4 sm:p-5">
+                <div className="bg-gray-50 rounded-md p-4 sm:p-5">
                   <div className="font-medium text-base text-gray-900 mb-2">{step.title}</div>
                   <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line mb-4">{step.description}</p>
                   {step.copy_text && (
                     <div
-                      className="bg-white border border-gray-200 p-4 rounded text-sm text-gray-700 mb-4 cursor-pointer hover:bg-gray-50 transition-colors group leading-relaxed whitespace-pre-line"
+                      className="bg-white border border-gray-200 p-4 rounded text-sm text-gray-700 mb-4 cursor-pointer hover:bg-gray-100 transition-colors group leading-relaxed whitespace-pre-line"
                       onClick={() => navigator.clipboard.writeText(step.copy_text!)}
                       title={t('report.clickToCopy')}
                     >
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium text-gray-500">{t('report.copyablePrompt')}</span>
-                        <span className="text-sm text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">{t('report.clickToCopy')}</span>
+                        <span className="text-sm text-gray-500">{t('report.copyablePrompt')}</span>
+                        <span className="text-sm text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">{t('report.clickToCopy')}</span>
                       </div>
                       {step.copy_text}
                     </div>
@@ -1059,7 +1057,7 @@ export default function ReportPage() {
                     <a
                       href={step.action_url}
                       target="_blank"
-                      className="inline-block px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
+                      className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
                     >
                       {step.action_label || t('report.goExecute')}
                     </a>
@@ -1079,13 +1077,13 @@ export default function ReportPage() {
               {t('report.costEstimate')}
             </h3>
             <div className="space-y-4">
-              <div className="p-4 bg-blue-50 rounded-md border border-blue-100">
-                <div className="text-sm font-medium text-blue-600 mb-2">{t('report.timeInvestment')}</div>
-                <div className="text-sm text-gray-800 leading-relaxed">{report.cost_estimate.time_breakdown}</div>
+              <div className="p-4 bg-gray-50 rounded-md">
+                <div className="text-sm text-gray-500 mb-2">{t('report.timeInvestment')}</div>
+                <div className="text-sm text-gray-900 leading-relaxed">{report.cost_estimate.time_breakdown}</div>
               </div>
-              <div className="p-4 bg-green-50 rounded-md border border-green-100">
-                <div className="text-sm font-medium text-green-600 mb-2">{t('report.moneyInvestment')}</div>
-                <div className="text-sm text-gray-800 leading-relaxed">{report.cost_estimate.money_breakdown}</div>
+              <div className="p-4 bg-gray-50 rounded-md">
+                <div className="text-sm text-gray-500 mb-2">{t('report.moneyInvestment')}</div>
+                <div className="text-sm text-gray-900 leading-relaxed">{report.cost_estimate.money_breakdown}</div>
               </div>
             </div>
           </div>
@@ -1097,11 +1095,11 @@ export default function ReportPage() {
             </h3>
             <ul className="space-y-3">
               {report.pitfalls.map((pit, i) => (
-                <li key={i} className="flex items-start gap-3 p-3 bg-orange-50 rounded-md border border-orange-100">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-200 text-orange-700 flex items-center justify-center text-sm font-medium mt-0.5">
+                <li key={i} className="flex items-start gap-3 p-3 bg-gray-50 rounded-md">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-sm font-medium mt-0.5">
                     {i + 1}
                   </span>
-                  <span className="text-sm text-gray-800 leading-relaxed">{pit}</span>
+                  <span className="text-sm text-gray-700 leading-relaxed">{pit}</span>
                 </li>
               ))}
             </ul>
@@ -1125,7 +1123,7 @@ export default function ReportPage() {
                     setFeedbackRating('helpful')
                     setFeedbackModalOpen(true)
                   }}
-                  className="px-5 py-2.5 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 transition-all text-green-700 text-base"
+                  className="px-5 py-2.5 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-all text-gray-700 text-base"
                 >
                   {t('report.feedback.helpful')}
                 </button>
@@ -1134,7 +1132,7 @@ export default function ReportPage() {
                     setFeedbackRating('not_helpful')
                     setFeedbackModalOpen(true)
                   }}
-                  className="px-5 py-2.5 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-all text-gray-600 text-base"
+                  className="px-5 py-2.5 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-all text-gray-700 text-base"
                 >
                   {t('report.feedback.notHelpful')}
                 </button>
@@ -1180,8 +1178,8 @@ export default function ReportPage() {
             className={cn(
               'flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-all',
               copySuccess
-                ? 'bg-green-500 text-white'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-xl'
+                ? 'bg-gray-700 text-white'
+                : 'bg-gray-900 text-white hover:bg-gray-800 hover:shadow-xl'
             )}
           >
             {copySuccess ? (

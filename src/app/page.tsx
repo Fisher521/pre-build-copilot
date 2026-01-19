@@ -161,14 +161,9 @@ export default function HomePage() {
       <div className="w-full max-w-lg">
         <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
           <div className="space-y-3 sm:space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-0.5 sm:mb-1">
-                {t('home.inputLabel')}
-              </label>
-              <p className="text-xs text-gray-400">
-                {t('home.privacyNote')}
-              </p>
-            </div>
+            <label className="block text-base font-medium text-gray-900">
+              {t('home.inputLabel')}
+            </label>
 
             <textarea
               ref={textareaRef}
@@ -193,12 +188,8 @@ export default function HomePage() {
             />
 
             {/* Action row */}
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs text-gray-400 hidden sm:inline">
-                {t('home.inputHint')}
-              </span>
-
-              <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center justify-end gap-2">
+              <div className="flex items-center gap-2">
                 <VoiceButton
                   onTranscript={handleVoiceTranscript}
                   disabled={isLoading}
@@ -208,9 +199,9 @@ export default function HomePage() {
                   onClick={handleSubmit}
                   disabled={isLoading || !input.trim()}
                   className={cn(
-                    'px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap',
-                    'bg-indigo-600 text-white',
-                    'hover:bg-indigo-700 transition-colors',
+                    'px-5 py-2.5 rounded-md text-base font-medium whitespace-nowrap',
+                    'bg-gray-900 text-white',
+                    'hover:bg-gray-800 transition-colors',
                     'disabled:opacity-40 disabled:cursor-not-allowed',
                     'flex items-center gap-2'
                   )}
@@ -230,7 +221,7 @@ export default function HomePage() {
 
           {/* Examples - 完全分开的中英文案例，点击直接使用预置字段 */}
           <div className="mt-4 sm:mt-6 pt-4 sm:pt-5 border-t border-gray-100">
-            <p className="text-xs text-gray-400 mb-2 sm:mb-3">{t('home.hotIdeas')}</p>
+            <p className="text-sm text-gray-400 mb-2 sm:mb-3">{t('home.hotIdeas')}</p>
             <div className="flex flex-wrap gap-2">
               {examples.map((example) => (
                 <button
@@ -243,7 +234,7 @@ export default function HomePage() {
                     }
                   }}
                   disabled={isLoading}
-                  className="px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs text-gray-600 bg-gray-50 hover:bg-indigo-50 hover:text-indigo-600 border border-gray-200 hover:border-indigo-200 rounded-md transition-colors disabled:opacity-50"
+                  className="px-3 py-1.5 text-sm text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md transition-colors disabled:opacity-50"
                 >
                   {example.title}
                 </button>
@@ -255,11 +246,14 @@ export default function HomePage() {
 
       {/* How It Works - hidden on mobile */}
       <div className="mt-8 sm:mt-10 text-center hidden sm:block">
-        <p className="text-xs text-gray-400 mb-4">{t('home.threeSteps')}</p>
-        <div className="flex items-center justify-center gap-4 sm:gap-6 text-xs text-gray-500">
+        <p className="text-sm text-gray-400 mb-5">{t('home.threeSteps')}</p>
+        <div className="flex items-center justify-center gap-6 sm:gap-8 text-sm text-gray-600">
           {steps.map((step, i) => (
-            <div key={step.label[lang]} className="flex items-center gap-4 sm:gap-6">
-              <span>{step.label[lang]}</span>
+            <div key={step.label[lang]} className="flex items-center gap-6 sm:gap-8">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{step.icon}</span>
+                <span>{step.label[lang]}</span>
+              </div>
               {i < 2 && <span className="text-gray-300">→</span>}
             </div>
           ))}
