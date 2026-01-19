@@ -129,8 +129,8 @@ function LoadingProgress({
     <div className="min-h-screen pt-14 sm:pt-16 pb-8 px-4 sm:px-6 bg-gray-50">
       <div className="max-w-lg mx-auto">
         {/* 标题 */}
-        <div className="text-center mb-6 sm:mb-8 mt-4">
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">{t('report.generating')}</h1>
+        <div className="text-center mb-8 sm:mb-10 mt-6">
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">{t('report.generating')}</h1>
           <p className="text-sm text-gray-500">
             {isLastStep
               ? (lang === 'zh' ? '报告生成中，请稍候' : 'Generating report, please wait')
@@ -626,14 +626,16 @@ export default function ReportPage() {
         </button>
 
         {/* 报告卡片容器 */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
           {/* 报告标题 */}
           <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-100 text-center">
             <h1 className="text-lg sm:text-xl font-semibold text-gray-900">{t('report.title')}</h1>
           </div>
+        </div>
 
-          {/* Tab导航 - 吸顶 */}
-          <div className="sticky top-14 z-20 bg-white border-b border-gray-200 shadow-sm overflow-x-auto scrollbar-hide">
+        {/* Tab导航 - 吸顶冻结 */}
+        <div className="sticky top-12 sm:top-14 z-30 -mx-3 sm:-mx-6 px-3 sm:px-6">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-md overflow-x-auto scrollbar-hide">
             <div className="px-3 sm:px-8 py-2.5 sm:py-3 flex gap-1.5 sm:gap-2 sm:justify-center">
               {navSections.map((section) => (
                 <button
@@ -651,8 +653,10 @@ export default function ReportPage() {
               ))}
             </div>
           </div>
+        </div>
 
-          {/* 报告内容区域 */}
+        {/* 报告内容区域 */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm mt-4">
           <div className="px-3 sm:px-6 py-4 sm:py-6">
         {/* Score Card - 批次1 */}
         <div
@@ -906,22 +910,22 @@ export default function ReportPage() {
             {/* Option A - China Stack */}
             <CollapsibleSection
               title={
-                <div className="flex items-start justify-between w-full pr-6 gap-4">
-                  <div>
+                <div className="flex items-start justify-between w-full pr-6 gap-6">
+                  <div className="text-left">
                     <div className="font-medium text-base text-gray-900">{report.tech_options.option_a.name}</div>
                     <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_a.fit_for}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div className="text-gray-900 font-medium text-base">{report.tech_options.option_a.cost}</div>
-                    <div className="text-sm text-gray-500 mt-1">{report.tech_options.option_a.dev_time}</div>
+                    <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_a.dev_time}</div>
                   </div>
                 </div>
               }
               defaultOpen={false}
-              className="border border-gray-200 rounded-md p-4 sm:p-6"
+              className="border border-gray-200 rounded-md p-4 sm:p-6 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all cursor-pointer"
             >
               {/* Tools with purposes */}
-              <div className="mb-4">
+              <div className="mb-5 mt-2">
                 <div className="text-sm font-semibold text-gray-700 mb-3">{t('report.techStack')}</div>
                 <div className="space-y-2">
                   {(Array.isArray(report.tech_options.option_a.tools) ? report.tech_options.option_a.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
@@ -948,22 +952,22 @@ export default function ReportPage() {
             {/* Option B - Global Stack */}
             <CollapsibleSection
               title={
-                <div className="flex items-start justify-between w-full pr-6 gap-4">
-                  <div>
+                <div className="flex items-start justify-between w-full pr-6 gap-6">
+                  <div className="text-left">
                     <div className="font-medium text-base text-gray-900">{report.tech_options.option_b.name}</div>
                     <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_b.fit_for}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div className="text-gray-900 font-medium text-base">{report.tech_options.option_b.cost}</div>
-                    <div className="text-sm text-gray-500 mt-1">{report.tech_options.option_b.dev_time}</div>
+                    <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_b.dev_time}</div>
                   </div>
                 </div>
               }
               defaultOpen={false}
-              className="border border-gray-200 rounded-md p-4 sm:p-6"
+              className="border border-gray-200 rounded-md p-4 sm:p-6 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all cursor-pointer"
             >
               {/* Tools with purposes */}
-              <div className="mb-5">
+              <div className="mb-5 mt-2">
                 <div className="text-sm font-semibold text-gray-700 mb-3">{t('report.techStack')}</div>
                 <div className="space-y-2">
                   {(Array.isArray(report.tech_options.option_b.tools) ? report.tech_options.option_b.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
@@ -989,25 +993,25 @@ export default function ReportPage() {
 
             {/* Option C - Vibe Coder Stack */}
             {report.tech_options.option_c && (
-              <div className="border border-gray-200 rounded-md p-4 sm:p-6 relative">
+              <div className="border border-gray-200 rounded-md p-4 sm:p-6 relative hover:border-indigo-200 hover:bg-indigo-50/50 transition-all cursor-pointer">
                 <div className="absolute top-3 right-3 text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
                   {t('report.recommended')}
                 </div>
-                <div className="flex items-start justify-between mb-6 pr-16 sm:pr-20 gap-4">
-                  <div>
+                <div className="flex items-start justify-between mb-6 pr-16 sm:pr-20 gap-6">
+                  <div className="text-left">
                     <div className="font-medium text-base text-gray-900">
                       {report.tech_options.option_c.name}
                     </div>
-                    <div className="text-sm text-indigo-600 mt-2">{report.tech_options.option_c.fit_for}</div>
+                    <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_c.fit_for}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="text-indigo-600 font-medium text-base">{report.tech_options.option_c.cost}</div>
-                    <div className="text-sm text-gray-500 mt-1">{report.tech_options.option_c.dev_time}</div>
+                    <div className="text-gray-900 font-medium text-base">{report.tech_options.option_c.cost}</div>
+                    <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_c.dev_time}</div>
                   </div>
                 </div>
 
                 {/* Tools with purposes */}
-                <div className="mb-5">
+                <div className="mb-5 mt-2">
                   <div className="text-sm font-semibold text-gray-700 mb-3">{t('report.vibeToolchain')}</div>
                   <div className="space-y-2">
                     {(Array.isArray(report.tech_options.option_c.tools) ? report.tech_options.option_c.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
