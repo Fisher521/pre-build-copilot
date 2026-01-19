@@ -264,6 +264,9 @@ export default function ReportPage() {
   const REVEAL_DELAY = 200 // 每批间隔时间(ms)
   const TOTAL_REVEAL_STEPS = 7
 
+  // 当前活动的导航区块
+  const [activeSection, setActiveSection] = useState('score')
+
   // 模拟进度推进 - 只增不减
   useEffect(() => {
     if (!isLoading) return
@@ -580,8 +583,33 @@ export default function ReportPage() {
   ]
 
   const scrollToSection = (id: string) => {
+    setActiveSection(id)
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
+
+  // 滚动监听 - 检测当前可见区块
+  useEffect(() => {
+    if (isLoading) return
+
+    const sectionIds = ['score', 'analysis', 'market', 'approach', 'tech', 'path', 'cost']
+
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 150 // 偏移量，考虑固定导航
+
+      for (let i = sectionIds.length - 1; i >= 0; i--) {
+        const section = document.getElementById(sectionIds[i])
+        if (section && section.offsetTop <= scrollPosition) {
+          setActiveSection(sectionIds[i])
+          break
+        }
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll() // 初始化
+
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [isLoading])
 
   return (
     <div className="min-h-screen pt-14 sm:pt-14 bg-gray-50">
@@ -611,7 +639,12 @@ export default function ReportPage() {
                 <button
                   key={section.id}
                   onClick={() => scrollToSection(section.id)}
-                  className="px-3 sm:px-4 py-2 text-sm text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 rounded-lg whitespace-nowrap transition-all flex-shrink-0 border border-transparent hover:border-indigo-200 cursor-pointer"
+                  className={cn(
+                    "px-3 sm:px-4 py-2 text-sm rounded-lg whitespace-nowrap transition-all flex-shrink-0 border cursor-pointer",
+                    activeSection === section.id
+                      ? "text-indigo-600 bg-indigo-50 border-indigo-200 font-medium"
+                      : "text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 border-transparent hover:border-indigo-200"
+                  )}
                 >
                   {section.label}
                 </button>
@@ -833,7 +866,7 @@ export default function ReportPage() {
 
                 <div className="mt-5 sm:mt-6 grid grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <div className="text-sm text-gray-500 mb-3">{t('report.pros')}</div>
+                    <div className="text-sm font-semibold text-gray-700 mb-3">{t('report.pros')}</div>
                     <ul className="space-y-3">
                       {selectedApproachData.pros.map((pro, i) => (
                         <li key={i} className="text-sm text-gray-700 flex items-start gap-2 leading-relaxed">
@@ -843,7 +876,7 @@ export default function ReportPage() {
                     </ul>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 mb-3">{t('report.cons')}</div>
+                    <div className="text-sm font-semibold text-gray-700 mb-3">{t('report.cons')}</div>
                     <ul className="space-y-3">
                       {selectedApproachData.cons.map((con, i) => (
                         <li key={i} className="text-sm text-gray-700 flex items-start gap-2 leading-relaxed">
