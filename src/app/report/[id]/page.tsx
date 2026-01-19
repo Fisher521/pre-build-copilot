@@ -205,9 +205,9 @@ function LoadingProgress({
           </div>
         </div>
 
-        {/* 提示语卡片 - 合并所有提示到一个区域 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-          <p className="text-gray-600 text-sm">
+        {/* 提示语 */}
+        <div className="text-center mt-6">
+          <p className="text-gray-500 text-sm">
             💡 {waitingTips[tipIndex][lang]}
           </p>
         </div>
