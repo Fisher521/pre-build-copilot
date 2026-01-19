@@ -66,11 +66,13 @@ Please optimize the text while preserving the original meaning. Output ONLY the 
 }
 
 export async function POST(request: NextRequest) {
+  let language = 'zh' // Default language, defined outside try for catch block access
+
   try {
     const formData = await request.formData()
     const audioFile = formData.get('audio') as Blob | null
     const skipOptimize = formData.get('skipOptimize') === 'true'
-    const language = (formData.get('language') as string) || 'zh'
+    language = (formData.get('language') as string) || 'zh'
 
     if (!audioFile) {
       return NextResponse.json(
