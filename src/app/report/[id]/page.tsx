@@ -11,6 +11,49 @@ import type { VibeReport, ProductApproach } from '@/lib/types'
 // 加载步骤配置 - 使用翻译
 const LOADING_STEPS_DURATION = [3000, 5000, 4000, 3000, 3000, 2000]
 
+// 可折叠区块组件 - 仅移动端可折叠
+function CollapsibleSection({
+  title,
+  children,
+  defaultOpen = true,
+  className = '',
+}: {
+  title: React.ReactNode
+  children: React.ReactNode
+  defaultOpen?: boolean
+  className?: string
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+
+  return (
+    <div className={className}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between sm:cursor-default"
+      >
+        <span>{title}</span>
+        <svg
+          className={cn(
+            'w-5 h-5 text-gray-400 transition-transform sm:hidden',
+            isOpen && 'rotate-180'
+          )}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      <div className={cn(
+        'overflow-hidden transition-all duration-300',
+        isOpen ? 'max-h-[2000px] opacity-100 mt-3 sm:mt-4' : 'max-h-0 opacity-0 sm:max-h-[2000px] sm:opacity-100 sm:mt-4'
+      )}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
 // 进度加载组件
 function LoadingProgress({
   currentStep,
@@ -469,9 +512,8 @@ export default function ReportPage() {
         {/* 报告卡片容器 */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           {/* 报告标题 */}
-          <div className="px-4 sm:px-8 py-5 sm:py-6 border-b border-gray-100 text-center">
+          <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-100 text-center">
             <h1 className="text-lg sm:text-xl font-semibold text-gray-900">{t('report.title')}</h1>
-            <p className="text-xs sm:text-sm text-gray-400 mt-1">justart.today</p>
           </div>
 
           {/* Tab导航 - 吸顶 */}
@@ -495,11 +537,11 @@ export default function ReportPage() {
         <div
           id="score"
           className={cn(
-            'rounded-lg border p-3 sm:p-6 mb-3 sm:mb-6 bg-white scroll-mt-24 sm:scroll-mt-32',
+            'rounded-lg border p-4 sm:p-6 mb-4 sm:mb-6 bg-white scroll-mt-24 sm:scroll-mt-32',
             getScoreBg(report.score.feasibility)
           )}
         >
-          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
             {/* Score Ring */}
             <div className="flex-shrink-0">
               <ScoreRing score={report.score.feasibility} size={100} strokeWidth={8} />
@@ -507,25 +549,25 @@ export default function ReportPage() {
 
             {/* Score Details */}
             <div className="flex-1 text-center sm:text-left w-full min-w-0">
-              <div className="text-xs sm:text-sm text-gray-500 mb-1">{t('report.feasibilityScore')}</div>
-              <div className="bg-white/80 rounded-md p-2.5 sm:p-4 border border-gray-100 mb-3 sm:mb-4">
-                <p className="text-sm sm:text-base font-medium text-gray-800 break-words sm:leading-relaxed">{report.one_liner_conclusion}</p>
+              <div className="text-sm text-gray-500 mb-1">{t('report.feasibilityScore')}</div>
+              <div className="bg-white/80 rounded-md p-3 sm:p-4 border border-gray-100 mb-4">
+                <p className="text-base font-medium text-gray-800 break-words leading-relaxed">{report.one_liner_conclusion}</p>
               </div>
 
               {/* Score Breakdown - 移动端单列，桌面端双列 */}
-              <div className="grid grid-cols-2 gap-1.5 sm:gap-3 text-sm">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {[
                   { label: translations.report.scoreBreakdown.tech[lang], value: report.score.breakdown.tech, color: 'bg-indigo-500' },
                   { label: translations.report.scoreBreakdown.market[lang], value: report.score.breakdown.market, color: 'bg-purple-500' },
                   { label: translations.report.scoreBreakdown.onboarding[lang], value: report.score.breakdown.onboarding, color: 'bg-pink-500' },
                   { label: translations.report.scoreBreakdown.userMatch[lang], value: report.score.breakdown.user_match, color: 'bg-cyan-500' },
                 ].map((item) => (
-                  <div key={item.label} className="bg-gray-50 rounded-md p-2 sm:p-3 min-w-0">
-                    <div className="flex justify-between items-center mb-1 sm:mb-1.5 gap-1">
-                      <span className="text-gray-500 text-xs sm:text-sm truncate">{item.label}</span>
-                      <span className="font-bold text-gray-900 text-xs sm:text-sm flex-shrink-0">{item.value}</span>
+                  <div key={item.label} className="bg-gray-50 rounded-md p-2.5 sm:p-3 min-w-0">
+                    <div className="flex justify-between items-center mb-1.5 gap-1">
+                      <span className="text-gray-500 text-sm truncate">{item.label}</span>
+                      <span className="font-bold text-gray-900 text-sm flex-shrink-0">{item.value}</span>
                     </div>
-                    <div className="h-1 sm:h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className={cn('h-full rounded-full transition-all duration-1000', item.color)}
                         style={{ width: `${item.value}%` }}
@@ -539,30 +581,30 @@ export default function ReportPage() {
         </div>
 
         {/* Strengths & Risks */}
-        <div id="analysis" className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mb-3 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
-          <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-6">
-            <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+        <div id="analysis" className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32">
+          <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
               {t('report.whyWorthIt')}
             </h3>
-            <ul className="space-y-2 sm:space-y-3">
+            <ul className="space-y-3">
               {report.why_worth_it.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 sm:gap-3 text-gray-700">
+                <li key={i} className="flex items-start gap-3 text-gray-700">
                   <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
-                  <span className="text-xs sm:text-sm sm:leading-relaxed break-words">{item}</span>
+                  <span className="text-sm leading-relaxed break-words">{item}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-6">
-            <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+          <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
               {t('report.risks')}
             </h3>
-            <ul className="space-y-2 sm:space-y-3">
+            <ul className="space-y-3">
               {report.risks.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 sm:gap-3 text-gray-700">
+                <li key={i} className="flex items-start gap-3 text-gray-700">
                   <span className="text-amber-500 mt-0.5 flex-shrink-0">!</span>
-                  <span className="text-xs sm:text-sm sm:leading-relaxed break-words">{item}</span>
+                  <span className="text-sm leading-relaxed break-words">{item}</span>
                 </li>
               ))}
             </ul>
@@ -988,6 +1030,7 @@ export default function ReportPage() {
           conversationId={conversationId}
           reportScore={report.score.feasibility}
           onSubmitSuccess={() => setFeedbackSubmitted(true)}
+          lang={lang}
         />
 
         {/* Actions */}

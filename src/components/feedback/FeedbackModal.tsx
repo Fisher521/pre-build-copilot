@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { Language } from '@/lib/i18n/translations'
 
 interface FeedbackModalProps {
   isOpen: boolean
@@ -10,26 +11,54 @@ interface FeedbackModalProps {
   conversationId: string
   reportScore?: number
   onSubmitSuccess?: () => void
+  lang?: Language
 }
 
-// Predefined reasons based on rating
+// Predefined reasons based on rating with i18n support
 const HELPFUL_REASONS = [
-  { id: 'accurate_analysis', label: '分析准确' },
-  { id: 'useful_tools', label: '工具推荐有用' },
-  { id: 'clear_steps', label: '步骤清晰' },
-  { id: 'cost_estimate', label: '成本估算合理' },
-  { id: 'risk_warning', label: '风险提示到位' },
-  { id: 'saved_time', label: '节省了我的时间' },
+  { id: 'accurate_analysis', label: { zh: '分析准确', en: 'Accurate analysis' } },
+  { id: 'useful_tools', label: { zh: '工具推荐有用', en: 'Useful tool recommendations' } },
+  { id: 'clear_steps', label: { zh: '步骤清晰', en: 'Clear steps' } },
+  { id: 'cost_estimate', label: { zh: '成本估算合理', en: 'Reasonable cost estimate' } },
+  { id: 'risk_warning', label: { zh: '风险提示到位', en: 'Good risk warnings' } },
+  { id: 'saved_time', label: { zh: '节省了我的时间', en: 'Saved my time' } },
 ]
 
 const NOT_HELPFUL_REASONS = [
-  { id: 'inaccurate', label: '分析不准确' },
-  { id: 'wrong_tools', label: '工具推荐不合适' },
-  { id: 'too_generic', label: '建议太笼统' },
-  { id: 'missing_info', label: '缺少关键信息' },
-  { id: 'wrong_cost', label: '成本估算偏差大' },
-  { id: 'not_practical', label: '方案不可行' },
+  { id: 'inaccurate', label: { zh: '分析不准确', en: 'Inaccurate analysis' } },
+  { id: 'wrong_tools', label: { zh: '工具推荐不合适', en: 'Wrong tool recommendations' } },
+  { id: 'too_generic', label: { zh: '建议太笼统', en: 'Too generic suggestions' } },
+  { id: 'missing_info', label: { zh: '缺少关键信息', en: 'Missing key information' } },
+  { id: 'wrong_cost', label: { zh: '成本估算偏差大', en: 'Inaccurate cost estimate' } },
+  { id: 'not_practical', label: { zh: '方案不可行', en: 'Impractical approach' } },
 ]
+
+// Modal text translations
+const modalText = {
+  header: {
+    helpful: { zh: '很高兴对你有帮助！', en: 'Glad it was helpful!' },
+    notHelpful: { zh: '抱歉没能帮到你', en: "Sorry it wasn't helpful" },
+  },
+  subheader: {
+    helpful: { zh: '告诉我们哪里做得好', en: 'Tell us what we did well' },
+    notHelpful: { zh: '告诉我们哪里需要改进', en: 'Tell us how to improve' },
+  },
+  selectReason: { zh: '选择原因（可多选）', en: 'Select reasons (multiple allowed)' },
+  additionalComment: { zh: '补充说明（可选）', en: 'Additional comments (optional)' },
+  placeholderHelpful: { zh: '还有什么特别喜欢的地方？', en: 'What else did you like?' },
+  placeholderNotHelpful: { zh: '具体哪里可以改进？你期望看到什么？', en: 'What could be improved? What did you expect?' },
+  privacyNote: {
+    zh: '你的反馈完全匿名，不会关联到你的项目想法。我们只统计改进方向，不记录具体内容。',
+    en: 'Your feedback is completely anonymous and not linked to your project. We only track improvement areas.'
+  },
+  errorRequired: { zh: '请至少选择一个原因或填写反馈', en: 'Please select at least one reason or provide feedback' },
+  errorSubmit: { zh: '提交失败，请重试', en: 'Submission failed, please try again' },
+  cancel: { zh: '取消', en: 'Cancel' },
+  submitting: { zh: '提交中...', en: 'Submitting...' },
+  submit: { zh: '提交反馈', en: 'Submit Feedback' },
+  successTitle: { zh: '感谢你的反馈！', en: 'Thanks for your feedback!' },
+  successDesc: { zh: '你的意见将帮助我们改进产品', en: 'Your input helps us improve the product' },
+}
 
 export function FeedbackModal({
   isOpen,
@@ -38,6 +67,7 @@ export function FeedbackModal({
   conversationId,
   reportScore,
   onSubmitSuccess,
+  lang = 'zh',
 }: FeedbackModalProps) {
   const [selectedReasons, setSelectedReasons] = useState<string[]>([])
   const [comment, setComment] = useState('')
@@ -46,6 +76,7 @@ export function FeedbackModal({
   const [error, setError] = useState<string | null>(null)
 
   const reasons = rating === 'helpful' ? HELPFUL_REASONS : NOT_HELPFUL_REASONS
+  const txt = (key: keyof typeof modalText) => modalText[key][lang]
 
   const toggleReason = (reasonId: string) => {
     setSelectedReasons(prev =>
@@ -57,7 +88,7 @@ export function FeedbackModal({
 
   const handleSubmit = async () => {
     if (selectedReasons.length === 0 && !comment.trim()) {
-      setError('请至少选择一个原因或填写反馈')
+      setError(txt('errorRequired'))
       return
     }
 
@@ -93,7 +124,7 @@ export function FeedbackModal({
         onClose()
       }, 2000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : '提交失败，请重试')
+      setError(err instanceof Error ? err.message : txt('errorSubmit'))
     } finally {
       setIsSubmitting(false)
     }
@@ -117,8 +148,8 @@ export function FeedbackModal({
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
               <span className="text-3xl">🎉</span>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">感谢你的反馈！</h3>
-            <p className="text-gray-500">你的意见将帮助我们改进产品</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">{txt('successTitle')}</h3>
+            <p className="text-gray-500">{txt('successDesc')}</p>
           </div>
         ) : (
           <>
@@ -133,10 +164,10 @@ export function FeedbackModal({
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    {rating === 'helpful' ? '很高兴对你有帮助！' : '抱歉没能帮到你'}
+                    {rating === 'helpful' ? modalText.header.helpful[lang] : modalText.header.notHelpful[lang]}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    {rating === 'helpful' ? '告诉我们哪里做得好' : '告诉我们哪里需要改进'}
+                    {rating === 'helpful' ? modalText.subheader.helpful[lang] : modalText.subheader.notHelpful[lang]}
                   </p>
                 </div>
               </div>
@@ -152,7 +183,7 @@ export function FeedbackModal({
 
             {/* Reason selection */}
             <div className="mb-4">
-              <p className="text-sm font-medium text-gray-700 mb-3">选择原因（可多选）</p>
+              <p className="text-sm font-medium text-gray-700 mb-3">{txt('selectReason')}</p>
               <div className="flex flex-wrap gap-2">
                 {reasons.map((reason) => (
                   <button
@@ -165,7 +196,7 @@ export function FeedbackModal({
                         : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                     )}
                   >
-                    {reason.label}
+                    {reason.label[lang]}
                   </button>
                 ))}
               </div>
@@ -174,14 +205,14 @@ export function FeedbackModal({
             {/* Comment input */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                补充说明（可选）
+                {txt('additionalComment')}
               </label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder={rating === 'helpful'
-                  ? '还有什么特别喜欢的地方？'
-                  : '具体哪里可以改进？你期望看到什么？'
+                  ? txt('placeholderHelpful')
+                  : txt('placeholderNotHelpful')
                 }
                 rows={3}
                 className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-primary-500 focus:outline-none resize-none"
@@ -192,7 +223,7 @@ export function FeedbackModal({
             <div className="mb-6 p-3 bg-gray-50 rounded-lg">
               <p className="text-xs text-gray-500 flex items-start gap-2">
                 <span className="flex-shrink-0">🔒</span>
-                <span>你的反馈完全匿名，不会关联到你的项目想法。我们只统计改进方向，不记录具体内容。</span>
+                <span>{txt('privacyNote')}</span>
               </p>
             </div>
 
@@ -209,7 +240,7 @@ export function FeedbackModal({
                 onClick={onClose}
                 className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
               >
-                取消
+                {txt('cancel')}
               </button>
               <button
                 onClick={handleSubmit}
@@ -222,7 +253,7 @@ export function FeedbackModal({
                   'disabled:opacity-50'
                 )}
               >
-                {isSubmitting ? '提交中...' : '提交反馈'}
+                {isSubmitting ? txt('submitting') : txt('submit')}
               </button>
             </div>
           </>

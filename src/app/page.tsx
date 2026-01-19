@@ -151,14 +151,7 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col items-center sm:justify-center px-4 py-4 sm:p-6 bg-gray-50 pt-16 sm:pt-14">
       {/* Hero Section - more compact on mobile */}
       <div className="text-center mb-4 sm:mb-8">
-        <h1 className="text-lg sm:text-2xl font-semibold text-gray-900 mb-0.5 sm:mb-2">justart.today</h1>
-        <p className="text-xs sm:text-base text-gray-500">{t('home.tagline')}</p>
-
-        {/* Social Proof */}
-        <p
-          className="mt-1 sm:mt-3 text-xs sm:text-sm text-gray-400"
-          dangerouslySetInnerHTML={{ __html: t('home.socialProof') }}
-        />
+        <p className="text-sm sm:text-base text-gray-600">{t('home.tagline')}</p>
       </div>
 
       {/* Main Input Card */}
