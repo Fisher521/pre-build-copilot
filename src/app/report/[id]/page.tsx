@@ -421,6 +421,30 @@ export default function ReportPage() {
     generateReport()
   }, [conversationId, retryCount])
 
+  // 滚动监听 - 检测当前可见区块
+  useEffect(() => {
+    if (isLoading) return
+
+    const sectionIds = ['score', 'analysis', 'market', 'approach', 'tech', 'path', 'cost']
+
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 150 // 偏移量，考虑固定导航
+
+      for (let i = sectionIds.length - 1; i >= 0; i--) {
+        const section = document.getElementById(sectionIds[i])
+        if (section && section.offsetTop <= scrollPosition) {
+          setActiveSection(sectionIds[i])
+          break
+        }
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll() // 初始化
+
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [isLoading])
+
   const handleRestart = () => {
     router.push('/')
   }
@@ -587,30 +611,6 @@ export default function ReportPage() {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  // 滚动监听 - 检测当前可见区块
-  useEffect(() => {
-    if (isLoading) return
-
-    const sectionIds = ['score', 'analysis', 'market', 'approach', 'tech', 'path', 'cost']
-
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY + 150 // 偏移量，考虑固定导航
-
-      for (let i = sectionIds.length - 1; i >= 0; i--) {
-        const section = document.getElementById(sectionIds[i])
-        if (section && section.offsetTop <= scrollPosition) {
-          setActiveSection(sectionIds[i])
-          break
-        }
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    handleScroll() // 初始化
-
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [isLoading])
-
   return (
     <div className="min-h-screen pt-14 sm:pt-14 bg-gray-50">
       <div className="max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
@@ -756,23 +756,23 @@ export default function ReportPage() {
 
             {report.market_analysis.competitors.length > 0 && (
               <CollapsibleSection
-                title={<span className="text-sm text-gray-500">{t('report.competitors')} ({report.market_analysis.competitors.length})</span>}
+                title={<span className="text-sm font-semibold text-gray-700">{t('report.competitors')} ({report.market_analysis.competitors.length})</span>}
                 defaultOpen={false}
               >
                 <div className="grid gap-3 sm:gap-4">
                   {report.market_analysis.competitors.map((comp, i) => (
-                    <div key={i} className="p-4 bg-gray-50 rounded-md">
+                    <div key={i} className="p-4 bg-gray-50 rounded-md border border-transparent hover:border-gray-200 hover:bg-white transition-all cursor-default">
                       <div className="flex items-center justify-between mb-3">
-                        <div className="font-medium text-base text-gray-900">{comp.name}</div>
+                        <div className="font-semibold text-base text-gray-900">{comp.name}</div>
                         {comp.url && (
-                          <a href={comp.url} target="_blank" className="text-sm text-gray-500 hover:text-gray-700 hover:underline">
+                          <a href={comp.url} target="_blank" className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline transition-colors">
                             {t('report.view')} →
                           </a>
                         )}
                       </div>
                       <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
-                        <div className="text-gray-600">+ {comp.pros}</div>
-                        <div className="text-gray-500">- {comp.cons}</div>
+                        <div className="text-gray-600"><span className="text-green-600 font-medium">+</span> {comp.pros}</div>
+                        <div className="text-gray-500"><span className="text-gray-400 font-medium">-</span> {comp.cons}</div>
                       </div>
                     </div>
                   ))}
@@ -840,7 +840,7 @@ export default function ReportPage() {
             </div>
 
             <div className="p-4 bg-gray-50 rounded-md text-sm text-gray-600 leading-relaxed">
-              <span className="text-gray-500">{t('report.suggestion')}</span>
+              <span className="font-semibold text-gray-700">{t('report.suggestion')}</span>
               {report.product_approaches.recommendation_reason}
             </div>
 
@@ -853,11 +853,11 @@ export default function ReportPage() {
                 <div className="space-y-4 sm:space-y-5">
                   {selectedApproachData.workflow.map((step) => (
                     <div key={step.step} className="flex items-start gap-4">
-                      <div className="w-7 h-7 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center text-sm font-medium flex-shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-semibold flex-shrink-0">
                         {step.step}
                       </div>
                       <div>
-                        <div className="font-medium text-base text-gray-900">{step.action}</div>
+                        <div className="font-semibold text-base text-gray-900">{step.action}</div>
                         <div className="text-sm text-gray-600 mt-1 leading-relaxed">{step.detail}</div>
                       </div>
                     </div>
@@ -870,7 +870,7 @@ export default function ReportPage() {
                     <ul className="space-y-3">
                       {selectedApproachData.pros.map((pro, i) => (
                         <li key={i} className="text-sm text-gray-700 flex items-start gap-2 leading-relaxed">
-                          <span className="text-gray-400 flex-shrink-0">+</span> {pro}
+                          <span className="text-green-600 font-medium flex-shrink-0">+</span> {pro}
                         </li>
                       ))}
                     </ul>
@@ -880,7 +880,7 @@ export default function ReportPage() {
                     <ul className="space-y-3">
                       {selectedApproachData.cons.map((con, i) => (
                         <li key={i} className="text-sm text-gray-700 flex items-start gap-2 leading-relaxed">
-                          <span className="text-gray-400 flex-shrink-0">-</span> {con}
+                          <span className="text-orange-500 font-medium flex-shrink-0">-</span> {con}
                         </li>
                       ))}
                     </ul>
@@ -888,7 +888,7 @@ export default function ReportPage() {
                 </div>
 
                 <div className="mt-5 text-sm text-gray-500">
-                  <span>{t('report.bestFor')}</span>{selectedApproachData.best_for}
+                  <span className="font-semibold text-gray-700">{t('report.bestFor')}</span>{selectedApproachData.best_for}
                 </div>
               </CollapsibleSection>
             )}
@@ -922,7 +922,7 @@ export default function ReportPage() {
             >
               {/* Tools with purposes */}
               <div className="mb-4">
-                <div className="text-sm text-gray-500 mb-3">{t('report.techStack')}</div>
+                <div className="text-sm font-semibold text-gray-700 mb-3">{t('report.techStack')}</div>
                 <div className="space-y-2">
                   {(Array.isArray(report.tech_options.option_a.tools) ? report.tech_options.option_a.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
                     <div key={i} className="border border-gray-200 rounded px-3 py-2.5 text-sm">
@@ -941,7 +941,7 @@ export default function ReportPage() {
               </div>
 
               <div className="text-sm text-gray-600 leading-relaxed">
-                <span className="text-gray-500">{t('report.capability')}</span>{report.tech_options.option_a.capability}
+                <span className="font-semibold text-gray-700">{t('report.capability')}</span>{report.tech_options.option_a.capability}
               </div>
             </CollapsibleSection>
 
@@ -964,7 +964,7 @@ export default function ReportPage() {
             >
               {/* Tools with purposes */}
               <div className="mb-5">
-                <div className="text-sm text-gray-500 mb-3">{t('report.techStack')}</div>
+                <div className="text-sm font-semibold text-gray-700 mb-3">{t('report.techStack')}</div>
                 <div className="space-y-2">
                   {(Array.isArray(report.tech_options.option_b.tools) ? report.tech_options.option_b.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
                     <div key={i} className="border border-gray-200 rounded px-3 py-2.5 text-sm">
@@ -983,7 +983,7 @@ export default function ReportPage() {
               </div>
 
               <div className="text-sm text-gray-600 leading-relaxed">
-                <span className="text-gray-500">{t('report.capability')}</span>{report.tech_options.option_b.capability}
+                <span className="font-semibold text-gray-700">{t('report.capability')}</span>{report.tech_options.option_b.capability}
               </div>
             </CollapsibleSection>
 
@@ -1008,7 +1008,7 @@ export default function ReportPage() {
 
                 {/* Tools with purposes */}
                 <div className="mb-5">
-                  <div className="text-sm text-gray-500 mb-3">{t('report.vibeToolchain')}</div>
+                  <div className="text-sm font-semibold text-gray-700 mb-3">{t('report.vibeToolchain')}</div>
                   <div className="space-y-2">
                     {(Array.isArray(report.tech_options.option_c.tools) ? report.tech_options.option_c.tools : []).map((tool: string | { name: string; purpose: string }, i: number) => (
                       <div key={i} className="border border-gray-200 rounded px-3 py-2.5 text-sm">
@@ -1027,14 +1027,14 @@ export default function ReportPage() {
                 </div>
 
                 <div className="text-sm text-gray-600 leading-relaxed">
-                  <span className="text-gray-500">{t('report.capability')}</span>{report.tech_options.option_c.capability}
+                  <span className="font-semibold text-gray-700">{t('report.capability')}</span>{report.tech_options.option_c.capability}
                 </div>
               </div>
             )}
           </div>
 
           <div className="mt-5 p-4 bg-gray-50 rounded-md text-sm text-gray-600 leading-relaxed">
-            <span className="text-gray-500">{t('report.suggestion')}</span>
+            <span className="font-semibold text-gray-700">{t('report.suggestion')}</span>
             {report.tech_options.advice}
           </div>
         </div>
