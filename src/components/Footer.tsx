@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { cn } from '@/lib/utils'
 
@@ -8,6 +9,29 @@ export function Footer() {
   const { language, setLanguage } = useLanguage()
   const [showLangMenu, setShowLangMenu] = useState(false)
   const langMenuRef = useRef<HTMLDivElement>(null)
+  const pathname = usePathname()
+  const router = useRouter()
+
+  // Check if on a page that has language-specific generated content
+  const isOnGeneratedPage = pathname.startsWith('/report/') ||
+                            pathname.startsWith('/review/') ||
+                            pathname.startsWith('/questions/')
+
+  // Handle language change - redirect to home if on generated content page
+  const handleLanguageChange = (lang: 'zh' | 'en') => {
+    if (lang === language) {
+      setShowLangMenu(false)
+      return
+    }
+
+    setLanguage(lang)
+    setShowLangMenu(false)
+
+    // Redirect to home if on a page with generated content
+    if (isOnGeneratedPage) {
+      router.push('/')
+    }
+  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -43,10 +67,7 @@ export function Footer() {
             {showLangMenu && (
               <div className="absolute bottom-full left-0 mb-1 w-28 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                 <button
-                  onClick={() => {
-                    setLanguage('zh')
-                    setShowLangMenu(false)
-                  }}
+                  onClick={() => handleLanguageChange('zh')}
                   className={cn(
                     'w-full px-3 py-2 text-sm text-left hover:bg-gray-50 transition-colors',
                     language === 'zh' ? 'text-gray-900 font-medium' : 'text-gray-600'
@@ -55,10 +76,7 @@ export function Footer() {
                   中文
                 </button>
                 <button
-                  onClick={() => {
-                    setLanguage('en')
-                    setShowLangMenu(false)
-                  }}
+                  onClick={() => handleLanguageChange('en')}
                   className={cn(
                     'w-full px-3 py-2 text-sm text-left hover:bg-gray-50 transition-colors',
                     language === 'en' ? 'text-gray-900 font-medium' : 'text-gray-600'
