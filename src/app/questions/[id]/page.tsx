@@ -201,8 +201,8 @@ export default function QuestionsPage() {
                 selectedOption.feedback.type === 'warning'
                   ? "bg-amber-50 border-amber-200 text-amber-800"
                   : selectedOption.feedback.type === 'positive'
-                    ? "bg-green-50 border-green-200 text-green-800"
-                    : "bg-blue-50 border-blue-200 text-blue-800"
+                    ? "bg-indigo-50 border-indigo-200 text-indigo-800"
+                    : "bg-indigo-50 border-indigo-200 text-indigo-800"
               )}>
                 <p className="leading-relaxed">{selectedOption.feedback.message}</p>
               </div>

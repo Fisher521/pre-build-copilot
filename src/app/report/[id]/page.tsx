@@ -129,8 +129,8 @@ function LoadingProgress({
     <div className="min-h-screen pt-14 sm:pt-16 pb-8 px-4 sm:px-6 bg-gray-50">
       <div className="max-w-lg mx-auto">
         {/* 标题 */}
-        <div className="text-center mb-8 sm:mb-10 mt-6">
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">{t('report.generating')}</h1>
+        <div className="text-center mb-10 sm:mb-12 mt-8">
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">{t('report.generating')}</h1>
           <p className="text-sm text-gray-500">
             {isLastStep
               ? (lang === 'zh' ? '报告生成中，请稍候' : 'Generating report, please wait')
