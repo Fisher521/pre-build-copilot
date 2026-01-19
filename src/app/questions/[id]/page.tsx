@@ -197,12 +197,10 @@ export default function QuestionsPage() {
             {/* Feedback */}
             {showFeedback && selectedOption?.feedback && (
               <div className={cn(
-                "mt-4 rounded-md p-3 border text-sm",
+                "mt-4 rounded-md p-3 text-sm border-l-4",
                 selectedOption.feedback.type === 'warning'
-                  ? "bg-amber-50 border-amber-200 text-amber-800"
-                  : selectedOption.feedback.type === 'positive'
-                    ? "bg-indigo-50 border-indigo-200 text-indigo-800"
-                    : "bg-indigo-50 border-indigo-200 text-indigo-800"
+                  ? "bg-amber-50 border-l-amber-400 text-amber-800"
+                  : "bg-gray-50 border-l-indigo-400 text-gray-700"
               )}>
                 <p className="leading-relaxed">{selectedOption.feedback.message}</p>
               </div>
