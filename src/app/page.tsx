@@ -135,8 +135,8 @@ export default function HomePage() {
 
           {/* 用户输入回显 */}
           <div className="mt-6 p-3 sm:p-4 bg-white border border-gray-200 rounded-lg text-left">
-            <p className="text-xs text-gray-400 mb-1">{t('home.yourIdea')}</p>
-            <p className="text-gray-700 text-sm line-clamp-3">{input}</p>
+            <p className="text-xs text-gray-400 mb-2">{t('home.yourIdea')}</p>
+            <p className="text-gray-500 text-sm line-clamp-3 leading-relaxed">{input}</p>
           </div>
         </div>
       </div>
