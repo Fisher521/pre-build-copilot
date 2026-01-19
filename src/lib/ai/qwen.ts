@@ -15,11 +15,12 @@ import type {
 import {
   SYSTEM_PROMPT,
   getStatePrompt,
-  SCHEMA_EXTRACTION_PROMPT,
+  getSchemaExtractionPrompt,
   CONVERSATION_STARTER,
   FEW_SHOT_EXAMPLES,
   BRIEF_GENERATION_PROMPT,
 } from './prompts'
+import type { Language } from '@/contexts/LanguageContext'
 import { withRetry, parseAIError } from './utils'
 import {
   createEmptySchema,
@@ -102,25 +103,37 @@ function parseAIResponse(content: string): { text: string; metadata: MessageMeta
  */
 export async function extractSchemaFromInput(
   userMessage: string,
-  currentSchema: EvaluationSchema
+  currentSchema: EvaluationSchema,
+  language: Language = 'zh'
 ): Promise<ParsedInput> {
+  // Language-specific user message templates
+  const userMessageTemplate = language === 'en'
+    ? `Current Schema State:
+${formatSchemaSummary(currentSchema)}
+
+User Input:
+${userMessage}
+
+Extract information and return JSON (respond in English only):`
+    : `当前 Schema 状态：
+${formatSchemaSummary(currentSchema)}
+
+用户输入：
+${userMessage}
+
+请提取信息并返回 JSON（请用中文回复）：`
+
   try {
     const response = await getClient().chat.completions.create({
       model: MODEL,
       messages: [
         {
           role: 'system',
-          content: SCHEMA_EXTRACTION_PROMPT,
+          content: getSchemaExtractionPrompt(language),
         },
         {
           role: 'user',
-          content: `当前 Schema 状态：
-${formatSchemaSummary(currentSchema)}
-
-用户输入：
-${userMessage}
-
-请提取信息并返回 JSON：`,
+          content: userMessageTemplate,
         },
       ],
       temperature: 0.3,
@@ -158,14 +171,15 @@ export async function processUserInput(params: {
   userMessage: string
   schema: EvaluationSchema
   previousMessages?: Array<{ role: string; content: string }>
+  language?: Language
 }): Promise<{
   response: AIResponse
   updatedSchema: EvaluationSchema
 }> {
-  const { userMessage, schema, previousMessages = [] } = params
+  const { userMessage, schema, previousMessages = [], language = 'zh' } = params
 
   // Step 1: Extract schema fields from user input
-  const parsed = await extractSchemaFromInput(userMessage, schema)
+  const parsed = await extractSchemaFromInput(userMessage, schema, language)
 
   // Step 2: Update schema with extracted fields
   let updatedSchema = updateSchema(schema, parsed.extractedFields)

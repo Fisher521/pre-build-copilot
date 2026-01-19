@@ -409,55 +409,63 @@ This evaluation is based on current information. Anything you'd like to explore 
  * Schema extraction prompt - 用于从用户输入中提取 Schema 字段
  */
 const SCHEMA_EXTRACTION_PROMPTS = {
-  zh: `从用户输入中提取以下字段的信息。只提取明确提到的信息，不要推测。
+  zh: `分析用户输入，提取并补全以下关键字段。如果用户没有明确说明，请根据上下文合理推断。
 
-可提取的字段：
-- idea.one_liner: 产品一句话描述
+【必填字段 - 必须全部填写，不能为空】
+- idea.one_liner: 产品一句话描述（如果用户只说了大概想法，帮他整理成清晰的一句话）
+- mvp.first_job: MVP 核心功能（推断这个产品最核心要做的一件事）
+- user.primary_user: 主要用户是谁（根据产品类型推断目标用户群体）
+- problem.scenario: 问题场景描述（推断用户/目标群体面临的痛点问题）
+
+【可选字段 - 如果能推断则填写】
 - idea.background: 为什么想做这个
-- user.primary_user: 主要用户是谁（自己/特定人群/大众）
 - user.usage_context: 使用场景
 - mvp.type: 产品类型（content_tool/functional_tool/ai_tool/other）
-- mvp.first_job: MVP 核心功能
 - platform.form: 产品形态（web/ios/android/plugin/cli）
-- preference.timeline: 时间预期（7d/14d/30d/flexible）
-- preference.priority: 优先级（ship_fast/stable_first/cost_first）
-- constraints.api_or_data_dependency: 外部依赖（none/possible/confirmed）
-- constraints.privacy_level: 隐私级别（low/medium/high）
-- problem.scenario: 问题场景描述
-- problem.pain_level: 痛点程度（low/medium/high）
+
+重要：
+1. 所有回复必须是中文
+2. 以上4个必填字段必须全部填写，根据上下文合理推断
+3. 保持简洁，每个字段1-2句话即可
 
 返回 JSON 格式：
 {
-  "understood": "你理解的用户想法（1-2句话）",
+  "understood": "你理解的用户想法（1-2句话，中文）",
   "extracted": {
-    "idea": { "one_liner": "..." },
-    ...只包含确实提取到的字段
+    "idea": { "one_liner": "一句话描述" },
+    "mvp": { "first_job": "核心功能" },
+    "user": { "primary_user": "目标用户" },
+    "problem": { "scenario": "解决的问题" }
   },
   "confidence": 0.8
 }`,
-  en: `Extract information from user input for the following fields. Only extract explicitly mentioned information, don't speculate.
+  en: `Analyze user input, extract and complete the following key fields. If user didn't specify clearly, make reasonable inferences based on context.
 
-Extractable fields:
-- idea.one_liner: One-line product description
+【Required Fields - Must ALL be filled, cannot be empty】
+- idea.one_liner: One-line product description (if user only gave a rough idea, organize it into a clear sentence)
+- mvp.first_job: MVP core function (infer the single most important thing this product needs to do)
+- user.primary_user: Primary users (infer target user group based on product type)
+- problem.scenario: Problem scenario description (infer pain points users/target group face)
+
+【Optional Fields - Fill if inferable】
 - idea.background: Why they want to build this
-- user.primary_user: Primary users (self/specific group/general public)
 - user.usage_context: Usage context
 - mvp.type: Product type (content_tool/functional_tool/ai_tool/other)
-- mvp.first_job: MVP core function
 - platform.form: Product form (web/ios/android/plugin/cli)
-- preference.timeline: Timeline expectation (7d/14d/30d/flexible)
-- preference.priority: Priority (ship_fast/stable_first/cost_first)
-- constraints.api_or_data_dependency: External dependency (none/possible/confirmed)
-- constraints.privacy_level: Privacy level (low/medium/high)
-- problem.scenario: Problem scenario description
-- problem.pain_level: Pain level (low/medium/high)
+
+Important:
+1. ALL responses must be in English only, no Chinese characters
+2. ALL 4 required fields above must be filled with reasonable inferences
+3. Keep it concise, 1-2 sentences per field
 
 Return JSON format:
 {
-  "understood": "Your understanding of user's idea (1-2 sentences)",
+  "understood": "Your understanding of user's idea (1-2 sentences, in English)",
   "extracted": {
-    "idea": { "one_liner": "..." },
-    ...only include actually extracted fields
+    "idea": { "one_liner": "one-line description" },
+    "mvp": { "first_job": "core function" },
+    "user": { "primary_user": "target users" },
+    "problem": { "scenario": "problem solved" }
   },
   "confidence": 0.8
 }`

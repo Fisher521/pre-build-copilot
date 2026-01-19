@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}))
     const initialInput = body.initialInput as string | undefined
+    const language = (body.language as 'zh' | 'en') || 'zh'
     const prefilledData = body.prefilledData as {
       projectName?: string
       coreFeature?: string
@@ -106,6 +107,7 @@ export async function POST(request: NextRequest) {
           userMessage: initialInput.trim(),
           schema,
           previousMessages: [],
+          language,
         })
 
         // Save AI response
