@@ -193,6 +193,7 @@ export default function HomePage() {
                 <VoiceButton
                   onTranscript={handleVoiceTranscript}
                   disabled={isLoading}
+                  lang={lang}
                 />
 
                 <button

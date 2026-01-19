@@ -58,9 +58,51 @@ interface VoiceButtonProps {
   onInterimTranscript?: (text: string) => void  // 实时显示识别中的文字
   disabled?: boolean
   className?: string
+  lang?: 'zh' | 'en'  // Language for speech recognition and UI text
 }
 
-export function VoiceButton({ onTranscript, onInterimTranscript, disabled, className }: VoiceButtonProps) {
+// Localized strings for the voice button
+const voiceStrings = {
+  zh: {
+    listening: '正在听...',
+    processing: '识别中...',
+    micDenied: '麦克风权限被拒绝',
+    noSpeech: '未检测到语音',
+    micUnavailable: '无法访问麦克风',
+    serviceUnavailable: '语音服务不可用',
+    recognitionError: '语音识别出错',
+    recognitionUnavailable: '语音识别不可用',
+    recognitionFailed: '识别失败，请重试',
+    serviceError: '语音识别服务不可用',
+    titleProcessing: '正在识别...',
+    titleStop: '点击停止录音',
+    titleStart: '点击开始录音',
+    ariaProcessing: '正在识别',
+    ariaStop: '停止录音',
+    ariaStart: '开始录音',
+  },
+  en: {
+    listening: 'Listening...',
+    processing: 'Processing...',
+    micDenied: 'Microphone access denied',
+    noSpeech: 'No speech detected',
+    micUnavailable: 'Cannot access microphone',
+    serviceUnavailable: 'Speech service unavailable',
+    recognitionError: 'Speech recognition error',
+    recognitionUnavailable: 'Speech recognition unavailable',
+    recognitionFailed: 'Recognition failed, please retry',
+    serviceError: 'Speech recognition service unavailable',
+    titleProcessing: 'Processing...',
+    titleStop: 'Click to stop recording',
+    titleStart: 'Click to start recording',
+    ariaProcessing: 'Processing',
+    ariaStop: 'Stop recording',
+    ariaStart: 'Start recording',
+  },
+}
+
+export function VoiceButton({ onTranscript, onInterimTranscript, disabled, className, lang = 'zh' }: VoiceButtonProps) {
+  const strings = voiceStrings[lang]
   const [isRecording, setIsRecording] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
@@ -140,7 +182,7 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
       const recognition = new SpeechRecognitionAPI()
       recognition.continuous = true
       recognition.interimResults = true
-      recognition.lang = 'zh-CN'
+      recognition.lang = lang === 'zh' ? 'zh-CN' : 'en-US'
 
       let finalTranscript = ''
 
@@ -188,9 +230,9 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
 
         console.error('Speech recognition error:', event.error)
         if (event.error === 'not-allowed') {
-          setError('麦克风权限被拒绝')
+          setError(strings.micDenied)
         } else if (event.error === 'no-speech') {
-          setError('未检测到语音')
+          setError(strings.noSpeech)
         } else if (event.error === 'network') {
           // Network error - fallback to MediaRecorder silently
           console.warn('Web Speech API network error, falling back to MediaRecorder')
@@ -200,11 +242,11 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
         } else if (event.error === 'aborted') {
           // User aborted, no error needed
         } else if (event.error === 'audio-capture') {
-          setError('无法访问麦克风')
+          setError(strings.micUnavailable)
         } else if (event.error === 'service-not-allowed') {
-          setError('语音服务不可用')
+          setError(strings.serviceUnavailable)
         } else {
-          setError('语音识别出错')
+          setError(strings.recognitionError)
         }
         setIsRecording(false)
       }
@@ -223,11 +265,11 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
 
     } catch (err) {
       console.error('Failed to start Web Speech:', err)
-      setError('语音识别不可用')
+      setError(strings.recognitionUnavailable)
       // Fallback to MediaRecorder
       setUseWebSpeech(false)
     }
-  }, [disabled, isProcessing, onTranscript, onInterimTranscript])
+  }, [disabled, isProcessing, onTranscript, onInterimTranscript, lang, strings])
 
   const stopWebSpeechRecording = useCallback(() => {
     if (recognitionRef.current && isRecording) {
@@ -288,9 +330,9 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
 
     } catch (err) {
       console.error('Failed to start recording:', err)
-      setError('无法访问麦克风')
+      setError(strings.micUnavailable)
     }
-  }, [disabled, isProcessing])
+  }, [disabled, isProcessing, strings])
 
   // Effect to trigger fallback recording when Web Speech API fails
   useEffect(() => {
@@ -328,12 +370,13 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
   const processAudio = async (audioBlob: Blob) => {
     setIsProcessing(true)
     setError(null)
-    
+
     try {
-      // Call backend ASR API
+      // Call backend ASR API with language parameter
       const formData = new FormData()
       formData.append('audio', audioBlob, 'recording.webm')
-      
+      formData.append('language', lang)
+
       const response = await fetch('/api/speech', {
         method: 'POST',
         body: formData,
@@ -345,11 +388,11 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
         onTranscript(result.text)
       } else if (result.error) {
         console.warn('ASR warning:', result.error)
-        setError('识别失败，请重试')
+        setError(strings.recognitionFailed)
       }
     } catch (err) {
       console.error('ASR request failed:', err)
-      setError('语音识别服务不可用')
+      setError(strings.serviceError)
     } finally {
       setIsProcessing(false)
       setRecordingTime(0)
@@ -387,7 +430,7 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
           "absolute right-14 text-sm font-medium whitespace-nowrap",
           isProcessing ? "text-indigo-500" : "text-indigo-500 animate-pulse"
         )}>
-          {isProcessing ? '识别中...' : useWebSpeech ? '正在听...' : formatTime(recordingTime)}
+          {isProcessing ? strings.processing : useWebSpeech ? strings.listening : formatTime(recordingTime)}
         </span>
       )}
 
@@ -413,8 +456,8 @@ export function VoiceButton({ onTranscript, onInterimTranscript, disabled, class
           'disabled:opacity-50 disabled:cursor-not-allowed',
           className
         )}
-        title={isProcessing ? '正在识别...' : isRecording ? '点击停止录音' : '点击开始录音'}
-        aria-label={isProcessing ? '正在识别' : isRecording ? '停止录音' : '开始录音'}
+        title={isProcessing ? strings.titleProcessing : isRecording ? strings.titleStop : strings.titleStart}
+        aria-label={isProcessing ? strings.ariaProcessing : isRecording ? strings.ariaStop : strings.ariaStart}
       >
         {/* Pulse ring animation when recording */}
         {isRecording && (

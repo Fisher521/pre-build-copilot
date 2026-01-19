@@ -174,6 +174,7 @@ export default function ReviewPage() {
                   <VoiceButton
                     onTranscript={(text) => setParsedInfo(prev => ({ ...prev, projectName: prev.projectName + text }))}
                     className="flex-shrink-0"
+                    lang={lang}
                   />
                 </div>
               </div>
@@ -201,6 +202,7 @@ export default function ReviewPage() {
                   <VoiceButton
                     onTranscript={(text) => setParsedInfo(prev => ({ ...prev, coreFeature: prev.coreFeature + text }))}
                     className="flex-shrink-0 mt-1"
+                    lang={lang}
                   />
                 </div>
               </div>
@@ -228,6 +230,7 @@ export default function ReviewPage() {
                   <VoiceButton
                     onTranscript={(text) => setParsedInfo(prev => ({ ...prev, targetUser: prev.targetUser + text }))}
                     className="flex-shrink-0"
+                    lang={lang}
                   />
                 </div>
               </div>
@@ -255,6 +258,7 @@ export default function ReviewPage() {
                   <VoiceButton
                     onTranscript={(text) => setParsedInfo(prev => ({ ...prev, problemSolved: prev.problemSolved + text }))}
                     className="flex-shrink-0 mt-1"
+                    lang={lang}
                   />
                 </div>
               </div>

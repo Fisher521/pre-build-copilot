@@ -7,7 +7,13 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd feedback collection system with privacy reassurance\n\n- Create feedback database table and storage functions\n- Add feedback API endpoint \\(POST /api/feedback\\)\n- Create FeedbackModal component with reason selection\n- Integrate feedback into report page with submit flow\n- Add privacy reassurance text throughout:\n  - Homepage: \"你的想法仅用于本次评估，不会被存储或分享\"\n  - Report feedback: \"反馈仅用于改进产品，不会关联你的项目内容\"\n  - Modal: \"你的反馈完全匿名，不会关联到你的项目想法\"\n- Update Supabase schema with feedback table\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(cat:*)",
       "Bash(npx tsc:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: redesign report page layout and internationalize questions\n\nReport page changes:\n- Remove download functionality\n- Move back button above report card \\(cleaner hierarchy\\)\n- Title and tabs now inside report card container\n- Tab navigation sticky within card\n- Add floating share button \\(icon + text\\) at bottom right\n- Share menu opens above the button\n\nQuestion internationalization:\n- English version: web, pwa, browser_extension, mobile_app\n- Chinese version: web, miniprogram, browser_extension, mobile_app\n- Remove \"miniprogram\" from English \\(China-specific\\)\n- Add clear platform form descriptions in prompts\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: redesign report page layout and internationalize questions\n\nReport page changes:\n- Remove download functionality\n- Move back button above report card \\(cleaner hierarchy\\)\n- Title and tabs now inside report card container\n- Tab navigation sticky within card\n- Add floating share button \\(icon + text\\) at bottom right\n- Share menu opens above the button\n\nQuestion internationalization:\n- English version: web, pwa, browser_extension, mobile_app\n- Chinese version: web, miniprogram, browser_extension, mobile_app\n- Remove \"miniprogram\" from English \\(China-specific\\)\n- Add clear platform form descriptions in prompts\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(npx eslint:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nstyle: Enhance report page with highlights and scroll spy navigation\n\n- Add scroll spy to highlight active section in tab navigation\n- Bold labels for Tech Stack, Capability, Suggestion, Pros, Cons\n- Add indigo color to step numbers in detailed flow\n- Add green/orange colors to pros/cons plus/minus signs\n- Add hover effects to competitor cards\n- Make competitor names bold and View link indigo\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git diff:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run lint)"
     ]
   }
 }
