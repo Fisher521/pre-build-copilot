@@ -200,8 +200,8 @@ export default function HomePage() {
                   disabled={isLoading || !input.trim()}
                   className={cn(
                     'px-5 py-2.5 rounded-md text-base font-medium whitespace-nowrap',
-                    'bg-gray-900 text-white',
-                    'hover:bg-gray-800 transition-colors',
+                    'bg-indigo-600 text-white',
+                    'hover:bg-indigo-700 transition-colors',
                     'disabled:opacity-40 disabled:cursor-not-allowed',
                     'flex items-center gap-2'
                   )}

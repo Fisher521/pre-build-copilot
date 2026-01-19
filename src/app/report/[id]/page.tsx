@@ -148,10 +148,7 @@ function LoadingProgress({
             </div>
             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
               <div
-                className={cn(
-                  "h-full bg-indigo-500 rounded-full transition-all duration-700 ease-out",
-                  isLastStep && "bg-gradient-to-r from-indigo-500 to-purple-500"
-                )}
+                className="h-full bg-indigo-600 rounded-full transition-all duration-700 ease-out"
                 style={{ width: `${displayProgress}%` }}
               />
             </div>
@@ -170,14 +167,14 @@ function LoadingProgress({
                   key={step.id}
                   className={cn(
                     'flex items-center gap-3 py-2 px-3 rounded-md transition-all duration-300',
-                    isCompleted && 'bg-green-50',
+                    isCompleted && 'bg-gray-50',
                     isCurrent && 'bg-indigo-50',
                     isPending && 'opacity-40'
                   )}
                 >
                   <div className={cn(
                     'w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium transition-all flex-shrink-0',
-                    isCompleted && 'bg-green-500 text-white',
+                    isCompleted && 'bg-indigo-600 text-white',
                     isCurrent && 'bg-indigo-500 text-white',
                     isCurrent && isLast && 'animate-pulse',
                     isPending && 'bg-gray-200 text-gray-500'
@@ -187,7 +184,7 @@ function LoadingProgress({
                   <div className="flex-1 min-w-0">
                     <span className={cn(
                       'text-sm',
-                      isCompleted && 'text-green-700',
+                      isCompleted && 'text-gray-700',
                       isCurrent && 'text-indigo-700 font-medium',
                       isPending && 'text-gray-500'
                     )}>
@@ -209,16 +206,16 @@ function LoadingProgress({
         </div>
 
         {/* 提示语卡片 */}
-        <div className="bg-indigo-50 rounded-lg border border-indigo-100 p-4 sm:p-6 text-center">
-          <p className="text-indigo-800 text-sm font-medium transition-all duration-500">
+        <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 sm:p-6 text-center">
+          <p className="text-gray-700 text-sm transition-all duration-500">
             {waitingTips[tipIndex][lang]}
           </p>
         </div>
 
         {/* 最后阶段的额外提示 */}
         {isLastStep && elapsedTime > 10 && (
-          <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-lg text-center">
-            <p className="text-amber-700 text-xs">
+          <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg text-center">
+            <p className="text-gray-600 text-xs">
               {lang === 'zh'
                 ? 'AI 正在深度分析您的项目，生成详细报告需要一些时间'
                 : 'AI is doing deep analysis, detailed report generation takes a moment'}
@@ -283,7 +280,7 @@ export default function ReportPage() {
   const REVEAL_DELAY = 200 // 每批间隔时间(ms)
   const TOTAL_REVEAL_STEPS = 7
 
-  // 模拟进度推进
+  // 模拟进度推进 - 只增不减
   useEffect(() => {
     if (!isLoading) return
 
@@ -293,19 +290,19 @@ export default function ReportPage() {
     const interval = setInterval(() => {
       elapsed += 200
 
-      // 计算当前步骤
+      // 计算当前步骤 - 只增不减
       let cumulative = 0
       for (let i = 0; i < LOADING_STEPS_DURATION.length; i++) {
         cumulative += LOADING_STEPS_DURATION[i]
         if (elapsed < cumulative) {
-          setCurrentStep(i)
+          setCurrentStep(prev => Math.max(prev, i))
           break
         }
       }
 
-      // 计算进度（最多到95%，剩下的等API返回）
+      // 计算进度（最多到95%，剩下的等API返回）- 只增不减
       const rawProgress = (elapsed / totalDuration) * 100
-      setProgress(Math.min(rawProgress, 95))
+      setProgress(prev => Math.max(prev, Math.min(rawProgress, 95)))
 
     }, 200)
 
@@ -565,7 +562,7 @@ export default function ReportPage() {
               </button>
               <button
                 onClick={handleRestart}
-                className="px-5 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-50 transition-colors"
+                className="px-5 py-2.5 bg-white text-gray-600 text-sm font-medium rounded-md border border-gray-200 hover:bg-gray-50 transition-colors"
               >
                 {t('report.restart')}
               </button>
@@ -630,7 +627,7 @@ export default function ReportPage() {
                 <button
                   key={section.id}
                   onClick={() => scrollToSection(section.id)}
-                  className="px-3 sm:px-4 py-2 sm:py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg whitespace-nowrap transition-colors flex-shrink-0 font-medium"
+                  className="px-3 sm:px-4 py-2 text-sm text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 rounded-lg whitespace-nowrap transition-all flex-shrink-0 border border-transparent hover:border-indigo-200 cursor-pointer"
                 >
                   {section.label}
                 </button>
@@ -677,7 +674,7 @@ export default function ReportPage() {
                     </div>
                     <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full transition-all duration-1000 bg-gray-400"
+                        className="h-full rounded-full transition-all duration-1000 bg-indigo-500"
                         style={{ width: `${item.value}%` }}
                       />
                     </div>
@@ -797,7 +794,7 @@ export default function ReportPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-base text-gray-900">{approach.name}</span>
                         {isRecommended && (
-                          <span className="text-xs text-indigo-600 font-medium">{t('report.recommended')}</span>
+                          <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">{t('report.recommended')}</span>
                         )}
                       </div>
                       <span className="text-xs text-gray-500 flex-shrink-0">
@@ -976,7 +973,7 @@ export default function ReportPage() {
             {/* Option C - Vibe Coder Stack */}
             {report.tech_options.option_c && (
               <div className="border border-gray-200 rounded-md p-4 sm:p-5 relative">
-                <div className="absolute top-3 right-3 text-xs text-indigo-600 font-medium">
+                <div className="absolute top-3 right-3 text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
                   {t('report.recommended')}
                 </div>
                 <div className="flex items-start justify-between mb-4 pr-16 sm:pr-20">
@@ -984,10 +981,10 @@ export default function ReportPage() {
                     <div className="font-medium text-base text-gray-900">
                       {report.tech_options.option_c.name}
                     </div>
-                    <div className="text-sm text-gray-500 mt-1">{report.tech_options.option_c.fit_for}</div>
+                    <div className="text-sm text-indigo-600 mt-1">{report.tech_options.option_c.fit_for}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="text-gray-900 font-medium text-base">{report.tech_options.option_c.cost}</div>
+                    <div className="text-indigo-600 font-medium text-base">{report.tech_options.option_c.cost}</div>
                     <div className="text-sm text-gray-500 mt-0.5">{report.tech_options.option_c.dev_time}</div>
                   </div>
                 </div>
@@ -1057,7 +1054,7 @@ export default function ReportPage() {
                     <a
                       href={step.action_url}
                       target="_blank"
-                      className="inline-block px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
+                      className="inline-block px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
                     >
                       {step.action_label || t('report.goExecute')}
                     </a>
@@ -1178,8 +1175,8 @@ export default function ReportPage() {
             className={cn(
               'flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-all',
               copySuccess
-                ? 'bg-gray-700 text-white'
-                : 'bg-gray-900 text-white hover:bg-gray-800 hover:shadow-xl'
+                ? 'bg-indigo-500 text-white'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-xl'
             )}
           >
             {copySuccess ? (
