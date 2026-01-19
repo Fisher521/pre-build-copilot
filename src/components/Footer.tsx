@@ -21,9 +21,9 @@ export function Footer() {
   }, [])
 
   return (
-    <footer className="border-t border-gray-100 bg-gray-50 py-6 mt-auto">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between text-sm text-gray-500">
+    <footer className="border-t border-gray-100 bg-gray-50 py-10 mt-auto">
+      <div className="max-w-2xl mx-auto px-4">
+        <div className="flex flex-col items-center gap-6 text-sm text-gray-500">
           {/* Language Switcher - Left side, Dropdown */}
           <div className="relative" ref={langMenuRef}>
             <button
@@ -71,7 +71,7 @@ export function Footer() {
           </div>
 
           {/* Center text */}
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2">
               <span>justart.today</span>
               <span className="text-gray-300 hidden sm:inline">·</span>

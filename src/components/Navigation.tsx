@@ -26,8 +26,8 @@ export function Navigation() {
       "fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200",
       isReportPage && "hidden sm:block" // 移动端报告页隐藏
     )}>
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center h-12 sm:h-14">
+      <div className="max-w-2xl mx-auto px-4">
+        <div className="flex items-center justify-center h-12 sm:h-14">
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <span className="text-base font-semibold text-gray-900">justart.today</span>
