@@ -625,8 +625,8 @@ export default function ReportPage() {
           <span>{t('report.backToHome')}</span>
         </button>
 
-        {/* 标题 + Tab导航 - 整体吸顶 */}
-        <div className="sticky top-14 z-30 -mx-3 sm:-mx-6 px-3 sm:px-6">
+        {/* 标题 + Tab导航 */}
+        <div className="-mx-3 sm:-mx-6 px-3 sm:px-6">
           <div className="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden">
             {/* 报告标题 */}
             <div className="px-4 sm:px-8 pt-3 sm:pt-4 pb-1 sm:pb-2 text-center">
