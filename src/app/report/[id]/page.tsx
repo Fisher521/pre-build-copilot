@@ -629,12 +629,12 @@ export default function ReportPage() {
         <div className="sticky top-12 sm:top-14 z-30 -mx-3 sm:-mx-6 px-3 sm:px-6">
           <div className="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden">
             {/* 报告标题 */}
-            <div className="px-4 sm:px-8 py-3 sm:py-4 border-b border-gray-100 text-center">
+            <div className="px-4 sm:px-8 pt-3 sm:pt-4 pb-1 sm:pb-2 text-center">
               <h1 className="text-base sm:text-lg font-semibold text-gray-900">{t('report.title')}</h1>
             </div>
             {/* Tab导航 */}
             <div className="overflow-x-auto scrollbar-hide">
-              <div className="px-3 sm:px-8 py-2 sm:py-2.5 flex gap-1.5 sm:gap-2 sm:justify-center">
+              <div className="px-3 sm:px-8 pb-2 sm:pb-2.5 pt-1 flex gap-1.5 sm:gap-2 sm:justify-center">
                 {navSections.map((section) => (
                   <button
                     key={section.id}
@@ -661,7 +661,7 @@ export default function ReportPage() {
         <div
           id="score"
           className={cn(
-            'rounded-lg border p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32',
+            'rounded-lg border p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-36 sm:scroll-mt-40',
             getScoreBg(),
             getRevealClass(1)
           )}
@@ -706,7 +706,7 @@ export default function ReportPage() {
         </div>
 
         {/* Strengths & Risks - 批次2 */}
-        <div id="analysis" className={cn("grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32", getRevealClass(2))}>
+        <div id="analysis" className={cn("grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-4 sm:mb-6 scroll-mt-36 sm:scroll-mt-40", getRevealClass(2))}>
           <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
               {t('report.whyWorthIt')}
@@ -738,7 +738,7 @@ export default function ReportPage() {
 
         {/* Market Analysis */}
         {/* Market Analysis - 批次3 */}
-        <div id="market" className={cn("rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32", getRevealClass(3))}>
+        <div id="market" className={cn("rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-36 sm:scroll-mt-40", getRevealClass(3))}>
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-5">
             {t('report.marketAnalysis')}
           </h3>
@@ -787,7 +787,7 @@ export default function ReportPage() {
 
         {/* Product Approach Selection */}
         {report.product_approaches && report.product_approaches.approaches.length > 0 && (
-          <div id="approach" className={cn("rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32", getRevealClass(4))}>
+          <div id="approach" className={cn("rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-36 sm:scroll-mt-40", getRevealClass(4))}>
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
               {t('report.productApproach')}
             </h3>
@@ -900,7 +900,7 @@ export default function ReportPage() {
 
         {/* Tech Stack */}
         {/* Tech Stack - 批次5 */}
-        <div id="tech" className={cn("rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32", getRevealClass(5))}>
+        <div id="tech" className={cn("rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-36 sm:scroll-mt-40", getRevealClass(5))}>
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-5">
             {t('report.techOptions')}
           </h3>
@@ -1072,7 +1072,7 @@ export default function ReportPage() {
 
         {/* Fastest Path */}
         {/* Fastest Path - 批次6 */}
-        <div id="path" className={cn("rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32", getRevealClass(6))}>
+        <div id="path" className={cn("rounded-lg border border-gray-200 bg-white p-4 sm:p-6 mb-4 sm:mb-6 scroll-mt-36 sm:scroll-mt-40", getRevealClass(6))}>
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-5">
             {t('report.fastestPath')}
           </h3>
@@ -1115,7 +1115,7 @@ export default function ReportPage() {
 
         {/* Cost & Pitfalls */}
         {/* Cost & Pitfalls - 批次6 */}
-        <div id="cost" className={cn("grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-4 sm:mb-6 scroll-mt-24 sm:scroll-mt-32", getRevealClass(6))}>
+        <div id="cost" className={cn("grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-4 sm:mb-6 scroll-mt-36 sm:scroll-mt-40", getRevealClass(6))}>
           {/* Cost Estimate */}
           <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-5">
