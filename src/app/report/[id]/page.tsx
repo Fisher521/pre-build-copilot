@@ -31,10 +31,10 @@ function CollapsibleSection({
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between sm:cursor-default"
       >
-        <span>{title}</span>
+        <span className="flex-1 min-w-0">{title}</span>
         <svg
           className={cn(
-            'w-5 h-5 text-gray-400 transition-transform sm:hidden',
+            'w-5 h-5 text-gray-400 transition-transform sm:hidden flex-shrink-0 ml-2',
             isOpen && 'rotate-180'
           )}
           fill="none"
@@ -625,32 +625,31 @@ export default function ReportPage() {
           <span>{t('report.backToHome')}</span>
         </button>
 
-        {/* 报告卡片容器 */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-          {/* 报告标题 */}
-          <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-100 text-center">
-            <h1 className="text-lg sm:text-xl font-semibold text-gray-900">{t('report.title')}</h1>
-          </div>
-        </div>
-
-        {/* Tab导航 - 吸顶冻结 */}
+        {/* 标题 + Tab导航 - 整体吸顶 */}
         <div className="sticky top-12 sm:top-14 z-30 -mx-3 sm:-mx-6 px-3 sm:px-6">
-          <div className="bg-white border border-gray-200 rounded-lg shadow-md overflow-x-auto scrollbar-hide">
-            <div className="px-3 sm:px-8 py-2.5 sm:py-3 flex gap-1.5 sm:gap-2 sm:justify-center">
-              {navSections.map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => scrollToSection(section.id)}
-                  className={cn(
-                    "px-3 sm:px-4 py-2 text-sm rounded-lg whitespace-nowrap transition-all flex-shrink-0 border cursor-pointer",
-                    activeSection === section.id
-                      ? "text-indigo-600 bg-indigo-50 border-indigo-200 font-medium"
-                      : "text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 border-transparent hover:border-indigo-200"
-                  )}
-                >
-                  {section.label}
-                </button>
-              ))}
+          <div className="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden">
+            {/* 报告标题 */}
+            <div className="px-4 sm:px-8 py-3 sm:py-4 border-b border-gray-100 text-center">
+              <h1 className="text-base sm:text-lg font-semibold text-gray-900">{t('report.title')}</h1>
+            </div>
+            {/* Tab导航 */}
+            <div className="overflow-x-auto scrollbar-hide">
+              <div className="px-3 sm:px-8 py-2 sm:py-2.5 flex gap-1.5 sm:gap-2 sm:justify-center">
+                {navSections.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => scrollToSection(section.id)}
+                    className={cn(
+                      "px-3 sm:px-4 py-2 text-sm rounded-lg whitespace-nowrap transition-all flex-shrink-0 border cursor-pointer",
+                      activeSection === section.id
+                        ? "text-indigo-600 bg-indigo-50 border-indigo-200 font-medium"
+                        : "text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 border-transparent hover:border-indigo-200"
+                    )}
+                  >
+                    {section.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -910,14 +909,24 @@ export default function ReportPage() {
             {/* Option A - China Stack */}
             <CollapsibleSection
               title={
-                <div className="flex items-start justify-between w-full pr-6 gap-6">
-                  <div className="text-left">
+                <div className="w-full">
+                  {/* 移动端：纯垂直布局 */}
+                  <div className="sm:hidden space-y-1">
                     <div className="font-medium text-base text-gray-900">{report.tech_options.option_a.name}</div>
-                    <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_a.fit_for}</div>
+                    <div className="text-sm text-gray-500">{report.tech_options.option_a.fit_for}</div>
+                    <div className="text-gray-900 font-medium text-sm">{report.tech_options.option_a.cost}</div>
+                    <div className="text-sm text-gray-500">{report.tech_options.option_a.dev_time}</div>
                   </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-gray-900 font-medium text-base">{report.tech_options.option_a.cost}</div>
-                    <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_a.dev_time}</div>
+                  {/* 桌面端：左右布局 */}
+                  <div className="hidden sm:flex sm:items-start sm:justify-between gap-6">
+                    <div className="text-left">
+                      <div className="font-medium text-base text-gray-900">{report.tech_options.option_a.name}</div>
+                      <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_a.fit_for}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-gray-900 font-medium text-base">{report.tech_options.option_a.cost}</div>
+                      <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_a.dev_time}</div>
+                    </div>
                   </div>
                 </div>
               }
@@ -952,14 +961,24 @@ export default function ReportPage() {
             {/* Option B - Global Stack */}
             <CollapsibleSection
               title={
-                <div className="flex items-start justify-between w-full pr-6 gap-6">
-                  <div className="text-left">
+                <div className="w-full">
+                  {/* 移动端：纯垂直布局 */}
+                  <div className="sm:hidden space-y-1">
                     <div className="font-medium text-base text-gray-900">{report.tech_options.option_b.name}</div>
-                    <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_b.fit_for}</div>
+                    <div className="text-sm text-gray-500">{report.tech_options.option_b.fit_for}</div>
+                    <div className="text-gray-900 font-medium text-sm">{report.tech_options.option_b.cost}</div>
+                    <div className="text-sm text-gray-500">{report.tech_options.option_b.dev_time}</div>
                   </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-gray-900 font-medium text-base">{report.tech_options.option_b.cost}</div>
-                    <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_b.dev_time}</div>
+                  {/* 桌面端：左右布局 */}
+                  <div className="hidden sm:flex sm:items-start sm:justify-between gap-6">
+                    <div className="text-left">
+                      <div className="font-medium text-base text-gray-900">{report.tech_options.option_b.name}</div>
+                      <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_b.fit_for}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-gray-900 font-medium text-base">{report.tech_options.option_b.cost}</div>
+                      <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_b.dev_time}</div>
+                    </div>
                   </div>
                 </div>
               }
@@ -997,16 +1016,24 @@ export default function ReportPage() {
                 <div className="absolute top-3 right-3 text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
                   {t('report.recommended')}
                 </div>
-                <div className="flex items-start justify-between mb-6 pr-16 sm:pr-20 gap-6">
-                  <div className="text-left">
-                    <div className="font-medium text-base text-gray-900">
-                      {report.tech_options.option_c.name}
-                    </div>
-                    <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_c.fit_for}</div>
+                <div className="w-full mb-4 sm:mb-6">
+                  {/* 移动端：纯垂直布局 */}
+                  <div className="sm:hidden space-y-1">
+                    <div className="font-medium text-base text-gray-900">{report.tech_options.option_c.name}</div>
+                    <div className="text-sm text-gray-500">{report.tech_options.option_c.fit_for}</div>
+                    <div className="text-gray-900 font-medium text-sm">{report.tech_options.option_c.cost}</div>
+                    <div className="text-sm text-gray-500">{report.tech_options.option_c.dev_time}</div>
                   </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-gray-900 font-medium text-base">{report.tech_options.option_c.cost}</div>
-                    <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_c.dev_time}</div>
+                  {/* 桌面端：左右布局 */}
+                  <div className="hidden sm:flex sm:items-start sm:justify-between gap-6">
+                    <div className="text-left">
+                      <div className="font-medium text-base text-gray-900">{report.tech_options.option_c.name}</div>
+                      <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_c.fit_for}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-gray-900 font-medium text-base">{report.tech_options.option_c.cost}</div>
+                      <div className="text-sm text-gray-500 mt-2">{report.tech_options.option_c.dev_time}</div>
+                    </div>
                   </div>
                 </div>
 
