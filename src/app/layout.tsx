@@ -23,6 +23,12 @@ export async function generateMetadata(): Promise<Metadata> {
       ? ['vibe coding', 'project evaluation', 'Indie Hacker', 'MVP', 'feasibility analysis', 'justart.today', 'just start today']
       : ['vibe coding', '项目评估', 'Indie Hacker', 'MVP', '可行性分析', 'justart.today', 'just start today'],
     authors: [{ name: 'justart.today' }],
+    icons: {
+      icon: [
+        { url: '/favicon.svg', type: 'image/svg+xml' },
+      ],
+      apple: '/apple-touch-icon.png',
+    },
   }
 }
 
