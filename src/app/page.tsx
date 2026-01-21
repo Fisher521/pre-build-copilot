@@ -152,9 +152,22 @@ export default function HomePage() {
       {/* Hero Section */}
       <div className="text-center mb-10 sm:mb-12 mt-2 sm:mt-4">
         <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Just Start Today</h1>
-        <p className="text-base sm:text-lg text-gray-500">
+        <p className="text-base sm:text-lg text-gray-500 mb-4">
           {lang === 'zh' ? 'vibe 代码前，先 check 下' : 'Check before you vibe code'}
         </p>
+        <a
+          href="https://www.producthunt.com/products/vibe-checker?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-vibe-checker"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1066171&theme=neutral&t=1769007676963"
+            alt="Vibe Checker - Worth building? Validate ideas before coding | Product Hunt"
+            width="250"
+            height="54"
+            className="inline-block"
+          />
+        </a>
       </div>
 
       {/* Main Input Card */}
